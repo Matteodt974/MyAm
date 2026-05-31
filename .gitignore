@@ -48,7 +48,6 @@ secrets/
 **/.pub/
 **/build/
 **/.metadata
-**/pubspec.lock
 **/doc/api/
 **/coverage/
 **/.fvm/
