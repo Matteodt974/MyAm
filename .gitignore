@@ -168,7 +168,7 @@ tmp/
 logs/
 
 # OCR / translation model caches if pulled outside containers
-models/
+AImodels/
 .paddleocr/
 
 # ============================================================
