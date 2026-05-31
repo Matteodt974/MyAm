@@ -1,0 +1,16 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Secrets — NE JAMAIS COMMITTER
+.env
+
+# BD locale / dumps
+*.sqlite3
+*.dump
+
+# OS
+.DS_Store

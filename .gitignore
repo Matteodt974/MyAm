@@ -177,3 +177,7 @@ models/
 .github/actions-runner/
 junit.xml
 test-results/
+
+
+CLAUDE.md
+objectifs.md
