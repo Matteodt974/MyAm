@@ -1,7 +1,11 @@
 class ApiEndpoints {
-  // URL de base du backend FastAPI.
+  // URL de base du backend.
+  // Deux backends interchangeables exposent le MEME contrat :
+  //   - FastAPI (../backend)        -> port 8000  (defaut ci-dessous)
+  //   - Spring Boot (../backend_spring) -> port 8080
   // Surcharge au lancement :
   //   flutter run --dart-define=API_BASE_URL=http://192.168.1.X:8000
+  //   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080   # backend Spring
   //
   // Valeurs selon la cible :
   //   - Émulateur Android        -> http://10.0.2.2:8000   (PAS localhost)
