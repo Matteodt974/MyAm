@@ -1,0 +1,30 @@
+# Configuration de l'API. Toutes les valeurs surchageables par variable d'environnement
+# (memes cles que le backend FastAPI). Voir .env.example.
+server:
+  # Render injecte PORT ; en local on retombe sur 8080 (le FastAPI occupe deja 8000).
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: INM5151 Scan API
+
+# Swagger UI auto-genere expose sur /docs, comme le /docs de FastAPI.
+springdoc:
+  swagger-ui:
+    path: /docs
+
+# Mappe sur la classe AppProperties (@ConfigurationProperties(prefix = "scan")).
+scan:
+  app-name: INM5151 Scan API
+  environment: ${ENVIRONMENT:development}
+  # Optionnel tant que la BD n'est pas branchee.
+  database-url: ${DATABASE_URL:}
+  # Services internes (noms de service docker-compose).
+  ocr-url: ${OCR_URL:http://ocr:8001}
+  translate-url: ${TRANSLATE_URL:http://libretranslate:5000}
+  # APIs externes open data.
+  off-base-url: ${OFF_BASE_URL:https://world.openfoodfacts.org}
+  obf-base-url: ${OBF_BASE_URL:https://world.openbeautyfacts.org}
+  # Open Food Facts EXIGE un User-Agent identifiable (sinon throttling/ban de l'IP).
+  # Valeur quotee : elle contient ": " qui casserait sinon le parsing YAML.
+  off-user-agent: "${OFF_USER_AGENT:INM5151-ScanApp/0.1 (contact: ton-email@uqam.ca)}"

@@ -1,0 +1,16 @@
+# Secrets locaux — ne JAMAIS committer
+.env
+
+# Build Maven
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# Logs
+*.log
