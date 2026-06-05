@@ -4,7 +4,7 @@ Application mobile de scan **alimentaire & cosmétique** : code-barres / étique
 fiche produit, **score nutritionnel /100** et **détection d'allergènes**.
 
 **Monorepo :**
-- [`backend/`](backend/) — API **FastAPI** (Python) + Docker Compose (Postgres, LibreTranslate, OCR à venir).
+- [`backend/`](backend/) — API **FastAPI** (Python) / **Spring Boot** + Docker Compose (Postgres, LibreTranslate, OCR à venir).
 - [`frontend/`](frontend/) — application **Flutter** (`scan_app`).
 
 Spécification du projet (source de vérité) : voir [objectifs.md](objectifs.md).
