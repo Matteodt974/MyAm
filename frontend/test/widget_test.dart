@@ -1,30 +1,32 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// Test léger de la barre de navigation animée (sans caméra ni réseau).
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:scan_app/main.dart';
+import 'package:scan_app/shared/widgets/animated_bottom_nav.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('AnimatedBottomNav rend 3 onglets et notifie la sélection',
+      (WidgetTester tester) async {
+    int tapped = -1;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          bottomNavigationBar: AnimatedBottomNav(
+            currentIndex: 1,
+            onTap: (i) => tapped = i,
+          ),
+        ),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    // L'onglet central ("Scan") est toujours présent.
+    expect(find.text('Scan'), findsOneWidget);
+
+    // Taper le premier onglet déclenche le callback avec l'index 0.
+    await tester.tap(find.byIcon(Icons.photo_camera_rounded));
     await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(tapped, 0);
   });
 }
