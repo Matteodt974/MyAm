@@ -4,6 +4,10 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>L'accès à la caméra permet de scanner des codes-barres, des QR codes et de photographier vos plats.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>L'accès à vos photos permet de choisir une image de plat à analyser.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
