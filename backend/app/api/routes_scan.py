@@ -6,7 +6,7 @@ sans OCR, sans rien d'autre à installer. Idéal pour valider que toute la
 chaîne (Flutter -> API -> service externe) marche dès le jour 1.
 """
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from app.core.config import settings
@@ -20,6 +20,11 @@ class BarcodeRequest(BaseModel):
 
 @router.post("/barcode")
 async def scan_barcode(req: BarcodeRequest):
+    """ UC2 - scan_food_barcode.
+
+    <p>Endpoint REEL et fonctionnel : il interroge Open Food Facts et renvoie les champs utiles.
+    Premier "vrai" use case de bout en bout (Flutter -> API -> service externe), sans BD ni OCR.
+    Portage de backend/app/api/routes_scan.py.</p>"""
     url = f"{settings.off_base_url}/api/v2/product/{req.ean}.json"
     params = {
         "fields": "product_name,brands,nutriscore_grade,nova_group,"
@@ -50,4 +55,31 @@ async def scan_barcode(req: BarcodeRequest):
         "additives_tags": p.get("additives_tags", []),
         "allergens_tags": p.get("allergens_tags", []),
         # TODO : calculer ici le score /100 (formule 60/30/10 du OpsCon)
+    }
+
+
+@router.post("/dish")
+async def scan_dish(image: UploadFile = File(...)):
+    """UC5 (stretch) — scan_dish : identification d'un plat à partir d'une photo.
+
+    L'onglet "Picture" de l'app envoie ici une image en multipart (champ ``image``).
+    L'identification réelle (LogMeal / CNN) n'est PAS encore branchée : on renvoie
+    une réponse stub structurée, prête à être remplie au sprint 3. L'objectif est
+    que le front ait un endpoint stable à appeler dès maintenant.
+
+    Loi 25 / RGPD : l'image n'est JAMAIS persistée. On la lit seulement en mémoire
+    pour en connaître la taille, puis elle est abandonnée (pas d'écriture disque).
+    """
+    if not (image.content_type or "").startswith("image/"):
+        raise HTTPException(status_code=400, detail="Le fichier doit être une image")
+
+    contents = await image.read()  # lecture en mémoire uniquement, aucun stockage
+
+    return {
+        "filename": image.filename,
+        "content_type": image.content_type,
+        "size_bytes": len(contents),
+        "status": "not_implemented",
+        "message": "Analyse de plat non encore disponible (UC5).",
+        "candidates": [],
     }
