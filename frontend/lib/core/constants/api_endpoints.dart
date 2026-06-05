@@ -17,7 +17,8 @@ class ApiEndpoints {
     defaultValue: 'http://10.0.2.2:8000',
   );
 
-  // Endpoints (voir backend/app/api/)
+  // Endpoints (voir backend/app/api/ ou backend_spring/src/main/.../api/*).
   static const String health = '/health';
   static const String scanBarcode = '/v1/scan/barcode';
+  static const String scanDish = '/v1/scan/dish';
 }
