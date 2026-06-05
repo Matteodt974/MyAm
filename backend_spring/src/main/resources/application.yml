@@ -7,6 +7,11 @@ server:
 spring:
   application:
     name: INM5151 Scan API
+  # Upload photo de plat (POST /v1/scan/dish). Limite raisonnable pour une photo mobile.
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
 
 # Swagger UI auto-genere expose sur /docs, comme le /docs de FastAPI.
 springdoc:
