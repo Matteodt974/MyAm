@@ -8,37 +8,11 @@ on:
 
 jobs:
   backend:
-    name: Backend · FastAPI
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
-      - name: Installer les dépendances
-        run: pip install -r requirements.txt
-      - name: Smoke test (import de l'app)
-        run: python -c "from app.main import app; print('import OK')"
-      - name: Tests (si présents)
-        run: |
-          if ls tests/*.py test_*.py >/dev/null 2>&1; then
-            pip install pytest
-            pytest -q
-          else
-            echo "Pas encore de tests backend — étape ignorée."
-          fi
-
-  backend_spring:
     name: Backend · Spring Boot
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend_spring
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -46,7 +20,8 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-      - name: Build + tests (compile, contextLoads)
+      # Compile + packaging + tests (contextLoads, ScanControllerTest).
+      - name: Build + tests (mvnw package)
         run: ./mvnw -B -ntp package
 
   frontend:
