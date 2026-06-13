@@ -1,17 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:image_picker/image_picker.dart';
 
 import '../data/dish_result.dart';
+
 import 'dish_controller.dart';
+
 import 'dish_result_sheet.dart';
 
-/// Onglet "Picture" : prend une photo d'un plat et l'envoie a `/v1/scan/dish`.
-///
-/// S'affiche en panneau translucide par-dessus le fond camera. La capture passe
-/// par image_picker (mode camera), robuste sur iOS et Android.
 class PictureTab extends ConsumerStatefulWidget {
   const PictureTab({super.key});
 
@@ -27,20 +27,23 @@ class _PictureTabState extends ConsumerState<PictureTab> {
       source: ImageSource.camera,
       imageQuality: 85,
     );
-    if (shot == null) return; // l'utilisateur a annule
+
+    if (shot == null) return;
+
     await ref.read(dishControllerProvider.notifier).analyze(File(shot.path));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     final state = ref.watch(dishControllerProvider);
 
-    // Affiche le resultat / l'erreur des qu'ils arrivent.
     ref.listen<AsyncValue<DishResult?>>(dishControllerProvider, (prev, next) {
       next.whenOrNull(
         data: (result) {
           if (result == null) return;
+
           showModalBottomSheet<void>(
             context: context,
             showDragHandle: false,
@@ -50,9 +53,10 @@ class _PictureTabState extends ConsumerState<PictureTab> {
           );
         },
         error: (e, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('$e')));
+
           ref.read(dishControllerProvider.notifier).reset();
         },
       );
@@ -69,8 +73,11 @@ class _PictureTabState extends ConsumerState<PictureTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.restaurant_menu,
-                size: 56, color: theme.colorScheme.primary),
+            Icon(
+              Icons.restaurant_menu,
+              size: 56,
+              color: theme.colorScheme.primary,
+            ),
             const SizedBox(height: 16),
             Text('Photo d\'un plat', style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
