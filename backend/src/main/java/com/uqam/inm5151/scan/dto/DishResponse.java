@@ -4,14 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-/**
- * Reponse de POST /v1/scan/dish (UC5 stretch - scan_dish).
- *
- * <p>Contrat JSON identique au backend FastAPI : cles snake_case ({@code content_type}, {@code
- * size_bytes}), champs nuls conserves grace a {@code JsonInclude.Include.ALWAYS}. L'identification
- * reelle du plat n'est pas encore branchee : {@code status} vaut {@code "not_implemented"} et
- * {@code candidates} est vide. Portage de backend/app/api/routes_scan.py::scan_dish.
- */
 @JsonInclude(JsonInclude.Include.ALWAYS)
 public record DishResponse(
     String filename,
@@ -19,4 +11,18 @@ public record DishResponse(
     @JsonProperty("size_bytes") long sizeBytes,
     String status,
     String message,
-    List<String> candidates) {}
+    @JsonProperty("dish_name") String dishName,
+    Double confidence,
+    List<DishCandidate> candidates,
+    List<ProbableIngredient> ingredients,
+    @JsonProperty("food_data_matches") List<FoodDataMatch> foodDataMatches) {
+  public record DishCandidate(String name, Double confidence) {}
+
+  public record ProbableIngredient(String name, Double confidence) {}
+
+  public record FoodDataMatch(
+      @JsonProperty("fdc_id") Integer fdcId,
+      String description,
+      @JsonProperty("data_type") String dataType,
+      @JsonProperty("brand_owner") String brandOwner) {}
+}
