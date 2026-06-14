@@ -14,6 +14,7 @@ cp .env.example .env
 ```
 
 Pour l'analyse de photo de plat, remplir `GEMINI_API_KEY=` dans `.env`, puis redemarrer le backend.
+Pour les donnees nutritionnelles (UC7), `FDC_API_KEY=DEMO_KEY` suffit en developpement ; obtenir une cle sur https://fdc.nal.usda.gov/api-guide.html pour la prod.
 
 Swagger : http://localhost:8080/docs
 
@@ -46,10 +47,3 @@ flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080
 ```bash
 ./mvnw test
 ```
-
-## Structure
-
-- `api/` : controleurs REST
-- `config/` : configuration Spring
-- `dto/` : objets d'entree et de sortie
-- `service/` : appels externes et logique metier
