@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Barre de navigation basse personnalisee facon Yuka.
-///
-/// 3 onglets — Picture (gauche) / Scan (centre) / Profile (droite) — avec un
-/// indicateur "slider" anime qui glisse sous l'onglet selectionne
-/// ([AnimatedAlign]). Coins arrondis, compatible clair/sombre, fluide a 60 FPS.
 class AnimatedBottomNav extends StatelessWidget {
   const AnimatedBottomNav({
     super.key,
@@ -13,6 +8,7 @@ class AnimatedBottomNav extends StatelessWidget {
   });
 
   final int currentIndex;
+
   final ValueChanged<int> onTap;
 
   static const List<_NavItem> _items = [
@@ -24,7 +20,7 @@ class AnimatedBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // index 0 -> -1.0 (gauche), 1 -> 0.0 (centre), 2 -> 1.0 (droite).
+
     final alignX = (currentIndex - 1).toDouble();
 
     return SafeArea(
@@ -47,9 +43,9 @@ class AnimatedBottomNav extends StatelessWidget {
           child: LayoutBuilder(
             builder: (context, constraints) {
               final itemWidth = constraints.maxWidth / _items.length;
+
               return Stack(
                 children: [
-                  // Indicateur anime (pastille glissante).
                   AnimatedAlign(
                     alignment: Alignment(alignX, 0),
                     duration: const Duration(milliseconds: 280),
@@ -59,8 +55,9 @@ class AnimatedBottomNav extends StatelessWidget {
                       child: Container(
                         width: itemWidth - 16,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary
-                              .withValues(alpha: 0.16),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.16,
+                          ),
                           borderRadius: BorderRadius.circular(22),
                         ),
                       ),
@@ -83,8 +80,11 @@ class AnimatedBottomNav extends StatelessWidget {
 
   Widget _buildItem(BuildContext context, int index) {
     final theme = Theme.of(context);
+
     final selected = index == currentIndex;
+
     final item = _items[index];
+
     final color = selected
         ? theme.colorScheme.primary
         : theme.colorScheme.onSurfaceVariant;
@@ -119,5 +119,6 @@ class _NavItem {
   const _NavItem(this.icon, this.label);
 
   final IconData icon;
+
   final String label;
 }

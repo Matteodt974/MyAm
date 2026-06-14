@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'allergy_controller.dart';
 
-/// Onglet "Profile" — gestion LOCALE des allergies de l'utilisateur (UC6, light).
-///
-/// Pas d'auth ni de backend pour l'instant : la liste est persistee sur l'appareil
-/// et survit au redemarrage. Prete a basculer vers une API plus tard.
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
@@ -20,19 +17,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void dispose() {
     _controller.dispose();
+
     super.dispose();
   }
 
   Future<void> _add() async {
     final text = _controller.text;
+
     if (text.trim().isEmpty) return;
+
     await ref.read(allergyControllerProvider.notifier).add(text);
+
     _controller.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     final allergiesAsync = ref.watch(allergyControllerProvider);
+
     final theme = Theme.of(context);
 
     return SafeArea(
@@ -65,17 +67,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: _add,
-                  child: const Text('Ajouter'),
-                ),
+                FilledButton(onPressed: _add, child: const Text('Ajouter')),
               ],
             ),
             const SizedBox(height: 16),
             Expanded(
               child: allergiesAsync.when(
-                loading: () =>
-                    const Center(child: CircularProgressIndicator()),
+                loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Erreur : $e')),
                 data: (allergies) {
                   if (allergies.isEmpty) {
