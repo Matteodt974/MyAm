@@ -1,24 +1,35 @@
 class ApiEndpoints {
-  // URL de base du backend.
-  // Deux backends interchangeables exposent le MEME contrat :
-  //   - FastAPI (../backend)        -> port 8000  (defaut ci-dessous)
-  //   - Spring Boot (../backend_spring) -> port 8080
-  // Surcharge au lancement :
-  //   flutter run --dart-define=API_BASE_URL=http://192.168.1.X:8000
-  //   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080   # backend Spring
-  //
-  // Valeurs selon la cible :
-  //   - Émulateur Android        -> http://10.0.2.2:8000   (PAS localhost)
-  //   - Simulateur iOS / desktop -> http://localhost:8000
-  //   - Téléphone physique       -> http://<IP-LAN-de-ta-machine>:8000
-  //     (lancer le backend en --host 0.0.0.0 ; Docker le fait déjà)
-  static const String baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
+  static const String _apiBaseUrl = String.fromEnvironment('API_BASE_URL');
+  static const String _backendUrl = String.fromEnvironment('BACKEND_URL');
+  static const String _backendHost = String.fromEnvironment('BACKEND_HOST');
+  static const String _backendPort = String.fromEnvironment(
+    'BACKEND_PORT',
+    defaultValue: '8080',
+  );
+  static const String _backendScheme = String.fromEnvironment(
+    'BACKEND_SCHEME',
+    defaultValue: 'http',
   );
 
-  // Endpoints (voir backend/app/api/ ou backend_spring/src/main/.../api/*).
+  static String get baseUrl {
+    if (_apiBaseUrl.isNotEmpty) return _normalize(_apiBaseUrl);
+    if (_backendUrl.isNotEmpty) return _normalize(_backendUrl);
+    if (_backendHost.isNotEmpty) {
+      return _normalize('$_backendScheme://$_backendHost:$_backendPort');
+    }
+    return 'http://10.0.2.2:8080';
+  }
+
+  static String _normalize(String value) {
+    final trimmed = value.trim();
+    return trimmed.endsWith('/')
+        ? trimmed.substring(0, trimmed.length - 1)
+        : trimmed;
+  }
+
   static const String health = '/health';
+
   static const String scanBarcode = '/v1/scan/barcode';
+
   static const String scanDish = '/v1/scan/dish';
 }

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/nutriscore_badge.dart';
+
 import '../../profile_allergies/presentation/allergy_controller.dart';
+
 import '../data/product_result.dart';
 
-/// Fiche produit affichee en bottom sheet apres un scan code-barres reussi.
-///
-/// Croise les `allergens_tags` du produit avec les allergies locales de
-/// l'utilisateur pour mettre en evidence les correspondances (intersection simple).
 class ProductResultSheet extends ConsumerWidget {
   const ProductResultSheet({super.key, required this.product});
 
@@ -17,6 +16,7 @@ class ProductResultSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+
     final userAllergies =
         ref.watch(allergyControllerProvider).value ?? const <String>[];
 
@@ -113,12 +113,16 @@ class ProductResultSheet extends ConsumerWidget {
     List<String> userAllergies,
   ) {
     if (userAllergies.isEmpty) return const [];
+
     final result = <String>[];
+
     for (final tag in tags) {
       final normalized = _normalizeTag(tag);
+
       for (final allergy in userAllergies) {
         if (normalized.contains(allergy) || allergy.contains(normalized)) {
           result.add(normalized);
+
           break;
         }
       }
@@ -127,9 +131,10 @@ class ProductResultSheet extends ConsumerWidget {
   }
 
   static String _normalizeTag(String tag) {
-    // OFF renvoie "en:milk", "fr:lait"… on retire le prefixe de langue.
     final idx = tag.indexOf(':');
+
     final value = idx >= 0 ? tag.substring(idx + 1) : tag;
+
     return value.replaceAll('-', ' ').toLowerCase().trim();
   }
 }
@@ -142,6 +147,7 @@ class _AllergyAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -151,8 +157,10 @@ class _AllergyAlert extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.warning_amber_rounded,
-              color: theme.colorScheme.onErrorContainer),
+          Icon(
+            Icons.warning_amber_rounded,
+            color: theme.colorScheme.onErrorContainer,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -173,18 +181,23 @@ class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.label, required this.value});
 
   final String label;
+
   final String value;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: theme.textTheme.bodyMedium),
-        Text(value,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -199,34 +212,41 @@ class _TagsBlock extends StatelessWidget {
   });
 
   final String title;
+
   final List<String> tags;
+
   final String emptyLabel;
+
   final List<String> highlight;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          title,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 6),
         if (tags.isEmpty)
-          Text(emptyLabel,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.outline))
+          Text(
+            emptyLabel,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+          )
         else
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: [
               for (final tag in tags)
-                _Tag(
-                  label: _label(tag),
-                  danger: _isHighlighted(tag),
-                ),
+                _Tag(label: _label(tag), danger: _isHighlighted(tag)),
             ],
           ),
       ],
@@ -235,13 +255,17 @@ class _TagsBlock extends StatelessWidget {
 
   bool _isHighlighted(String tag) {
     if (highlight.isEmpty) return false;
+
     final normalized = ProductResultSheet._normalizeTag(tag);
-    return highlight
-        .any((a) => normalized.contains(a) || a.contains(normalized));
+
+    return highlight.any(
+      (a) => normalized.contains(a) || a.contains(normalized),
+    );
   }
 
   static String _label(String tag) {
     final idx = tag.indexOf(':');
+
     return (idx >= 0 ? tag.substring(idx + 1) : tag).replaceAll('-', ' ');
   }
 }
@@ -250,25 +274,32 @@ class _Tag extends StatelessWidget {
   const _Tag({required this.label, this.danger = false});
 
   final String label;
+
   final bool danger;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     final bg = danger
         ? theme.colorScheme.error
         : theme.colorScheme.surfaceContainerHighest;
-    final fg =
-        danger ? theme.colorScheme.onError : theme.colorScheme.onSurface;
+
+    final fg = danger ? theme.colorScheme.onError : theme.colorScheme.onSurface;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
-          style: theme.textTheme.bodySmall
-              ?.copyWith(color: fg, fontWeight: FontWeight.w600)),
+      child: Text(
+        label,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
