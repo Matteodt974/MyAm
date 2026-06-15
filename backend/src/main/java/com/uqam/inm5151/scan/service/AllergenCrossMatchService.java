@@ -59,11 +59,32 @@ public class AllergenCrossMatchService {
         return match(tracesTags, userAllergies);
     }
 
+    // Retourne les tags qui ne correspondent à aucune allergie connue du
+    // dictionnaire
+    public List<String> findUndetermined(List<String> allergensTags, List<String> userAllergies) {
+        if (allergensTags == null || allergensTags.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> undetermined = new ArrayList<>();
+        for (String tag : allergensTags) {
+            String normalizedTag = normalizeTag(tag);
+            boolean knownInDictionary = SYNONYMS.containsValue(normalizedTag)
+                    || SYNONYMS.containsKey(normalizedTag);
+            boolean matchesUserAllergy = !match(List.of(tag), userAllergies).isEmpty();
+
+            if (!knownInDictionary && !matchesUserAllergy) {
+                undetermined.add(normalizedTag);
+            }
+        }
+        return undetermined;
+    }
+
     // SAFE = aucun match, WARNING = traces seulement, DANGER = allergène présent
-    public String riskLevel(List<String> matched, List<String> traces) {
+    public String riskLevel(List<String> matched, List<String> traces, List<String> undetermined) {
         if (!matched.isEmpty())
             return "DANGER";
-        if (!traces.isEmpty())
+        if (!traces.isEmpty() || !undetermined.isEmpty())
             return "WARNING";
         return "SAFE";
     }
