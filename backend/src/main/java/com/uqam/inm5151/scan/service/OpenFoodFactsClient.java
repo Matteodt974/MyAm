@@ -82,7 +82,8 @@ public class OpenFoodFactsClient {
         List<String> tracesTags = toStringList(p.get("traces_tags"));
         List<String> matched = crossMatch.findMatches(allergensTags, userAllergies);
         List<String> traces = crossMatch.findTraces(tracesTags, userAllergies);
-        String risk = crossMatch.riskLevel(matched, traces);
+        List<String> undetermined = crossMatch.findUndetermined(allergensTags, userAllergies);
+        String risk = crossMatch.riskLevel(matched, traces, undetermined);
         // TODO : calculer ici le score /100 (formule 60/30/10 du OpsCon)
 
         return new BarcodeResponse(
@@ -95,8 +96,8 @@ public class OpenFoodFactsClient {
                 allergensTags,
                 tracesTags,
                 risk,
-                matched
-        );
+                matched,
+                undetermined);
     }
 
     private static Integer toInt(Object o) {
