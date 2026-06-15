@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AllergenCrossMatchServiceTest {
+class AllergenCrossMatchServiceTest {
 
     private final AllergenCrossMatchService service = new AllergenCrossMatchService();
 
@@ -12,6 +12,17 @@ public class AllergenCrossMatchServiceTest {
     void matchFound_whenAllergenMatchesUserAllergy() {
         List<String> allergensTags = List.of("en:milk", "en:nuts");
         List<String> userAllergies = List.of("milk");
+
+        List<String> matched = service.findMatches(allergensTags, userAllergies);
+
+        assertFalse(matched.isEmpty());
+        assertTrue(matched.contains("milk"));
+    }
+
+    @Test
+    void matchFound_whenUserAllergiesInFrench() {
+        List<String> allergensTags = List.of("en:milk", "en:nuts");
+        List<String> userAllergies = List.of("lait");
 
         List<String> matched = service.findMatches(allergensTags, userAllergies);
 
@@ -32,14 +43,21 @@ public class AllergenCrossMatchServiceTest {
     @Test
     void riskLevel_isDanger_whenMatchFound() {
         List<String> matched = List.of("milk");
-        assertEquals("DANGER", service.riskLevel(matched));
+        List<String> traces = List.of();
+        assertEquals("DANGER", service.riskLevel(matched, traces));
+    }
+
+    @Test
+    void riskLevel_isWarning_whenTraceFound() {
+        List<String> matched = List.of();
+        List<String> traces = List.of("nuts");
+        assertEquals("WARNING", service.riskLevel(matched, traces));
     }
 
     @Test
     void riskLevel_isSafe_whenNoMatch() {
         List<String> matched = List.of();
-        assertEquals("SAFE", service.riskLevel(matched));
+        List<String> traces = List.of();
+        assertEquals("SAFE", service.riskLevel(matched, traces));
     }
-
-
 }
