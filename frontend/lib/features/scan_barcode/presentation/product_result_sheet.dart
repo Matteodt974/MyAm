@@ -17,10 +17,9 @@ class ProductResultSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final userAllergies =
-        ref.watch(allergyControllerProvider).value ?? const <String>[];
 
-    final matched = _matchedAllergens(product.allergensTags, userAllergies);
+    final matched = product.matchedAllergens;
+    final isUnsafe = product.riskLevel == 'DANGER';
 
     return SafeArea(
       child: Padding(
@@ -74,7 +73,7 @@ class ProductResultSheet extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            if (matched.isNotEmpty) ...[
+            if (isUnsafe) ...[
               _AllergyAlert(matched: matched),
               const SizedBox(height: 12),
             ],
