@@ -19,9 +19,13 @@ import java.util.List;
 /**
  * UC2 - scan_food_barcode.
  *
- * <p>Endpoint REEL et fonctionnel : il interroge Open Food Facts et renvoie les champs utiles.
- * Premier "vrai" use case de bout en bout (Flutter -> API -> service externe), sans BD ni OCR.
- * Portage de backend/app/api/routes_scan.py.</p>
+ * <p>
+ * Endpoint REEL et fonctionnel : il interroge Open Food Facts et renvoie les
+ * champs utiles.
+ * Premier "vrai" use case de bout en bout (Flutter -> API -> service externe),
+ * sans BD ni OCR.
+ * Portage de backend/app/api/routes_scan.py.
+ * </p>
  */
 @RestController
 @RequestMapping("/v1/scan")
@@ -35,17 +39,25 @@ public class ScanController {
 
     @PostMapping("/barcode")
     public BarcodeResponse scanBarcode(@RequestBody BarcodeRequest req) {
-        return openFoodFacts.fetchBarcode(req.ean());
+        return openFoodFacts.fetchBarcode(req.ean(), req.allergies());
     }
 
     /**
      * UC5 (stretch) - scan_dish : identification d'un plat a partir d'une photo.
      *
-     * <p>L'onglet "Picture" de l'app envoie ici une image en multipart (champ {@code image}).
-     * L'identification reelle (LogMeal / CNN) n'est PAS encore branchee : on renvoie une
-     * reponse stub structuree, prete a etre remplie au sprint 3. Contrat identique a FastAPI.</p>
+     * <p>
+     * L'onglet "Picture" de l'app envoie ici une image en multipart (champ
+     * {@code image}).
+     * L'identification reelle (LogMeal / CNN) n'est PAS encore branchee : on
+     * renvoie une
+     * reponse stub structuree, prete a etre remplie au sprint 3. Contrat identique
+     * a FastAPI.
+     * </p>
      *
-     * <p>Loi 25 / RGPD : l'image n'est JAMAIS persistee. On lit seulement sa taille en memoire.</p>
+     * <p>
+     * Loi 25 / RGPD : l'image n'est JAMAIS persistee. On lit seulement sa taille en
+     * memoire.
+     * </p>
      */
     @PostMapping(value = "/dish", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public DishResponse scanDish(@RequestParam("image") MultipartFile image) {
@@ -60,7 +72,6 @@ public class ScanController {
                 image.getSize(),
                 "not_implemented",
                 "Analyse de plat non encore disponible (UC5).",
-                List.of()
-        );
+                List.of());
     }
 }
