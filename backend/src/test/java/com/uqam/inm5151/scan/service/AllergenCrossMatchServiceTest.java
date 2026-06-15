@@ -44,20 +44,20 @@ class AllergenCrossMatchServiceTest {
     void riskLevel_isDanger_whenMatchFound() {
         List<String> matched = List.of("milk");
         List<String> traces = List.of();
-        assertEquals("DANGER", service.riskLevel(matched, traces));
+        assertEquals("DANGER", service.riskLevel(matched, traces, List.of()));
     }
 
     @Test
     void riskLevel_isWarning_whenTraceFound() {
         List<String> matched = List.of();
         List<String> traces = List.of("nuts");
-        assertEquals("WARNING", service.riskLevel(matched, traces));
+        assertEquals("WARNING", service.riskLevel(matched, traces, List.of()));
     }
 
     @Test
     void riskLevel_isSafe_whenNoMatch() {
         List<String> matched = List.of();
         List<String> traces = List.of();
-        assertEquals("SAFE", service.riskLevel(matched, traces));
+        assertEquals("SAFE", service.riskLevel(matched, traces, List.of()));
     }
 }

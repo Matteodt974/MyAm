@@ -18,14 +18,15 @@ import java.util.List;
  */
 @JsonInclude(JsonInclude.Include.ALWAYS)
 public record BarcodeResponse(
-        String ean,
-        String name,
-        String brands,
-        String nutriscore,
-        @JsonProperty("nova_group") Integer novaGroup,
-        @JsonProperty("additives_tags") List<String> additivesTags,
-        @JsonProperty("allergens_tags") List<String> allergensTags,
-        @JsonProperty("traces_tags") List<String> tracesTags,
-        @JsonProperty("risk_level") String riskLevel,
-        @JsonProperty("matched_allergens") List<String> matchedAllergens) {
+                String ean,
+                String name,
+                String brands,
+                String nutriscore,
+                @JsonProperty("nova_group") Integer novaGroup,
+                @JsonProperty("additives_tags") List<String> additivesTags,
+                @JsonProperty("allergens_tags") List<String> allergensTags,
+                @JsonProperty("traces_tags") List<String> tracesTags,
+                @JsonProperty("risk_level") String riskLevel,
+                @JsonProperty("matched_allergens") List<String> matchedAllergens,
+                @JsonProperty("undetermined_allergens") List<String> undeterminedAllergens) {
 }
