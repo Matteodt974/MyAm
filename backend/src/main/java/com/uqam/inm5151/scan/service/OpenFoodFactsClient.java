@@ -31,7 +31,7 @@ import java.util.Map;
 @Service
 public class OpenFoodFactsClient {
 
-    private static final String FIELDS = "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags";
+    private static final String FIELDS = "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags";
 
     private final RestClient client;
     private final String userAgent;
@@ -79,8 +79,10 @@ public class OpenFoodFactsClient {
 
         Map<String, Object> p = (Map<String, Object>) data.getOrDefault("product", Map.of());
         List<String> allergensTags = toStringList(p.get("allergens_tags"));
+        List<String> tracesTags = toStringList(p.get("traces_tags"));
         List<String> matched = crossMatch.findMatches(allergensTags, userAllergies);
-        String risk = crossMatch.riskLevel(matched);
+        List<String> traces = crossMatch.findTraces(tracesTags, userAllergies);
+        String risk = crossMatch.riskLevel(matched, traces);
         // TODO : calculer ici le score /100 (formule 60/30/10 du OpsCon)
 
         return new BarcodeResponse(
@@ -91,6 +93,7 @@ public class OpenFoodFactsClient {
                 toInt(p.get("nova_group")),
                 toStringList(p.get("additives_tags")),
                 allergensTags,
+                tracesTags,
                 risk,
                 matched
         );
