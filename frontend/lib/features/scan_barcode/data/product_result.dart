@@ -22,6 +22,10 @@ abstract class ProductResult with _$ProductResult {
     @JsonKey(name: 'risk_level') String? riskLevel,
     @JsonKey(name: 'matched_allergens')
     @Default(<String>[]) List<String> matchedAllergens,
+    @JsonKey(name: 'traces_tags') 
+    @Default(<String>[]) List<String> tracesTags,
+    @JsonKey(name: 'undetermined_allergens')
+    @Default(<String>[]) List<String> undeterminedAllergens,
   }) = _ProductResult;
 
   factory ProductResult.fromJson(Map<String, dynamic> json) =>
