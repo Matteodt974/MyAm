@@ -46,6 +46,8 @@ class _PictureTabState extends ConsumerState<PictureTab> {
 
           showModalBottomSheet<void>(
             context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
             showDragHandle: false,
             builder: (_) => DishResultSheet(result: result),
           ).whenComplete(
