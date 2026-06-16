@@ -24,5 +24,6 @@ public record DishResponse(
       @JsonProperty("fdc_id") Integer fdcId,
       String description,
       @JsonProperty("data_type") String dataType,
-      @JsonProperty("brand_owner") String brandOwner) {}
+      @JsonProperty("brand_owner") String brandOwner,
+      String ingredients) {}
 }

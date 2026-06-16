@@ -209,6 +209,16 @@ class _FoodDataRow extends StatelessWidget {
                       color: theme.colorScheme.outline,
                     ),
                   ),
+                if (match.ingredients != null && match.ingredients!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      match.ingredients!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

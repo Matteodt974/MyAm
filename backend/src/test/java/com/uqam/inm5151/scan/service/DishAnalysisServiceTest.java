@@ -36,7 +36,8 @@ class DishAnalysisServiceTest {
     when(foodDataCentral.search(any(), anyInt()))
         .thenReturn(
             List.of(
-                new DishResponse.FoodDataMatch(170457, "Tomatoes, red, raw", "SR Legacy", null)));
+                new DishResponse.FoodDataMatch(
+                    170457, "Tomatoes, red, raw", "SR Legacy", null, null)));
 
     DishResponse response = service().analyze(image());
 
