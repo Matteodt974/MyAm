@@ -180,9 +180,3 @@ test-results/
 
 CLAUDE.md
 objectifs.md
-
-# ============================================================
-# Backend Python (FastAPI) abandonné au profit de Spring Boot.
-# Conservé en local pour référence, mais NON versionné.
-# ============================================================
-backend_python/
