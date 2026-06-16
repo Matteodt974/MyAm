@@ -221,9 +221,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       bottomNavigationBar: AnimatedBottomNav(
         currentIndex: _selectedIndex,
         onTap: (i) {
-          if (i == _scanTabIndex) {
-            _scanner?.start();
-          } else {
+          if (i != _scanTabIndex) {
             _scanner?.stop();
           }
           setState(() => _selectedIndex = i);
