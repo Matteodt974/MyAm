@@ -1,17 +1,42 @@
-# scan_app
+# MyAm
 
-Scanner alimentaire et cosmétique - INM5151
+Application Flutter de scan alimentaire et cosmetique.
 
-## Getting Started
+## Lancer
 
-This project is a starting point for a Flutter application.
+```bash
+flutter pub get
+flutter run --dart-define=BACKEND_URL=http://10.0.2.2:8080
+```
 
-A few resources to get you started if this is your first Flutter project:
+Pour un telephone physique, remplacer `10.0.2.2` par l'adresse LAN de la machine qui lance le backend.
+Les scripts `scripts/run_android.sh` et `scripts/run_ios.sh` lisent aussi `frontend/.env`.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Le backend peut etre configure avec une URL complete :
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter run --dart-define=BACKEND_URL=http://192.168.2.10:8082
+```
+
+ou avec une adresse IP / un nom d'hote et un port :
+
+```bash
+flutter run --dart-define=BACKEND_HOST=192.168.2.10 --dart-define=BACKEND_PORT=8082
+```
+
+`API_BASE_URL` reste accepte pour compatibilite.
+
+Exemple avec `.env` :
+
+```bash
+cp .env.example .env
+# Puis definir BACKEND_URL ou BACKEND_HOST/BACKEND_PORT dans .env.
+scripts/run_android.sh --debug -d 192.168.2.25:36207
+```
+
+## Tests
+
+```bash
+flutter analyze
+flutter test
+```

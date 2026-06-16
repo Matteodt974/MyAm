@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Pastille Nutri-Score (A..E) avec le code couleur officiel.
-///
-/// Affiche un "?" gris si la note est absente (produit sans Nutri-Score dans OFF).
 class NutriScoreBadge extends StatelessWidget {
   const NutriScoreBadge({super.key, required this.grade, this.size = 44});
 
   final String? grade;
+
   final double size;
 
   static const Map<String, Color> _colors = {
@@ -20,7 +18,9 @@ class NutriScoreBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalized = grade?.trim().toLowerCase();
+
     final color = _colors[normalized] ?? Colors.grey;
+
     final label = (normalized != null && _colors.containsKey(normalized))
         ? normalized.toUpperCase()
         : '?';

@@ -1,4 +1,4 @@
-package com.uqam.inm5151.scan_app
+package com.uqam.inm5151.myam
 
 import io.flutter.embedding.android.FlutterActivity
 

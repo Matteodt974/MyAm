@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/nutriscore_badge.dart';
+
 import '../data/product_result.dart';
 
 /// Fiche produit affichee en bottom sheet apres un scan code-barres reussi.
@@ -163,18 +165,23 @@ class _InfoRow extends StatelessWidget {
   const _InfoRow({required this.label, required this.value});
 
   final String label;
+
   final String value;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: theme.textTheme.bodyMedium),
-        Text(value,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -188,31 +195,37 @@ class _TagsBlock extends StatelessWidget {
   });
 
   final String title;
+
   final List<String> tags;
+
   final String emptyLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.w700)),
+        Text(
+          title,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 6),
         if (tags.isEmpty)
-          Text(emptyLabel,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.outline))
+          Text(
+            emptyLabel,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.outline,
+            ),
+          )
         else
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: [
-              for (final tag in tags)
-                _Tag(label: _label(tag)),
-            ],
+            children: [for (final tag in tags) _Tag(label: _label(tag))],
           ),
       ],
     );
@@ -220,6 +233,7 @@ class _TagsBlock extends StatelessWidget {
 
   static String _label(String tag) {
     final idx = tag.indexOf(':');
+
     return (idx >= 0 ? tag.substring(idx + 1) : tag).replaceAll('-', ' ');
   }
 }
@@ -232,16 +246,20 @@ class _Tag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label,
-          style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface,
-              fontWeight: FontWeight.w600)),
+      child: Text(
+        label,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurface,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

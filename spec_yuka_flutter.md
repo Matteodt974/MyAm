@@ -5,6 +5,7 @@
 Construire un écran principal inspiré de l'expérience Yuka, développé en Flutter et compatible iOS et Android.
 
 L'objectif est de fournir à l'agent de développement toutes les informations nécessaires pour :
+
 - reproduire l'expérience utilisateur principale ;
 - intégrer une caméra temps réel en arrière-plan ;
 - permettre le scan de codes-barres et QR codes ;
