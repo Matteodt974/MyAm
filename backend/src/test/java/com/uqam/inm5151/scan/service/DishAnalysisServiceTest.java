@@ -30,6 +30,7 @@ class DishAnalysisServiceTest {
         .thenReturn(
             new GeminiDishAnalysis(
                 "Salade grecque",
+                null,
                 0.92,
                 List.of(new GeminiDishAnalysis.DishCandidate("Salade grecque", 0.92)),
                 List.of(new GeminiDishAnalysis.ProbableIngredient("tomate", 0.8))));
@@ -58,6 +59,7 @@ class DishAnalysisServiceTest {
         .thenReturn(
             new GeminiDishAnalysis(
                 "Ragout",
+                null,
                 0.42,
                 List.of(new GeminiDishAnalysis.DishCandidate("Ragout", 0.42)),
                 List.of()));
@@ -87,6 +89,7 @@ class DishAnalysisServiceTest {
         .thenReturn(
             new GeminiDishAnalysis(
                 "Pates tomate",
+                null,
                 0.88,
                 List.of(),
                 List.of(new GeminiDishAnalysis.ProbableIngredient("tomate", 0.7))));
