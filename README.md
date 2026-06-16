@@ -1,120 +1,97 @@
-# Allergies Mobile App — INM5151 (UQAM)
+# MyAm
 
-Application mobile de scan **alimentaire & cosmétique** : code-barres / étiquettes / menus →
-fiche produit, **score nutritionnel /100** et **détection d'allergènes**.
+Application mobile INM5151 pour scanner des produits alimentaires et cosmetiques.
 
-**Monorepo :**
-- [`backend/`](backend/) — API **FastAPI** (Python) / **Spring Boot** + Docker Compose (Postgres, LibreTranslate, OCR à venir).
-- [`frontend/`](frontend/) — application **Flutter** (`scan_app`).
+- `backend/` : API Spring Boot.
+- `frontend/` : application Flutter.
 
-Spécification du projet (source de vérité) : voir [objectifs.md](objectifs.md).
+## Prerequis
 
----
+| Outil             | Version cible    | Pourquoi                 |
+| ----------------- | ---------------- | ------------------------ |
+| Git               | recent           | cloner et contribuer     |
+| Flutter SDK       | 3.44.x stable    | application mobile       |
+| Java              | 21               | backend Spring Boot      |
+| Docker Desktop    | recent           | services locaux          |
+| Android Studio    | recent           | SDK et emulateur Android |
+| Xcode + CocoaPods | macOS uniquement | iOS                      |
+| Python            | 3.x              | pre-commit               |
+| Node.js           | recent           | prettier                 |
 
-## 1) Prérequis (à installer une fois par machine)
+Verifier Flutter :
 
-Les dépendances **du code** (`pip` et `pub`) s'installent automatiquement plus bas. Ce que chacun doit
-installer lui-même, c'est **l'outillage** :
+```bash
+flutter doctor
+```
 
-| Outil | Version cible | Pourquoi | Où |
-|---|---|---|---|
-| **Git** | récent | cloner / PR | git-scm.com |
-| **Flutter SDK** (inclut Dart) | **3.44.x stable** (Dart 3.12) | app mobile | docs.flutter.dev/get-started/install → puis `flutter doctor` |
-| **Python** | **3.11 ou 3.12** | backend | python.org (cocher « Add to PATH » sous Windows) |
-| **Docker Desktop** | récent (Compose v2 inclus) | Postgres + LibreTranslate | docker.com/products/docker-desktop |
-| **Android Studio** | récent | SDK + émulateur Android, puis `flutter doctor --android-licenses` | developer.android.com/studio |
-| **Xcode + CocoaPods** | macOS uniquement | build/simulateur iOS (`sudo gem install cocoapods`) | App Store |
-| Éditeur | — | VS Code (extensions *Flutter*, *Dart*, *Python*) ou Android Studio / PyCharm | — |
-
-Vérifie ton environnement Flutter avec `flutter doctor` (corrige tout ce qui n'est pas ✅ pour les
-plateformes que tu vises). Sous Windows : pas d'iOS → développe sur Android / web.
-
----
-
-## 2) Cloner
+## Installation
 
 ```bash
 git clone git@github.com:Matteodt974/Allergies_mobile_app.git
 cd Allergies_mobile_app
 ```
 
----
+## Pre-commit (hooks de formatage automatique)
 
-## 3) Backend (FastAPI) — `backend/`
+Le projet utilise [pre-commit](https://pre-commit.com/) pour formatter le code automatiquement a chaque commit :
 
-**Étape commune : crée ton `.env` depuis le modèle**
+- **Java** : Spotless (Google Java Format)
+- **Dart** : `dart format`
+- **YAML / JSON / Markdown** : Prettier
+
+Installation :
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Verifier que tout fonctionne :
+
+```bash
+pre-commit run --all-files
+```
+
+## Backend
 
 ```bash
 cd backend
-cp .env.example .env          # Windows (cmd) : copy .env.example .env
+cp .env.example .env
+./mvnw spring-boot:run
 ```
 
-**Option A — sans Docker (itération rapide de l'API) :**
+Avec Docker :
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate      # Windows PowerShell : .venv\Scripts\Activate.ps1
-                               # Windows cmd        : .venv\Scripts\activate.bat
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+docker compose up --build
 ```
 
-**Option B — avec Docker (API + Postgres + LibreTranslate) :**
+Swagger : http://localhost:8080/docs
+
+Verification :
 
 ```bash
-docker compose up --build      # 1er lancement long : LibreTranslate télécharge les modèles en/fr/zh
+curl http://localhost:8080/health
 ```
 
-**Vérifier que ça tourne :**
-
-```bash
-# Swagger : http://localhost:8000/docs
-curl http://localhost:8000/health
-curl -X POST http://localhost:8000/v1/scan/barcode \
-  -H "Content-Type: application/json" -d '{"ean":"3017620422003"}'   # Nutella
-```
-
-Tests backend : `pytest` (depuis `backend/`, venv activé) — *aucun test pour l'instant*.
-
-> **Notes** : le service **OCR (UC1)** est encore commenté dans `docker-compose.yml` (pas d'image prête) —
-> c'est normal. La **base de données** n'est pas encore branchée (SQLAlchemy commenté dans
-> `requirements.txt`) : l'API démarre sans.
-
----
-
-## 4) Frontend (Flutter) — `frontend/`
+## Frontend
 
 ```bash
 cd frontend
-flutter pub get                # installe les dépendances pub
-flutter run                    # lance sur l'appareil / émulateur sélectionné
+flutter pub get
+flutter run --dart-define=BACKEND_URL=http://10.0.2.2:8080
 ```
 
-Pour viser le bon backend selon la cible, passe `API_BASE_URL` :
+Sur telephone physique, remplacer `10.0.2.2` par l'adresse LAN de la machine qui lance le backend.
+
+## Tests
 
 ```bash
-# Émulateur Android :
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000
-# Téléphone physique (même Wi-Fi) :
-flutter run --dart-define=API_BASE_URL=http://<IP-LAN-de-ta-machine>:8000
+cd backend && ./mvnw test
+cd frontend && flutter analyze
+cd frontend && flutter test
 ```
 
-(défaut = `http://10.0.2.2:8000`, voir `lib/core/constants/api_endpoints.dart`)
+## Flux Git
 
-Autres commandes utiles :
-
-```bash
-flutter analyze                                            # lint
-flutter test                                               # tests
-dart run build_runner build --delete-conflicting-outputs   # dès qu'il y a des modèles freezed/json
-                                                           # (.g.dart / .freezed.dart ne sont PAS versionnés)
-```
-
----
-
-## 5) Flux de travail d'équipe
-
-Branche (`feat/...`, `fix/...`, `chore/...`) → commit → push → **Pull Request vers `main`** →
-CI verte + 1 review → merge.
-
-**Personne ne pousse directement sur `main`.** Chaque PR déclenche la CI (lint + tests backend & frontend).
+Branche (`feat/...`, `fix/...`, `chore/...`), commit, push, puis Pull Request vers `main`.

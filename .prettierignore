@@ -1,0 +1,44 @@
+# Build outputs
+backend/target/
+frontend/build/
+**/build/
+
+# Generated code
+**/*.g.dart
+**/*.freezed.dart
+**/*.gr.dart
+**/*.mocks.dart
+
+# Dependencies
+frontend/.dart_tool/
+frontend/.pub-cache/
+frontend/pubspec.lock
+
+# Platform-specific
+frontend/android/
+frontend/ios/
+frontend/web/
+frontend/macos/
+frontend/linux/
+frontend/windows/
+
+# Docker
+docker-compose.override.yml
+
+# Environment
+.env
+.env.*
+
+# Models
+AImodels/
+.paddleocr/
+pgdata/
+lt_models/
+
+# Git
+.git/
+
+# IDE
+.vscode/
+.idea/
+*.iml

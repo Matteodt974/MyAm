@@ -5,6 +5,8 @@ server:
   port: ${PORT:8080}
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: INM5151 Scan API
   # Upload photo de plat (POST /v1/scan/dish). Limite raisonnable pour une photo mobile.
@@ -32,4 +34,10 @@ scan:
   obf-base-url: ${OBF_BASE_URL:https://world.openbeautyfacts.org}
   # Open Food Facts EXIGE un User-Agent identifiable (sinon throttling/ban de l'IP).
   # Valeur quotee : elle contient ": " qui casserait sinon le parsing YAML.
-  off-user-agent: "${OFF_USER_AGENT:INM5151-ScanApp/0.1 (contact: ton-email@uqam.ca)}"
+  off-user-agent: '${OFF_USER_AGENT:INM5151-ScanApp/0.1 (contact: ton-email@uqam.ca)}'
+  # UC7 - analyse d'image Gemini. La cle reste cote serveur.
+  gemini-api-key: ${GEMINI_API_KEY:}
+  gemini-model: ${GEMINI_MODEL:gemini-3.5-flash}
+  # FoodData Central enrichit les resultats probables ; DEMO_KEY suffit au dev.
+  fdc-api-key: ${FDC_API_KEY:DEMO_KEY}
+  fdc-base-url: ${FDC_BASE_URL:https://api.nal.usda.gov}
