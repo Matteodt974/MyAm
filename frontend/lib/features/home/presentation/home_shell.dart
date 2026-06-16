@@ -199,14 +199,15 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       extendBody: true,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: MobileScanner(
-              controller: _scanner!,
-              onDetect: _onDetect,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error) => _CameraError(error: error),
+          if (_selectedIndex == _scanTabIndex)
+            Positioned.fill(
+              child: MobileScanner(
+                controller: _scanner!,
+                onDetect: _onDetect,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error) => _CameraError(error: error),
+              ),
             ),
-          ),
           Positioned.fill(child: _buildOverlay()),
           if (isLoading)
             const Positioned.fill(
@@ -219,7 +220,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       ),
       bottomNavigationBar: AnimatedBottomNav(
         currentIndex: _selectedIndex,
-        onTap: (i) => setState(() => _selectedIndex = i),
+        onTap: (i) {
+          if (i == _scanTabIndex) {
+            _scanner?.start();
+          } else {
+            _scanner?.stop();
+          }
+          setState(() => _selectedIndex = i);
+        },
       ),
     );
   }
