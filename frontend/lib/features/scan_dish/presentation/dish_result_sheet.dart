@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../profile_allergies/presentation/allergy_controller.dart';
 import '../data/dish_result.dart';
 
-class DishResultSheet extends StatelessWidget {
+class DishResultSheet extends ConsumerWidget {
   const DishResultSheet({super.key, required this.result});
 
   final DishResult result;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final allergies =
+        ref.watch(allergyControllerProvider).asData?.value ?? const <String>[];
+    final flagged = _flaggedIngredients(result.ingredients, allergies);
 
     final unrecognized = result.status == 'unrecognized';
 
@@ -115,6 +120,10 @@ class DishResultSheet extends StatelessWidget {
                   'Ingrédients probables',
                   style: theme.textTheme.titleSmall,
                 ),
+                if (flagged.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  _AllergyBanner(flagged: flagged),
+                ],
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 6,
@@ -128,7 +137,15 @@ class DishResultSheet extends StatelessWidget {
                               ingredient.name,
                               ingredient.confidence,
                             ),
+                            style: flagged.contains(ingredient.name)
+                                ? TextStyle(
+                                    color: theme.colorScheme.onErrorContainer,
+                                  )
+                                : null,
                           ),
+                          backgroundColor: flagged.contains(ingredient.name)
+                              ? theme.colorScheme.errorContainer
+                              : null,
                         ),
                   ],
                 ),
@@ -162,6 +179,24 @@ class DishResultSheet extends StatelessWidget {
     if (confidence == null) return label;
     return '$label ${(confidence * 100).round()} %';
   }
+
+  static Set<String> _flaggedIngredients(
+    List<ProbableIngredient> ingredients,
+    List<String> allergies,
+  ) {
+    if (allergies.isEmpty) return const {};
+    final result = <String>{};
+    for (final ingredient in ingredients) {
+      final name = ingredient.name.toLowerCase();
+      for (final allergy in allergies) {
+        if (name.contains(allergy) || allergy.contains(name)) {
+          result.add(ingredient.name);
+          break;
+        }
+      }
+    }
+    return result;
+  }
 }
 
 class _Notice extends StatelessWidget {
@@ -182,6 +217,44 @@ class _Notice extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(child: Text(text, style: theme.textTheme.bodySmall)),
       ],
+    );
+  }
+}
+
+class _AllergyBanner extends StatelessWidget {
+  const _AllergyBanner({required this.flagged});
+
+  final Set<String> flagged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.warning_rounded,
+            size: 18,
+            color: theme.colorScheme.onErrorContainer,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Allergènes détectés : ${flagged.join(', ')}',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

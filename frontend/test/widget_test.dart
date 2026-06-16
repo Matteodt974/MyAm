@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:myam/features/scan_dish/data/dish_result.dart';
@@ -123,8 +123,10 @@ void main() {
 
 Future<void> _pumpSheet(WidgetTester tester, DishResult result) async {
   await tester.pumpWidget(
-    MaterialApp(
-      home: Scaffold(body: DishResultSheet(result: result)),
+    ProviderScope(
+      child: MaterialApp(
+        home: Scaffold(body: DishResultSheet(result: result)),
+      ),
     ),
   );
 }
