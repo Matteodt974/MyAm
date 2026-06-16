@@ -23,122 +23,136 @@ class DishResultSheet extends StatelessWidget {
         ? 'Identification incertaine'
         : 'Plat identifié';
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) => SafeArea(
+        child: SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            Row(
-              children: [
-                Icon(
-                  unrecognized
-                      ? Icons.help_outline
-                      : lowConfidence
-                      ? Icons.warning_amber_rounded
-                      : Icons.restaurant,
-                  color: lowConfidence
-                      ? theme.colorScheme.tertiary
-                      : theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 10),
-                Expanded(child: Text(title, style: theme.textTheme.titleLarge)),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              result.message.isNotEmpty
-                  ? result.message
-                  : 'Aucun détail disponible pour cette analyse.',
-              style: theme.textTheme.bodyMedium,
-            ),
-            if (result.dishName != null && result.dishName!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(result.dishName!, style: theme.textTheme.headlineSmall),
-            ],
-            if (result.confidence != null) ...[
-              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(
+                    unrecognized
+                        ? Icons.help_outline
+                        : lowConfidence
+                        ? Icons.warning_amber_rounded
+                        : Icons.restaurant,
+                    color: lowConfidence
+                        ? theme.colorScheme.tertiary
+                        : theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(title, style: theme.textTheme.titleLarge),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Text(
-                'Confiance : ${(result.confidence! * 100).round()} %',
+                result.message.isNotEmpty
+                    ? result.message
+                    : 'Aucun détail disponible pour cette analyse.',
+                style: theme.textTheme.bodyMedium,
+              ),
+              if (result.dishName != null && result.dishName!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(result.dishName!, style: theme.textTheme.headlineSmall),
+              ],
+              if (result.confidence != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Confiance : ${(result.confidence! * 100).round()} %',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.outline,
+                  ),
+                ),
+              ],
+              if (lowConfidence) ...[
+                const SizedBox(height: 12),
+                _Notice(
+                  icon: Icons.warning_amber_rounded,
+                  text:
+                      'La photo ne permet pas une identification fiable. Reprenez une photo si nécessaire.',
+                ),
+              ],
+              if (result.candidates.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text('Candidats', style: theme.textTheme.titleSmall),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final c in result.candidates)
+                      if (c.name.isNotEmpty)
+                        Chip(
+                          label: Text(_withConfidence(c.name, c.confidence)),
+                        ),
+                  ],
+                ),
+              ],
+              if (result.ingredients.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Ingrédients probables',
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (final ingredient in result.ingredients)
+                      if (ingredient.name.isNotEmpty)
+                        Chip(
+                          label: Text(
+                            _withConfidence(
+                              ingredient.name,
+                              ingredient.confidence,
+                            ),
+                          ),
+                        ),
+                  ],
+                ),
+              ],
+              if (result.foodDataMatches.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  'Références FoodData Central',
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                for (final match in result.foodDataMatches.take(4))
+                  _FoodDataRow(match: match),
+              ],
+              const SizedBox(height: 8),
+              Text(
+                'Fichier : ${result.filename ?? '—'} '
+                '(${(result.sizeBytes / 1024).toStringAsFixed(0)} Ko)',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.outline,
                 ),
               ),
             ],
-            if (lowConfidence) ...[
-              const SizedBox(height: 12),
-              _Notice(
-                icon: Icons.warning_amber_rounded,
-                text:
-                    'La photo ne permet pas une identification fiable. Reprenez une photo si nécessaire.',
-              ),
-            ],
-            if (result.candidates.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text('Candidats', style: theme.textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final c in result.candidates)
-                    if (c.name.isNotEmpty)
-                      Chip(label: Text(_withConfidence(c.name, c.confidence))),
-                ],
-              ),
-            ],
-            if (result.ingredients.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text('Ingrédients probables', style: theme.textTheme.titleSmall),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final ingredient in result.ingredients)
-                    if (ingredient.name.isNotEmpty)
-                      Chip(
-                        label: Text(
-                          _withConfidence(
-                            ingredient.name,
-                            ingredient.confidence,
-                          ),
-                        ),
-                      ),
-                ],
-              ),
-            ],
-            if (result.foodDataMatches.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Références FoodData Central',
-                style: theme.textTheme.titleSmall,
-              ),
-              const SizedBox(height: 8),
-              for (final match in result.foodDataMatches.take(4))
-                _FoodDataRow(match: match),
-            ],
-            const SizedBox(height: 8),
-            Text(
-              'Fichier : ${result.filename ?? '—'} '
-              '(${(result.sizeBytes / 1024).toStringAsFixed(0)} Ko)',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.outline,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
