@@ -81,9 +81,11 @@ public class DishAnalysisService {
           List.of());
     }
 
+    String fdcQueryName =
+        analysis.enName() != null && !analysis.enName().isBlank() ? analysis.enName() : dishName;
     List<DishResponse.FoodDataMatch> matches;
     try {
-      matches = foodDataCentral.search(foodQuery(dishName, ingredients), FOOD_MATCH_LIMIT);
+      matches = foodDataCentral.search(foodQuery(fdcQueryName, ingredients), FOOD_MATCH_LIMIT);
     } catch (RuntimeException e) {
       matches = List.of();
     }

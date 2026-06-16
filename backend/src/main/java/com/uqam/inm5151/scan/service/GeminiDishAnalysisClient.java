@@ -31,12 +31,16 @@ public class GeminiDishAnalysisClient {
             Reponds uniquement avec un objet JSON strict:
             {
               "dish_name": string|null,
+              "en_name": string|null,
               "confidence": number,
               "candidates": [{"name": string, "confidence": number}],
               "ingredients": [{"name": string, "confidence": number}]
             }
             dish_name doit etre le nom le plus precis visible ou fortement probable: plat, boisson,
             produit, supplement, ou categorie alimentaire. La confiance doit etre entre 0 et 1.
+            en_name doit etre le nom en anglais de ce meme aliment, tel qu'il apparaitrait dans une
+            base de donnees alimentaire anglophone (ex: USDA FoodData Central). Utilise le nom de
+            marque anglais si visible sur l'emballage.
             Liste seulement les ingredients ou composants visibles/probables.
             Ne fais aucune affirmation medicale, nutritionnelle ou allergene.
             Retourne dish_name null, confidence 0, et des listes vides seulement si l'image ne montre
@@ -53,10 +57,13 @@ public class GeminiDishAnalysisClient {
             Reponds uniquement avec ce JSON strict:
             {
               "dish_name": string|null,
+              "en_name": string|null,
               "confidence": number,
               "candidates": [{"name": string, "confidence": number}],
               "ingredients": [{"name": string, "confidence": number}]
             }
+            en_name doit etre le nom en anglais tel qu'il apparaitrait dans une base de donnees
+            alimentaire anglophone (ex: USDA FoodData Central).
             Ne retourne null que si l'image ne contient vraiment aucun indice de nourriture,
             boisson, supplement, ingredient, produit ingestible ou emballage alimentaire.
             Ne fais aucune affirmation medicale, nutritionnelle ou allergene.
@@ -172,6 +179,7 @@ public class GeminiDishAnalysisClient {
       JsonNode root = objectMapper.readTree(stripCodeFence(text));
       return new GeminiDishAnalysis(
           textOrNull(field(root, "dish_name", "dishName")),
+          textOrNull(field(root, "en_name", "enName")),
           doubleOrNull(field(root, "confidence")),
           candidates(root.get("candidates")),
           ingredients(root.get("ingredients")));
