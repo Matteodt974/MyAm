@@ -5,18 +5,29 @@ Application mobile INM5151 pour scanner des produits alimentaires et cosmetiques
 - `backend/` : API Spring Boot.
 - `frontend/` : application Flutter.
 
+## Tech Stack
+
+<p align="center">
+  <!-- Frontend -->
+  <img src="https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white"/>
+  <img src="https://img.shields.io/badge/dart-%230175C2.svg?style=for-the-badge&logo=dart&logoColor=white"/>
+
+  <!-- Backend -->
+  <img src="https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white"/>
+  <img src="https://img.shields.io/badge/springboot-%236DB33F.svg?style=for-the-badge&logo=springboot&logoColor=white"/>
+  <img src="https://img.shields.io/badge/maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white"/>
+
+  <!-- DevOps -->
+  <img src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white"/>
+</p>
+
 ## Prerequis
 
-| Outil             | Version cible    | Pourquoi                 |
-| ----------------- | ---------------- | ------------------------ |
-| Git               | recent           | cloner et contribuer     |
-| Flutter SDK       | 3.44.x stable    | application mobile       |
-| Java              | 21               | backend Spring Boot      |
-| Docker Desktop    | recent           | services locaux          |
-| Android Studio    | recent           | SDK et emulateur Android |
-| Xcode + CocoaPods | macOS uniquement | iOS                      |
-| Python            | 3.x              | pre-commit               |
-| Node.js           | recent           | prettier                 |
+- Flutter SDK 3.44.x stable + Android Studio (SDK, émulateur Android)
+- Java 21
+- Docker Desktop
+- Xcode + CocoaPods (macOS, pour iOS)
+- Python 3.x (`pre-commit`) + Node.js (`prettier`)
 
 Verifier Flutter :
 
