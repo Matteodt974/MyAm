@@ -14,25 +14,38 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Client Open Food Facts. Portage fidele de la logique de backend/app/api/routes_scan.py.
+ *
+ * <p>Comportement (identique a FastAPI) :
+ *
+ * <ul>
+ *   <li>erreur reseau / timeout -> 502 "Open Food Facts injoignable"
+ *   <li>reponse HTTP != 200 -> 502 "Reponse OFF invalide"
+ *   <li>corps avec status != 1 -> 404 "Produit introuvable"
+ * </ul>
+ */
 @Service
 public class OpenFoodFactsClient {
 
   private static final String FIELDS =
-      "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags";
+      "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags";
 
   private final RestClient client;
   private final String userAgent;
+  private final AllergenCrossMatchService crossMatch;
 
-  public OpenFoodFactsClient(AppProperties props) {
+  public OpenFoodFactsClient(AppProperties props, AllergenCrossMatchService crossMatch) {
     SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
     factory.setConnectTimeout(Duration.ofSeconds(10));
     factory.setReadTimeout(Duration.ofSeconds(10));
     this.client = RestClient.builder().baseUrl(props.offBaseUrl()).requestFactory(factory).build();
     this.userAgent = props.offUserAgent();
+    this.crossMatch = crossMatch;
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  public BarcodeResponse fetchBarcode(String ean) {
+  public BarcodeResponse fetchBarcode(String ean, List<String> userAllergies) {
     ResponseEntity<Map> resp;
     try {
       resp =
@@ -62,6 +75,14 @@ public class OpenFoodFactsClient {
     }
 
     Map<String, Object> p = (Map<String, Object>) data.getOrDefault("product", Map.of());
+    List<String> allergensTags = toStringList(p.get("allergens_tags"));
+    List<String> tracesTags = toStringList(p.get("traces_tags"));
+    List<String> matched = crossMatch.findMatches(allergensTags, userAllergies);
+    List<String> traces = crossMatch.findTraces(tracesTags, userAllergies);
+    List<String> undetermined = crossMatch.findUndetermined(allergensTags, userAllergies);
+    String risk = crossMatch.riskLevel(matched, traces, undetermined);
+    // TODO : calculer ici le score /100 (formule 60/30/10 du OpsCon)
+
     return new BarcodeResponse(
         ean,
         (String) p.get("product_name"),
@@ -69,7 +90,11 @@ public class OpenFoodFactsClient {
         (String) p.get("nutriscore_grade"),
         toInt(p.get("nova_group")),
         toStringList(p.get("additives_tags")),
-        toStringList(p.get("allergens_tags")));
+        allergensTags,
+        tracesTags,
+        risk,
+        matched,
+        undetermined);
   }
 
   private static Integer toInt(Object o) {

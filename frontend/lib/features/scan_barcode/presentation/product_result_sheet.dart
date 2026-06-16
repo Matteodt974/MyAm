@@ -4,10 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/nutriscore_badge.dart';
 
-import '../../profile_allergies/presentation/allergy_controller.dart';
-
 import '../data/product_result.dart';
 
+/// Fiche produit affichee en bottom sheet apres un scan code-barres reussi.
 class ProductResultSheet extends ConsumerWidget {
   const ProductResultSheet({super.key, required this.product});
 
@@ -17,10 +16,9 @@ class ProductResultSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
-    final userAllergies =
-        ref.watch(allergyControllerProvider).value ?? const <String>[];
-
-    final matched = _matchedAllergens(product.allergensTags, userAllergies);
+    final matched = product.matchedAllergens;
+    final isDanger = product.riskLevel == 'DANGER';
+    final isWarning = product.riskLevel == 'WARNING';
 
     return SafeArea(
       child: Padding(
@@ -74,8 +72,17 @@ class ProductResultSheet extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            if (matched.isNotEmpty) ...[
-              _AllergyAlert(matched: matched),
+            if (isDanger) ...[
+              _AllergyAlert(matched: matched, level: 'DANGER'),
+              const SizedBox(height: 12),
+            ],
+            if (isWarning) ...[
+              _AllergyAlert(
+                matched: product.undeterminedAllergens.isNotEmpty
+                    ? product.undeterminedAllergens
+                    : product.tracesTags,
+                level: 'WARNING',
+              ),
               const SizedBox(height: 12),
             ],
             _InfoRow(
@@ -86,7 +93,6 @@ class ProductResultSheet extends ConsumerWidget {
             _TagsBlock(
               title: 'Allergènes',
               tags: product.allergensTags,
-              highlight: userAllergies,
               emptyLabel: 'Aucun allergène listé.',
             ),
             const SizedBox(height: 12),
@@ -107,66 +113,44 @@ class ProductResultSheet extends ConsumerWidget {
       ),
     );
   }
-
-  static List<String> _matchedAllergens(
-    List<String> tags,
-    List<String> userAllergies,
-  ) {
-    if (userAllergies.isEmpty) return const [];
-
-    final result = <String>[];
-
-    for (final tag in tags) {
-      final normalized = _normalizeTag(tag);
-
-      for (final allergy in userAllergies) {
-        if (normalized.contains(allergy) || allergy.contains(normalized)) {
-          result.add(normalized);
-
-          break;
-        }
-      }
-    }
-    return result;
-  }
-
-  static String _normalizeTag(String tag) {
-    final idx = tag.indexOf(':');
-
-    final value = idx >= 0 ? tag.substring(idx + 1) : tag;
-
-    return value.replaceAll('-', ' ').toLowerCase().trim();
-  }
 }
 
 class _AllergyAlert extends StatelessWidget {
-  const _AllergyAlert({required this.matched});
+  const _AllergyAlert({required this.matched, required this.level});
 
   final List<String> matched;
+  final String level;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDanger = level == 'DANGER';
+    final bg = isDanger
+        ? theme.colorScheme.errorContainer
+        : theme.colorScheme.tertiaryContainer;
+    final fg = isDanger
+        ? theme.colorScheme.onErrorContainer
+        : theme.colorScheme.onTertiaryContainer;
+    final message = isDanger
+        ? 'Allergène présent : ${matched.join(', ')}'
+        : 'Peut contenir : ${matched.join(', ')}';
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.errorContainer,
+        color: bg,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            color: theme.colorScheme.onErrorContainer,
-          ),
+          Icon(Icons.warning_amber_rounded, color: fg),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Allergène présent dans votre profil : ${matched.join(', ')}',
+              message,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onErrorContainer,
+                color: fg,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -208,7 +192,6 @@ class _TagsBlock extends StatelessWidget {
     required this.title,
     required this.tags,
     required this.emptyLabel,
-    this.highlight = const [],
   });
 
   final String title;
@@ -216,8 +199,6 @@ class _TagsBlock extends StatelessWidget {
   final List<String> tags;
 
   final String emptyLabel;
-
-  final List<String> highlight;
 
   @override
   Widget build(BuildContext context) {
@@ -244,22 +225,9 @@ class _TagsBlock extends StatelessWidget {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: [
-              for (final tag in tags)
-                _Tag(label: _label(tag), danger: _isHighlighted(tag)),
-            ],
+            children: [for (final tag in tags) _Tag(label: _label(tag))],
           ),
       ],
-    );
-  }
-
-  bool _isHighlighted(String tag) {
-    if (highlight.isEmpty) return false;
-
-    final normalized = ProductResultSheet._normalizeTag(tag);
-
-    return highlight.any(
-      (a) => normalized.contains(a) || a.contains(normalized),
     );
   }
 
@@ -271,32 +239,24 @@ class _TagsBlock extends StatelessWidget {
 }
 
 class _Tag extends StatelessWidget {
-  const _Tag({required this.label, this.danger = false});
+  const _Tag({required this.label});
 
   final String label;
-
-  final bool danger;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final bg = danger
-        ? theme.colorScheme.error
-        : theme.colorScheme.surfaceContainerHighest;
-
-    final fg = danger ? theme.colorScheme.onError : theme.colorScheme.onSurface;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: bg,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
         style: theme.textTheme.bodySmall?.copyWith(
-          color: fg,
+          color: theme.colorScheme.onSurface,
           fontWeight: FontWeight.w600,
         ),
       ),
