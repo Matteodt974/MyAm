@@ -52,6 +52,7 @@ abstract class FoodDataMatch with _$FoodDataMatch {
     String? description,
     @JsonKey(name: 'data_type') String? dataType,
     @JsonKey(name: 'brand_owner') String? brandOwner,
+    String? ingredients,
   }) = _FoodDataMatch;
 
   factory FoodDataMatch.fromJson(Map<String, dynamic> json) =>
