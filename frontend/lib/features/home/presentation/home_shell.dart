@@ -7,6 +7,8 @@ import '../../profile_allergies/presentation/profile_screen.dart';
 import '../../scan_barcode/presentation/product_result_sheet.dart';
 import '../../scan_barcode/presentation/scan_controller.dart';
 import '../../scan_dish/presentation/picture_tab.dart';
+import '../../profile_allergies/presentation/allergy_controller.dart';
+
 
 /// Ecran principal facon Yuka.
 ///
@@ -72,7 +74,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     final value = detected.rawValue!;
     try {
       if (_productFormats.contains(detected.format)) {
-        await ref.read(scanControllerProvider.notifier).scan(value);
+        final allergies = ref.read(allergyControllerProvider).value ?? [];
+        if (allergies.isEmpty) {
+          _showSnack('Aucune allergie enregistrée. Allez dans votre profil pour en ajouter.');
+          return;
+        }
+        await ref.read(scanControllerProvider.notifier).scan(value, allergies);
         if (!mounted) return;
         final state = ref.read(scanControllerProvider);
         final product = state.value;
