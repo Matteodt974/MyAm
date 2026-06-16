@@ -185,13 +185,11 @@ class _TagsBlock extends StatelessWidget {
     required this.title,
     required this.tags,
     required this.emptyLabel,
-    this.highlight = const [],
   });
 
   final String title;
   final List<String> tags;
   final String emptyLabel;
-  final List<String> highlight;
 
   @override
   Widget build(BuildContext context) {
