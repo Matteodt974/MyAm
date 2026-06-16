@@ -1,0 +1,39 @@
+repos:
+  # ── General ──────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+
+  # ── Prettier (YAML, JSON, Markdown) ─────────────────────
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: npx prettier --write
+        language: system
+        types_or: [yaml, json, markdown]
+
+  # ── Java (Spotless via Maven) ───────────────────────────
+  - repo: local
+    hooks:
+      - id: spotless-java
+        name: spotless:apply
+        entry: bash -c 'cd backend && ./mvnw spotless:apply -q'
+        language: system
+        files: \.java$
+        pass_filenames: false
+
+  # ── Dart ────────────────────────────────────────────────
+  - repo: local
+    hooks:
+      - id: dart-format
+        name: dart format
+        entry: dart format
+        language: system
+        files: \.dart$
+        pass_filenames: true

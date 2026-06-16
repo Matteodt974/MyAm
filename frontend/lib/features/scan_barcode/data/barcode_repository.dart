@@ -1,12 +1,15 @@
 import 'package:dio/dio.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_endpoints.dart';
+
 import '../../../core/errors/api_exception.dart';
+
 import '../../../core/network/dio_client.dart';
+
 import 'product_result.dart';
 
-/// Acces a l'endpoint `POST /v1/scan/barcode` (UC2 - scan_food_barcode).
 class BarcodeRepository {
   BarcodeRepository(this._dio);
 
@@ -21,6 +24,7 @@ class BarcodeRepository {
         ApiEndpoints.scanBarcode,
         data: {'ean': ean, 'allergies': allergies},
       );
+
       return ProductResult.fromJson(response.data!);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);

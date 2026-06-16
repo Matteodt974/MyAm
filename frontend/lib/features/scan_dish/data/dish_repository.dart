@@ -1,16 +1,17 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_endpoints.dart';
+
 import '../../../core/errors/api_exception.dart';
+
 import '../../../core/network/dio_client.dart';
+
 import 'dish_result.dart';
 
-/// Acces a l'endpoint `POST /v1/scan/dish` (UC5, stretch).
-///
-/// Envoie la photo en multipart sous le champ **`image`** (contrat backend).
 class DishRepository {
   DishRepository(this._dio);
 
@@ -26,10 +27,12 @@ class DishRepository {
               : 'dish.jpg',
         ),
       });
+
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.scanDish,
         data: formData,
       );
+
       return DishResult.fromJson(response.data!);
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
