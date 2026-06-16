@@ -70,7 +70,8 @@ public class FoodDataCentralClient {
               fdcId,
               stringOrNull(food.get("description")),
               stringOrNull(food.get("dataType")),
-              stringOrNull(food.get("brandOwner"))));
+              stringOrNull(food.get("brandOwner")),
+              stringOrNull(food.get("ingredients"))));
       if (matches.size() >= limit) {
         break;
       }

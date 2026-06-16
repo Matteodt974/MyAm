@@ -2,7 +2,11 @@ package com.uqam.inm5151.scan.service;
 
 import com.uqam.inm5151.scan.dto.DishResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -83,6 +87,7 @@ public class DishAnalysisService {
     } catch (RuntimeException e) {
       matches = List.of();
     }
+    ingredients = mergeWithFdcIngredients(ingredients, matches);
     String status = confidence < LOW_CONFIDENCE_THRESHOLD ? "low_confidence" : "identified";
     String message =
         confidence < LOW_CONFIDENCE_THRESHOLD
@@ -114,6 +119,26 @@ public class DishAnalysisService {
         List.of(),
         List.of(),
         List.of());
+  }
+
+  private static List<DishResponse.ProbableIngredient> mergeWithFdcIngredients(
+      List<DishResponse.ProbableIngredient> geminiIngredients,
+      List<DishResponse.FoodDataMatch> matches) {
+    String fdcStr =
+        matches.stream()
+            .map(DishResponse.FoodDataMatch::ingredients)
+            .filter(s -> s != null && !s.isBlank())
+            .findFirst()
+            .orElse(null);
+    if (fdcStr == null) return geminiIngredients;
+    Set<String> seen =
+        geminiIngredients.stream().map(i -> i.name().toLowerCase()).collect(Collectors.toSet());
+    List<DishResponse.ProbableIngredient> result = new ArrayList<>(geminiIngredients);
+    Arrays.stream(fdcStr.split(","))
+        .map(String::trim)
+        .filter(s -> !s.isBlank() && seen.add(s.toLowerCase()))
+        .forEach(name -> result.add(new DishResponse.ProbableIngredient(name, null)));
+    return result;
   }
 
   private static String foodQuery(

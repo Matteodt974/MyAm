@@ -42,7 +42,7 @@ class ScanControllerTest {
                 List.of(new DishResponse.ProbableIngredient("tomate", 0.84)),
                 List.of(
                     new DishResponse.FoodDataMatch(
-                        170457, "Tomatoes, red, raw", "SR Legacy", null))));
+                        170457, "Tomatoes, red, raw", "SR Legacy", null, null))));
 
     mvc.perform(multipart("/v1/scan/dish").file(file))
         .andExpect(status().isOk())
