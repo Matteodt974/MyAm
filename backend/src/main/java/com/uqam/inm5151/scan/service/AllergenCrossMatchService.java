@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class AllergenCrossMatchService {
 
-  // Dictionnaire : synonymes français/latin → forme canonique anglaise utilisée
-  // par Open Food Facts
+  // Dictionnaire : synonymes français/latin -> forme canonique anglaise utilisée par Open Food
+  // Facts
   private static final Map<String, String> SYNONYMS =
       Map.ofEntries(
           Map.entry("lait", "milk"),
@@ -108,14 +108,14 @@ public class AllergenCrossMatchService {
     return result;
   }
 
-  // Normalise un tag OFF : "en:tree-nuts" → "tree nuts"
+  // Normalise un tag OFF : "en:tree-nuts" -> "tree nuts"
   private String normalizeTag(String tag) {
     int idx = tag.indexOf(':');
     String value = idx >= 0 ? tag.substring(idx + 1) : tag;
     return value.replace('-', ' ').toLowerCase().trim();
   }
 
-  // Normalise une allergie utilisateur : "lait" → "milk" via le dictionnaire
+  // Normalise une allergie utilisateur : "lait" -> "milk" via le dictionnaire
   private String normalizeAllergy(String allergy) {
     String lower = allergy.toLowerCase().trim();
     return SYNONYMS.getOrDefault(lower, lower);

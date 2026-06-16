@@ -40,7 +40,7 @@ public class ScanController {
   }
 
   /**
-   * UC5 (stretch) - scan_dish : identification d'un plat a partir d'une photo.
+   * UC7 - scan_dish : identification d'un plat a partir d'une photo.
    *
    * <p>L'onglet "Picture" de l'app envoie ici une image en multipart (champ {@code image}). Loi 25
    * / RGPD : l'image n'est JAMAIS persistee.

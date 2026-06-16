@@ -1,36 +1,39 @@
-# MyAm
+# Frontend MyAm
 
-Application Flutter de scan alimentaire et cosmetique.
+Application Flutter de scan alimentaire et cosmétique.
+
+## Prérequis
+
+- Flutter SDK
+- Android Studio / Xcode selon la plateforme cible
 
 ## Lancer
 
 ```bash
 flutter pub get
+flutter run
+```
+
+## Configuration
+
+Par défaut, l'app pointe vers `http://10.0.2.2:8080`.
+
+**Option 1 : variable d'environnement complète**
+
+```bash
 flutter run --dart-define=BACKEND_URL=http://10.0.2.2:8080
 ```
 
-Pour un telephone physique, remplacer `10.0.2.2` par l'adresse LAN de la machine qui lance le backend.
-Les scripts `scripts/run_android.sh` et `scripts/run_ios.sh` lisent aussi `frontend/.env`.
-
-Le backend peut etre configure avec une URL complete :
-
-```bash
-flutter run --dart-define=BACKEND_URL=http://192.168.2.10:8082
-```
-
-ou avec une adresse IP / un nom d'hote et un port :
+**Option 2 : hôte et port séparés (utile si un des options n'est pas changé)**
 
 ```bash
 flutter run --dart-define=BACKEND_HOST=192.168.2.10 --dart-define=BACKEND_PORT=8082
 ```
 
-`API_BASE_URL` reste accepte pour compatibilite.
-
-Exemple avec `.env` :
+**Option 3 : fichier `.env`** (lu par `scripts/run_android.sh` et `scripts/run_ios.sh`)
 
 ```bash
-cp .env.example .env
-# Puis definir BACKEND_URL ou BACKEND_HOST/BACKEND_PORT dans .env.
+cp .env.example .env # Définir BACKEND_URL ou BACKEND_HOST/BACKEND_PORT
 scripts/run_android.sh --debug -d 192.168.2.25:36207
 ```
 
