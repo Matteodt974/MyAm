@@ -4,6 +4,7 @@ import java.util.List;
 
 public record GeminiDishAnalysis(
     String dishName,
+    String enName,
     Double confidence,
     List<DishCandidate> candidates,
     List<ProbableIngredient> ingredients) {
