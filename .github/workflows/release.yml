@@ -1,0 +1,126 @@
+name: Release
+# Inspired by plezy's release job: https://github.com/edde746/plezy/blob/main/.github/workflows/release.yml
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number'
+        required: true
+        type: string
+      release_name:
+        description: 'Release title (e.g., Sprint 1). Defaults to version if blank.'
+        required: false
+        type: string
+        default: ''
+      prerelease:
+        description: 'Pre-release?'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build Flutter APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate version format
+        run: |
+          if ! echo "${{ inputs.version }}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Error: version must be in X.Y.Z format"
+            exit 1
+          fi
+
+      - name: Bump version in pubspec.yaml
+        run: |
+          CURRENT=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+          BUILD=$(echo "$CURRENT" | cut -d'+' -f2)
+          NEW_BUILD=$((BUILD + 1))
+          NEW_VERSION="${{ inputs.version }}+$NEW_BUILD"
+          sed -i "s/^version: .*/version: $NEW_VERSION/" pubspec.yaml
+          echo "version=$NEW_VERSION" >> $GITHUB_ENV
+          echo "Updated pubspec version to $NEW_VERSION"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.1'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate code (build_runner)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build APK (release)
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: |
+          mkdir -p ../artifacts
+          cp build/app/outputs/flutter-apk/app-release.apk \
+             ../artifacts/myam-${{ inputs.version }}.apk
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and tag version bump
+        run: |
+          git add pubspec.yaml
+          git commit -m "chore: bump version to $version"
+          git tag "${{ inputs.version }}"
+          git push origin main
+          git push origin --tags
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${{ inputs.version }}^" 2>/dev/null || true)
+
+          # Write Release Description
+          {
+            echo "## ${{ inputs.release_name != '' && inputs.release_name || format('MyAm {0}', inputs.version) }}"
+            echo
+            echo "Commit: ${{ github.sha }}"
+            echo
+            echo "### Changes"
+
+            if [ -n "$PREVIOUS_TAG" ]; then
+              echo
+              echo "Changes since \`$PREVIOUS_TAG\`:"
+              echo
+              git log "$PREVIOUS_TAG..${{ inputs.version }}" \
+                --pretty=format:'- %s - %an - (%h)' \
+                --no-merges
+            else
+              echo
+              echo "Initial Release."
+              echo
+              git log "${{ inputs.version }}" \
+                --pretty=format:'- %s - %an - (%h)' \
+                --no-merges
+            fi
+          } > ../artifacts/release-notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: ${{ inputs.release_name != '' && inputs.release_name || format('MyAm {0}', inputs.version) }}
+          body_path: artifacts/release-notes.md
+          files: artifacts/myam-${{ inputs.version }}.apk
+          draft: true
+          prerelease: ${{ inputs.prerelease }}
