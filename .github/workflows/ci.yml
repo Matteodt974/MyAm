@@ -8,40 +8,45 @@ on:
 
 jobs:
   backend:
-    name: Backend · Spring Boot
+    name: Run Backend Tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
-      # Compile + packaging + tests (contextLoads, ScanControllerTest).
+
       - name: Build + tests (mvnw package)
         run: ./mvnw -B -ntp package
 
   frontend:
-    name: Frontend · Flutter
+    name: Run Frontend Static Analysis & Tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.0'
           channel: stable
           cache: true
-      - run: flutter pub get
-      # Genere le code freezed / json_serializable (*.freezed.dart, *.g.dart).
-      # Ces fichiers sont git-ignores : sans cette etape, `flutter analyze` echoue
-      # (parts manquantes pour ProductResult, DishResult, etc.).
+
+      - name: Flutter Dependencies
+        run: flutter pub get
+
       - name: Generer le code (build_runner)
         run: dart run build_runner build --delete-conflicting-outputs
-      - run: flutter analyze
-      - run: flutter test
+
+      - name: Flutter Static Analysis & Tests
+        run: |
+          flutter analyze
+          flutter test
