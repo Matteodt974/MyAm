@@ -2,6 +2,8 @@ name: Release
 # Inspired by plezy's release job: https://github.com/edde746/plezy/blob/main/.github/workflows/release.yml
 on:
   workflow_dispatch:
+    branches:
+      - main
     inputs:
       version:
         description: 'Version number'
@@ -22,12 +24,9 @@ permissions:
   contents: write
 
 jobs:
-  build-apk:
-    name: Build Flutter APK
+  prepare:
+    name: Bump Versions & Tag
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v4
@@ -42,14 +41,39 @@ jobs:
           fi
 
       - name: Bump version in pubspec.yaml
+        working-directory: frontend
         run: |
           CURRENT=$(grep '^version:' pubspec.yaml | sed 's/version: //')
           BUILD=$(echo "$CURRENT" | cut -d'+' -f2)
           NEW_BUILD=$((BUILD + 1))
-          NEW_VERSION="${{ inputs.version }}+$NEW_BUILD"
-          sed -i "s/^version: .*/version: $NEW_VERSION/" pubspec.yaml
-          echo "version=$NEW_VERSION" >> $GITHUB_ENV
-          echo "Updated pubspec version to $NEW_VERSION"
+          sed -i "s/^version: .*/version: ${{ inputs.version }}+$NEW_BUILD/" pubspec.yaml
+
+      - name: Bump pom.xml version
+        run: |
+          sed -i '/<artifactId>scan<\/artifactId>/{n;s|<version>[^<]*</version>|<version>${{ inputs.version }}</version>|}' backend/pom.xml
+
+      - name: Commit & tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add frontend/pubspec.yaml backend/pom.xml
+          git commit -m "chore: bump version to ${{ inputs.version }}"
+          git tag "${{ inputs.version }}"
+          git push origin main
+          git push origin --tags
+
+  build-apk:
+    name: Build Flutter APK
+    needs: prepare
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
 
       - uses: subosito/flutter-action@v2
         with:
@@ -66,35 +90,66 @@ jobs:
       - name: Build APK (release)
         run: flutter build apk --release
 
-      - name: Rename APK
-        run: |
-          mkdir -p ../artifacts
-          cp build/app/outputs/flutter-apk/app-release.apk \
-             ../artifacts/myam-${{ inputs.version }}.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: frontend/build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+  build-jar:
+    name: Build Spring Boot JAR
+    needs: prepare
+    runs-on: ubuntu-latest
 
-      - name: Commit and tag version bump
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: maven
+
+      - name: Build JAR
+        run: mvn -f backend/pom.xml package -DskipTests
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: jar
+          path: backend/target/scan-${{ inputs.version }}.jar
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-apk, build-jar]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.version }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Rename artifacts
         run: |
-          git add pubspec.yaml
-          git commit -m "chore: bump version to $version"
-          git tag "${{ inputs.version }}"
-          git push origin main
-          git push origin --tags
+          mv artifacts/apk/app-release.apk artifacts/myam-${{ inputs.version }}.apk
+          mv artifacts/jar/scan-${{ inputs.version }}.jar artifacts/myam-backend-${{ inputs.version }}.jar
 
       - name: Generate release notes
-        id: release_notes
         run: |
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${{ inputs.version }}^" 2>/dev/null || true)
 
-          # Write Release Description
           {
             echo "## ${{ inputs.release_name != '' && inputs.release_name || format('MyAm {0}', inputs.version) }}"
             echo
-            echo "Commit: ${{ github.sha }}"
+            echo "Commit: $(git rev-parse HEAD)"
             echo
             echo "### Changes"
 
@@ -113,7 +168,7 @@ jobs:
                 --pretty=format:'- %s - %an - (%h)' \
                 --no-merges
             fi
-          } > ../artifacts/release-notes.md
+          } > artifacts/release-notes.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -121,6 +176,8 @@ jobs:
           tag_name: ${{ inputs.version }}
           name: ${{ inputs.release_name != '' && inputs.release_name || format('MyAm {0}', inputs.version) }}
           body_path: artifacts/release-notes.md
-          files: artifacts/myam-${{ inputs.version }}.apk
+          files: |
+            artifacts/myam-${{ inputs.version }}.apk
+            artifacts/myam-backend-${{ inputs.version }}.jar
           draft: true
           prerelease: ${{ inputs.prerelease }}
