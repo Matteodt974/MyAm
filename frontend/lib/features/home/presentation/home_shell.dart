@@ -110,12 +110,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     try {
       if (_productFormats.contains(detected.format)) {
         final allergies = ref.read(allergyControllerProvider).value ?? [];
-        if (allergies.isEmpty) {
-          _showSnack(
-            'Aucune allergie enregistrée. Allez dans votre profil pour en ajouter.',
-          );
-          return;
-        }
+        //if (allergies.isEmpty) {
+          //_showSnack(
+          //  'Aucune allergie enregistrée. Allez dans votre profil pour en ajouter.',
+          //);
+          //return;
+        //}
         await ref.read(scanControllerProvider.notifier).scan(value, allergies);
 
         if (!mounted) return;
