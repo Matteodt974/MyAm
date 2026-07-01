@@ -12,8 +12,9 @@ class AnimatedBottomNav extends StatelessWidget {
   final ValueChanged<int> onTap;
 
   static const List<_NavItem> _items = [
-    _NavItem(Icons.photo_camera_rounded, 'photo'),
+    _NavItem(Icons.photo_camera_rounded, 'Photo'),
     _NavItem(Icons.qr_code_scanner_rounded, 'Scan'),
+    _NavItem(Icons.document_scanner_rounded, 'Étiquette'),
     _NavItem(Icons.person_rounded, 'Profil'),
   ];
 
@@ -21,7 +22,7 @@ class AnimatedBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final alignX = (currentIndex - 1).toDouble();
+    final alignX = (2 * currentIndex + 1) / _items.length - 1;
 
     return SafeArea(
       top: false,

@@ -32,4 +32,6 @@ class ApiEndpoints {
   static const String scanBarcode = '/v1/scan/barcode';
 
   static const String scanDish = '/v1/scan/dish';
+
+  static const String scanLabel = '/v1/label/translate-and-structure';
 }

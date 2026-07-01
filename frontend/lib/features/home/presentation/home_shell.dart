@@ -15,6 +15,7 @@ import '../../scan_barcode/presentation/product_result_sheet.dart';
 import '../../scan_barcode/presentation/scan_controller.dart';
 
 import '../../scan_dish/presentation/picture_tab.dart';
+import '../../scan_label/presentation/label_tab.dart';
 import '../../profile_allergies/presentation/allergy_controller.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
@@ -34,6 +35,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   bool _permissionPermanentlyDenied = false;
 
   static const _scanTabIndex = 1;
+
+  static const _labelTabIndex = 2;
+
+  static const _profileTabIndex = 3;
 
   static const _productFormats = {
     BarcodeFormat.ean13,
@@ -235,7 +240,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       case 0:
         return const PictureTab();
 
-      case 2:
+      case _labelTabIndex:
+        return const LabelTab();
+
+      case _profileTabIndex:
         return _ProfilePanel(
           color: Theme.of(context).colorScheme.surface,
           child: const ProfileScreen(),
