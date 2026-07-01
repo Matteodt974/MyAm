@@ -1,0 +1,82 @@
+package com.uqam.inm5151.scan.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
+import com.uqam.inm5151.scan.dto.LabelAnalysisResponse;
+import com.uqam.inm5151.scan.dto.LabelIngredient;
+import com.uqam.inm5151.scan.service.GeminiLabelClient.TranslationResult;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class LabelAnalysisServiceTest {
+
+  @Mock private GeminiLabelClient gemini;
+
+  private final IngredientParser parser = new IngredientParser();
+
+  @Test
+  void analyze_englishText_returnsNotTranslatedWithSameTextAndParsedIngredients() {
+    String text = "sugar, palm oil";
+    when(gemini.detectAndTranslate(text)).thenReturn(new TranslationResult("en", text, true));
+
+    LabelAnalysisResponse response = service().analyze(text);
+
+    assertThat(response.originalLanguage()).isEqualTo("en");
+    assertThat(response.translated()).isFalse();
+    assertThat(response.translatedText()).isEqualTo(text);
+    assertThat(response.ingredients())
+        .extracting(LabelIngredient::name)
+        .containsExactly("sugar", "palm oil");
+  }
+
+  @Test
+  void analyze_frenchText_returnsTranslatedWithTranslatedText() {
+    String text = "sucre, huile de palme";
+    String translated = "sugar, palm oil";
+    when(gemini.detectAndTranslate(text))
+        .thenReturn(new TranslationResult("fr", translated, false));
+
+    LabelAnalysisResponse response = service().analyze(text);
+
+    assertThat(response.originalLanguage()).isEqualTo("fr");
+    assertThat(response.translated()).isTrue();
+    assertThat(response.translatedText()).isEqualTo(translated);
+    assertThat(response.ingredients())
+        .extracting(LabelIngredient::name)
+        .containsExactly("sugar", "palm oil");
+  }
+
+  @Test
+  void analyze_nullText_throwsIllegalArgumentException() {
+    assertThatThrownBy(() -> service().analyze(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("requis");
+  }
+
+  @Test
+  void analyze_blankText_throwsIllegalArgumentException() {
+    assertThatThrownBy(() -> service().analyze("   "))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("requis");
+  }
+
+  @Test
+  void analyze_unsupportedLanguage_throwsUnsupportedLanguageException() {
+    String text = "some text";
+    when(gemini.detectAndTranslate(text))
+        .thenThrow(new UnsupportedLanguageException("Langue non identifiable"));
+
+    assertThatThrownBy(() -> service().analyze(text))
+        .isInstanceOf(UnsupportedLanguageException.class)
+        .hasMessageContaining("non identifiable");
+  }
+
+  private LabelAnalysisService service() {
+    return new LabelAnalysisService(gemini, parser);
+  }
+}
