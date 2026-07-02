@@ -87,7 +87,7 @@ public class OpenFoodFactsClient {
     List<String> ingredientsAnalysisTags = toStringList(p.get("ingredients_analysis_tags"));
     List<String> labelTags = toStringList(p.get("label_tags"));
 
-    boolean dietCompatible = isDietCompatible(userDiets, labelTags);
+    boolean dietCompatible = dietMatch.isUserDietsCompatible(userDiets, labelTags);
 
     List<String> matched = crossMatch.findMatches(allergensTags, userAllergies);
     List<String> traces = crossMatch.findTraces(tracesTags, userAllergies);
@@ -131,19 +131,5 @@ public class OpenFoodFactsClient {
       return list.stream().map(String::valueOf).toList();
     }
     return List.of();
-  }
-
-  private boolean isDietCompatible(List<Diet> userDiets, List<String> labelTags) {
-    if (userDiets == null || userDiets.isEmpty() || labelTags == null || labelTags.isEmpty()) {
-      return true;
-    }
-    for (Diet diet : userDiets) {
-      for (String tag : labelTags) {
-        if (dietMatch.isDietCompatible(diet, tag)) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }
