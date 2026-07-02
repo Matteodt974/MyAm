@@ -15,37 +15,42 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Client Open Food Facts. Portage fidele de la logique de backend/app/api/routes_scan.py.
+ * Client Open Food Facts. Portage fidele de la logique de
+ * backend/app/api/routes_scan.py.
  *
- * <p>Comportement (identique a FastAPI) :
+ * <p>
+ * Comportement (identique a FastAPI) :
  *
  * <ul>
- *   <li>erreur reseau / timeout -> 502 "Open Food Facts injoignable"
- *   <li>reponse HTTP != 200 -> 502 "Reponse OFF invalide"
- *   <li>corps avec status != 1 -> 404 "Produit introuvable"
+ * <li>erreur reseau / timeout -> 502 "Open Food Facts injoignable"
+ * <li>reponse HTTP != 200 -> 502 "Reponse OFF invalide"
+ * <li>corps avec status != 1 -> 404 "Produit introuvable"
  * </ul>
  */
 @Service
 public class OpenFoodFactsClient {
 
-  private static final String FIELDS =
-      "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags";
+  private static final String FIELDS = "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags,ingredients_analysis_tags,label_tags";
 
   private final RestClient client;
   private final String userAgent;
   private final AllergenCrossMatchService crossMatch;
+  private final DietMatchService dietMatch;
 
-  public OpenFoodFactsClient(AppProperties props, AllergenCrossMatchService crossMatch) {
+  public OpenFoodFactsClient(
+      AppProperties props, AllergenCrossMatchService crossMatch, DietMatchService dietMatch) {
     SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
     factory.setConnectTimeout(Duration.ofSeconds(10));
     factory.setReadTimeout(Duration.ofSeconds(10));
     this.client = RestClient.builder().baseUrl(props.offBaseUrl()).requestFactory(factory).build();
     this.userAgent = props.offUserAgent();
     this.crossMatch = crossMatch;
+    this.dietMatch = dietMatch;
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  public BarcodeResponse fetchBarcode(String ean, List<String> userAllergies, String language) {
+  public BarcodeResponse fetchBarcode(
+      String ean, List<String> userAllergies, String language, List<Diet> userDiets) {
     String lc = language == null || language.isBlank() ? "en" : language;
     ResponseEntity<Map> resp;
     try {
@@ -79,6 +84,11 @@ public class OpenFoodFactsClient {
     Map<String, Object> p = (Map<String, Object>) data.getOrDefault("product", Map.of());
     List<String> allergensTags = toStringList(p.get("allergens_tags"));
     List<String> tracesTags = toStringList(p.get("traces_tags"));
+    List<String> ingredientsAnalysisTags = toStringList(p.get("ingredients_analysis_tags"));
+    List<String> labelTags = toStringList(p.get("label_tags"));
+
+    boolean dietCompatible = isDietCompatible(userDiets, labelTags);
+
     List<String> matched = crossMatch.findMatches(allergensTags, userAllergies);
     List<String> traces = crossMatch.findTraces(tracesTags, userAllergies);
     List<String> undetermined = crossMatch.findUndetermined(allergensTags, userAllergies);
@@ -94,6 +104,9 @@ public class OpenFoodFactsClient {
         toStringList(p.get("additives_tags")),
         allergensTags,
         tracesTags,
+        ingredientsAnalysisTags,
+        labelTags,
+        dietCompatible,
         risk,
         matched,
         undetermined);
@@ -118,5 +131,19 @@ public class OpenFoodFactsClient {
       return list.stream().map(String::valueOf).toList();
     }
     return List.of();
+  }
+
+  private boolean isDietCompatible(List<Diet> userDiets, List<String> labelTags) {
+    if (userDiets == null || userDiets.isEmpty() || labelTags == null || labelTags.isEmpty()) {
+      return true;
+    }
+    for (Diet diet : userDiets) {
+      for (String tag : labelTags) {
+        if (dietMatch.isDietCompatible(diet, tag)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }
