@@ -14,9 +14,7 @@ class HistoryController extends AsyncNotifier<List<ScanHistoryEntry>> {
   Future<List<ScanHistoryEntry>> build() => _load();
 
   Future<List<ScanHistoryEntry>> _load() {
-    return ref.read(scanHistoryRepositoryProvider).load(
-      filter: _currentFilter,
-    );
+    return ref.read(scanHistoryRepositoryProvider).load(filter: _currentFilter);
   }
 
   /// Reloads the history while preserving the current filter.
