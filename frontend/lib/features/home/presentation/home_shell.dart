@@ -16,6 +16,7 @@ import '../../scan_barcode/presentation/scan_controller.dart';
 
 import '../../scan_dish/presentation/picture_tab.dart';
 import '../../scan_label/presentation/label_tab.dart';
+import '../../history/presentation/history_screen.dart';
 import '../../profile_allergies/presentation/allergy_controller.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
@@ -38,7 +39,9 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   static const _labelTabIndex = 2;
 
-  static const _profileTabIndex = 3;
+  static const _historyTabIndex = 3;
+
+  static const _profileTabIndex = 4;
 
   static const _productFormats = {
     BarcodeFormat.ean13,
@@ -116,10 +119,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
       if (_productFormats.contains(detected.format)) {
         final allergies = ref.read(allergyControllerProvider).value ?? [];
         //if (allergies.isEmpty) {
-          //_showSnack(
-          //  'Aucune allergie enregistrée. Allez dans votre profil pour en ajouter.',
-          //);
-          //return;
+        //_showSnack(
+        //  'Aucune allergie enregistrée. Allez dans votre profil pour en ajouter.',
+        //);
+        //return;
         //}
         await ref.read(scanControllerProvider.notifier).scan(value, allergies);
 
@@ -242,6 +245,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
       case _labelTabIndex:
         return const LabelTab();
+
+      case _historyTabIndex:
+        return ColoredBox(
+          color: Theme.of(context).colorScheme.surface,
+          child: const HistoryScreen(),
+        );
 
       case _profileTabIndex:
         return _ProfilePanel(
