@@ -15,6 +15,7 @@ class AnimatedBottomNav extends StatelessWidget {
     _NavItem(Icons.photo_camera_rounded, 'Photo'),
     _NavItem(Icons.qr_code_scanner_rounded, 'Scan'),
     _NavItem(Icons.document_scanner_rounded, 'Étiquette'),
+    _NavItem(Icons.history_rounded, 'Historique'),
     _NavItem(Icons.person_rounded, 'Profil'),
   ];
 
