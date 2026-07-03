@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../history/data/scan_history_entry.dart';
+import '../../history/data/scan_history_repository.dart';
 import '../../profile_allergies/presentation/language_controller.dart';
 import '../data/barcode_repository.dart';
 
@@ -19,6 +23,14 @@ class ScanController extends Notifier<AsyncValue<ProductResult?>> {
           .read(barcodeRepositoryProvider)
           .lookup(ean, allergies, language);
     });
+
+    if (state.value != null) {
+      unawaited(
+        ref
+            .read(scanHistoryRepositoryProvider)
+            .save(ScanHistoryEntry.fromProductResult(state.value!)),
+      );
+    }
   }
 
   void reset() => state = const AsyncData<ProductResult?>(null);
