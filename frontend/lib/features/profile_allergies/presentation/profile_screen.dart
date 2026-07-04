@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/languages.dart';
@@ -30,17 +29,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   void dispose() {
     _controller.dispose();
-
     super.dispose();
   }
 
   Future<void> _add() async {
     final text = _controller.text;
-
     if (text.trim().isEmpty) return;
 
     await ref.read(allergyControllerProvider.notifier).add(text);
-
     _controller.clear();
   }
 
@@ -93,10 +89,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
                 onChanged: (code) {
                   if (code == null) return;
-
-                  ref
-                      .read(languageControllerProvider.notifier)
-                      .setLanguage(code);
+                  ref.read(languageControllerProvider.notifier).setLanguage(code);
                 },
               ),
             ),
