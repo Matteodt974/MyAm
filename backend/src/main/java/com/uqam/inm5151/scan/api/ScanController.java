@@ -78,7 +78,7 @@ public class ScanController {
   @PostMapping("/label")
   public LabelResponse scanLabel(@RequestBody LabelRequest req) {
     List<String> ingredients = ingredientExtractor.extract(req.rawText());
-    List<String> matched = allergenCrossmatch.findMatches(ingredients, req.allergies());
+    List<String> matched = allergenCrossmatch.findMatchesInIngredients(ingredients, req.allergies());
     List<String> undetermined = allergenCrossmatch.findUndetermined(ingredients, req.allergies());
     String riskLevel = allergenCrossmatch.riskLevel(matched, List.of(), undetermined);
     return new LabelResponse(ingredients, riskLevel, matched, undetermined);

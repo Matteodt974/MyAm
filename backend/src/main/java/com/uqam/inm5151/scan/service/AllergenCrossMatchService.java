@@ -81,6 +81,30 @@ public class AllergenCrossMatchService {
     return undetermined;
   }
 
+  public List<String> findMatchesInIngredients(List<String> ingredients, List<String> userAllergies) {
+    if (userAllergies == null || userAllergies.isEmpty()) return List.of();
+    List<String> result = new ArrayList<>();
+    for (String ingredient : ingredients) {
+      String lower = ingredient.toLowerCase().trim();
+      for (String allergy : userAllergies) {
+        String normalizedAllergy = normalizeAllergy(allergy);
+        boolean matched = false;
+        for (String word : lower.split("\\s+")) {
+          String mapped = SYNONYMS.getOrDefault(word, word);
+          if (mapped.equals(normalizedAllergy)) {
+            matched = true;
+            break;
+          }
+        }
+        if (matched) {
+          result.add(lower);
+          break;
+        }
+      }
+    }
+    return result;
+  }
+
   // SAFE = aucun match, WARNING = traces seulement, DANGER = allergène présent
   public String riskLevel(List<String> matched, List<String> traces, List<String> undetermined) {
     if (!matched.isEmpty()) return "DANGER";
