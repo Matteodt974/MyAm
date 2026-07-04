@@ -12,14 +12,18 @@ class ScanController extends Notifier<AsyncValue<ProductResult?>> {
   AsyncValue<ProductResult?> build() => const AsyncData<ProductResult?>(null);
 
   /// Lance la recherche produit pour l'EAN scanne.
-  Future<void> scan(String ean, List<String> allergies) async {
+  Future<void> scan(
+    String ean,
+    List<String> allergies,
+    List<String> diets,
+  ) async {
     state = const AsyncLoading<ProductResult?>();
 
     state = await AsyncValue.guard<ProductResult?>(() async {
       final language = await ref.read(languageControllerProvider.future);
       return ref
           .read(barcodeRepositoryProvider)
-          .lookup(ean, allergies, language);
+          .lookup(ean, allergies, language, diets);
     });
 
     if (state.value != null) {
