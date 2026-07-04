@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/languages.dart';
 import 'allergy_controller.dart';
+import 'diet_controller.dart';
 import 'language_controller.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -15,6 +16,16 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _controller = TextEditingController();
+
+  static const _dietOptions = [
+    (value: 'VEGAN', label: 'Vegan'),
+    (value: 'VEGETARIAN', label: 'Végétarien'),
+    (value: 'PESCETARIAN', label: 'Pescétarien'),
+    (value: 'HALAL', label: 'Halal'),
+    (value: 'KOSHER', label: 'Kasher'),
+    (value: 'GLUTEN_FREE', label: 'Sans gluten'),
+    (value: 'LACTOSE_FREE', label: 'Sans lactose'),
+  ];
 
   @override
   void dispose() {
@@ -36,7 +47,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final allergiesAsync = ref.watch(allergyControllerProvider);
-
+    final dietsAsync = ref.watch(dietControllerProvider);
     final languageAsync = ref.watch(languageControllerProvider);
 
     final theme = Theme.of(context);
@@ -44,8 +55,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
             Text('Profil', style: theme.textTheme.headlineSmall),
             const SizedBox(height: 4),
@@ -117,35 +127,67 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child: allergiesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Erreur : $e')),
-                data: (allergies) {
-                  if (allergies.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'Aucune allergie enregistrée.',
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    );
-                  }
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final allergy in allergies)
-                        Chip(
-                          label: Text(allergy),
-                          onDeleted: () => ref
-                              .read(allergyControllerProvider.notifier)
-                              .remove(allergy),
-                        ),
-                    ],
+            allergiesAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Erreur : $e')),
+              data: (allergies) {
+                if (allergies.isEmpty) {
+                  return Text(
+                    'Aucune allergie enregistrée.',
+                    style: theme.textTheme.bodyMedium,
                   );
-                },
+                }
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final allergy in allergies)
+                      Chip(
+                        label: Text(allergy),
+                        onDeleted: () => ref
+                            .read(allergyControllerProvider.notifier)
+                            .remove(allergy),
+                      ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Mes régimes',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.primary,
               ),
             ),
+            const SizedBox(height: 12),
+            dietsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Erreur : $e')),
+              data: (diets) {
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final option in _dietOptions)
+                      FilterChip(
+                        label: Text(option.label),
+                        selected: diets.contains(option.value),
+                        onSelected: (_) => ref
+                            .read(dietControllerProvider.notifier)
+                            .toggle(option.value),
+                      ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Les régimes choisis seront envoyés avec chaque scan code-barres.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.outline,
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
               'Score indicatif, ne remplace pas un avis nutritionniste.',
               style: theme.textTheme.bodySmall?.copyWith(

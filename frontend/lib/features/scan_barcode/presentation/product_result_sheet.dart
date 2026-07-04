@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/nutriscore_badge.dart';
 import '../../../shared/widgets/risk_level_style.dart';
 
+import '../../profile_allergies/presentation/diet_controller.dart';
+
 import '../data/product_result.dart';
 
 /// Fiche produit affichee en bottom sheet apres un scan code-barres reussi.
@@ -16,6 +18,8 @@ class ProductResultSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final selectedDiets =
+        ref.watch(dietControllerProvider).value ?? const <String>[];
 
     final matched = product.matchedAllergens;
     final isDanger = product.riskLevel == 'DANGER';
@@ -86,6 +90,10 @@ class ProductResultSheet extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
             ],
+            if (selectedDiets.isNotEmpty) ...[
+              _DietBanner(isCompatible: product.dietCompatible),
+              const SizedBox(height: 12),
+            ],
             _InfoRow(
               label: 'Groupe NOVA',
               value: product.novaGroup?.toString() ?? '—',
@@ -102,6 +110,12 @@ class ProductResultSheet extends ConsumerWidget {
               tags: product.additivesTags,
               emptyLabel: 'Aucun additif listé.',
             ),
+            const SizedBox(height: 12),
+            _TagsBlock(
+              title: 'Labels',
+              tags: product.labelTags,
+              emptyLabel: 'Aucun label listé.',
+            ),
             const SizedBox(height: 16),
             Text(
               'Score indicatif, ne remplace pas un avis nutritionniste.',
@@ -111,6 +125,53 @@ class ProductResultSheet extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _DietBanner extends StatelessWidget {
+  const _DietBanner({required this.isCompatible});
+
+  final bool isCompatible;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bg = isCompatible
+        ? theme.colorScheme.secondaryContainer
+        : theme.colorScheme.errorContainer;
+    final fg = isCompatible
+        ? theme.colorScheme.onSecondaryContainer
+        : theme.colorScheme.onErrorContainer;
+    final text = isCompatible
+        ? 'Ce produit respecte vos régimes sélectionnés.'
+        : 'Ce produit ne respecte pas vos régimes sélectionnés.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isCompatible ? Icons.verified_rounded : Icons.no_food_rounded,
+            color: fg,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

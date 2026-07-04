@@ -22,11 +22,17 @@ class BarcodeRepository {
     String ean,
     List<String> allergies,
     String language,
+    List<String> diets,
   ) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.scanBarcode,
-        data: {'ean': ean, 'allergies': allergies, 'language': language},
+        data: {
+          'ean': ean,
+          'allergies': allergies,
+          'language': language,
+          'diets': diets,
+        },
       );
 
       return ProductResult.fromJson(response.data!);
