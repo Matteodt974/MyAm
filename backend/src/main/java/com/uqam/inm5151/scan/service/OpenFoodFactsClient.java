@@ -3,6 +3,7 @@ package com.uqam.inm5151.scan.service;
 import com.uqam.inm5151.scan.config.AppProperties;
 import com.uqam.inm5151.scan.dto.BarcodeResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -87,7 +88,13 @@ public class OpenFoodFactsClient {
     List<String> ingredientsAnalysisTags = toStringList(p.get("ingredients_analysis_tags"));
     List<String> labelTags = toStringList(p.get("label_tags"));
 
-    boolean dietCompatible = dietMatch.isUserDietsCompatible(userDiets, labelTags);
+    List<String> productTags = new ArrayList<>();
+    productTags.addAll(labelTags);
+    productTags.addAll(ingredientsAnalysisTags);
+    productTags.addAll(allergensTags);
+    productTags.addAll(tracesTags);
+
+    boolean dietCompatible = dietMatch.isUserDietsCompatible(userDiets, productTags, List.of());
 
     List<String> matched = crossMatch.findMatches(allergensTags, userAllergies);
     List<String> traces = crossMatch.findTraces(tracesTags, userAllergies);

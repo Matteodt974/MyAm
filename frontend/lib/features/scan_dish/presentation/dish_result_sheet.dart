@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../profile_allergies/presentation/allergy_controller.dart';
+import '../../profile_allergies/presentation/diet_controller.dart';
 import '../data/dish_result.dart';
 
 class DishResultSheet extends ConsumerWidget {
@@ -14,6 +15,8 @@ class DishResultSheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final allergies =
         ref.watch(allergyControllerProvider).asData?.value ?? const <String>[];
+    final diets =
+        ref.watch(dietControllerProvider).asData?.value ?? const <String>[];
     final flagged = flaggedDishIngredients(result.ingredients, allergies);
 
     final unrecognized = result.status == 'unrecognized';
@@ -160,6 +163,10 @@ class DishResultSheet extends ConsumerWidget {
                 for (final match in result.foodDataMatches.take(4))
                   _FoodDataRow(match: match),
               ],
+              if (diets.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _DietBanner(isCompatible: result.dietCompatible),
+              ],
               const SizedBox(height: 8),
               Text(
                 'Fichier : ${result.filename ?? '—'} '
@@ -178,6 +185,53 @@ class DishResultSheet extends ConsumerWidget {
   static String _withConfidence(String label, double? confidence) {
     if (confidence == null) return label;
     return '$label ${(confidence * 100).round()} %';
+  }
+}
+
+class _DietBanner extends StatelessWidget {
+  const _DietBanner({required this.isCompatible});
+
+  final bool isCompatible;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bg = isCompatible
+        ? theme.colorScheme.secondaryContainer
+        : theme.colorScheme.errorContainer;
+    final fg = isCompatible
+        ? theme.colorScheme.onSecondaryContainer
+        : theme.colorScheme.onErrorContainer;
+    final text = isCompatible
+        ? 'Ce plat respecte vos régimes sélectionnés.'
+        : 'Ce plat ne respecte pas vos régimes sélectionnés.';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isCompatible ? Icons.verified_rounded : Icons.no_food_rounded,
+            color: fg,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: fg,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

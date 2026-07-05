@@ -18,20 +18,27 @@ import org.springframework.web.server.ResponseStatusException;
 public class DishAnalysisService {
 
   private static final Logger log = LoggerFactory.getLogger(DishAnalysisService.class);
-
   private static final double LOW_CONFIDENCE_THRESHOLD = 0.70;
   private static final int FOOD_MATCH_LIMIT = 5;
 
   private final GeminiDishAnalysisClient gemini;
   private final FoodDataCentralClient foodDataCentral;
+  private final DietMatchService dietMatch;
 
   public DishAnalysisService(
-      GeminiDishAnalysisClient gemini, FoodDataCentralClient foodDataCentral) {
+      GeminiDishAnalysisClient gemini,
+      FoodDataCentralClient foodDataCentral,
+      DietMatchService dietMatch) {
     this.gemini = gemini;
     this.foodDataCentral = foodDataCentral;
+    this.dietMatch = dietMatch;
   }
 
   public DishResponse analyze(MultipartFile image, String language) {
+    return analyze(image, language, List.of());
+  }
+
+  public DishResponse analyze(MultipartFile image, String language, List<Diet> userDiets) {
     byte[] bytes;
     try {
       bytes = image.getBytes();
@@ -47,7 +54,10 @@ public class DishAnalysisService {
       analysis = gemini.analyze(bytes, image.getContentType(), language);
     } catch (GeminiDishAnalysisException e) {
       log.warn("Gemini dish JSON could not be parsed: {}", e.getMessage());
-      return unrecognized(image, "Gemini n'a pas pu identifier le plat avec certitude.");
+      return unrecognized(
+          image,
+          "Gemini n'a pas pu identifier le plat avec certitude.",
+          userDiets == null || userDiets.isEmpty());
     }
 
     String dishName = analysis.dishName();
@@ -78,7 +88,8 @@ public class DishAnalysisService {
           confidence,
           candidates,
           ingredients,
-          List.of());
+          List.of(),
+          userDiets == null || userDiets.isEmpty());
     }
 
     String fdcQueryName =
@@ -90,6 +101,10 @@ public class DishAnalysisService {
       matches = List.of();
     }
     ingredients = mergeWithFdcIngredients(ingredients, matches);
+    List<String> ingredientNames =
+        ingredients.stream().map(DishResponse.ProbableIngredient::name).toList();
+    boolean dietCompatible =
+        dietMatch.isUserDietsCompatible(userDiets, List.of(dishName, fdcQueryName), ingredientNames);
     String status = confidence < LOW_CONFIDENCE_THRESHOLD ? "low_confidence" : "identified";
     String message =
         confidence < LOW_CONFIDENCE_THRESHOLD
@@ -106,10 +121,12 @@ public class DishAnalysisService {
         confidence,
         candidates,
         ingredients,
-        matches);
+        matches,
+        dietCompatible);
   }
 
-  private static DishResponse unrecognized(MultipartFile image, String message) {
+  private static DishResponse unrecognized(
+      MultipartFile image, String message, boolean dietCompatible) {
     return new DishResponse(
         image.getOriginalFilename(),
         image.getContentType(),
@@ -120,7 +137,8 @@ public class DishAnalysisService {
         0.0,
         List.of(),
         List.of(),
-        List.of());
+        List.of(),
+        dietCompatible);
   }
 
   private static List<DishResponse.ProbableIngredient> mergeWithFdcIngredients(
@@ -132,7 +150,9 @@ public class DishAnalysisService {
             .filter(s -> s != null && !s.isBlank())
             .findFirst()
             .orElse(null);
-    if (fdcStr == null) return geminiIngredients;
+    if (fdcStr == null) {
+      return geminiIngredients;
+    }
     Set<String> seen =
         geminiIngredients.stream().map(i -> i.name().toLowerCase()).collect(Collectors.toSet());
     List<DishResponse.ProbableIngredient> result = new ArrayList<>(geminiIngredients);

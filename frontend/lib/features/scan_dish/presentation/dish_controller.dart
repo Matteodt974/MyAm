@@ -9,19 +9,18 @@ import '../../history/presentation/history_persistence.dart';
 import '../../profile_allergies/presentation/allergy_controller.dart';
 import '../../profile_allergies/presentation/language_controller.dart';
 import '../data/dish_repository.dart';
-
 import '../data/dish_result.dart';
 
 class DishController extends Notifier<AsyncValue<DishResult?>> {
   @override
   AsyncValue<DishResult?> build() => const AsyncData<DishResult?>(null);
 
-  Future<void> analyze(File image) async {
+  Future<void> analyze(File image, List<String> diets) async {
     state = const AsyncLoading<DishResult?>();
 
     state = await AsyncValue.guard<DishResult?>(() async {
       final language = await ref.read(languageControllerProvider.future);
-      return ref.read(dishRepositoryProvider).analyze(image, language);
+      return ref.read(dishRepositoryProvider).analyze(image, language, diets);
     });
 
     if (state.value != null) {
