@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class DietMatchService {
 
-    // Check whether the product respects all selected diets.
+    // compare chaque diet au produit
     public boolean isUserDietsCompatible(
             List<Diet> userDiets, List<String> productTags, List<String> ingredientNames) {
         if (userDiets == null || userDiets.isEmpty()) {
@@ -22,7 +22,8 @@ public class DietMatchService {
         return true;
     }
 
-    // Check if a single diet is compatible with product tags and ingredient names.
+    // vérifie si un régime alimentaire est compatible avec les tags du produit et
+    // les noms des ingrédients.
     public boolean isDietCompatible(Diet diet, List<String> productTags, List<String> ingredientNames) {
         if (diet == null) {
             return false;
@@ -50,7 +51,8 @@ public class DietMatchService {
         };
     }
 
-    // Backward-compatible overload for callers that only have a single label.
+    // vérifie si un produit est compatible avec un régime alimentaire donné en
+    // utilisant uniquement le tag du produit.
     public boolean isDietCompatible(Diet diet, String productDiet) {
         return isDietCompatible(diet, productDiet == null ? List.of() : List.of(productDiet), List.of());
     }
