@@ -8,6 +8,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../data/dish_result.dart';
 
+import '../../profile_allergies/presentation/diet_controller.dart';
+
 import 'dish_controller.dart';
 
 import 'dish_result_sheet.dart';
@@ -30,7 +32,11 @@ class _PictureTabState extends ConsumerState<PictureTab> {
 
     if (shot == null) return;
 
-    await ref.read(dishControllerProvider.notifier).analyze(File(shot.path));
+    final diets = ref.read(dietControllerProvider).value ?? const <String>[];
+
+    await ref
+        .read(dishControllerProvider.notifier)
+        .analyze(File(shot.path), diets);
   }
 
   @override

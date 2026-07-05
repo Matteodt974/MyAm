@@ -3,8 +3,11 @@ package com.uqam.inm5151.scan.api;
 import com.uqam.inm5151.scan.dto.BarcodeRequest;
 import com.uqam.inm5151.scan.dto.BarcodeResponse;
 import com.uqam.inm5151.scan.dto.DishResponse;
+import com.uqam.inm5151.scan.service.Diet;
 import com.uqam.inm5151.scan.service.DishAnalysisService;
 import com.uqam.inm5151.scan.service.OpenFoodFactsClient;
+import java.util.Arrays;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,11 +21,8 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * UC2 - scan_food_barcode.
  *
- * <p>
- * Endpoint REEL et fonctionnel : il interroge Open Food Facts et renvoie les
- * champs utiles.
- * Premier "vrai" use case de bout en bout (Flutter -> API -> service externe),
- * sans BD ni OCR.
+ * <p>Endpoint REEL et fonctionnel : il interroge Open Food Facts et renvoie les champs utiles.
+ * Premier "vrai" use case de bout en bout (Flutter -> API -> service externe), sans BD ni OCR.
  * Portage de backend/app/api/routes_scan.py.
  */
 @RestController
@@ -45,20 +45,39 @@ public class ScanController {
   /**
    * UC7 - scan_dish : identification d'un plat a partir d'une photo.
    *
-   * <p>
-   * L'onglet "Picture" de l'app envoie ici une image en multipart (champ
-   * {@code image}). Loi 25
+   * <p>L'onglet "Picture" de l'app envoie ici une image en multipart (champ {@code image}). Loi 25
    * / RGPD : l'image n'est JAMAIS persistee.
    */
   @PostMapping(value = "/dish", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public DishResponse scanDish(
       @RequestParam("image") MultipartFile image,
-      @RequestParam(value = "language", required = false) String language) {
+      @RequestParam(value = "language", required = false) String language,
+      @RequestParam(value = "diets", required = false) String diets) {
     String contentType = image.getContentType();
     if (contentType == null || !contentType.startsWith("image/")) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le fichier doit être une image");
     }
 
-    return dishAnalysis.analyze(image, language);
+    return dishAnalysis.analyze(image, language, parseDiets(diets));
+  }
+
+  private static List<Diet> parseDiets(String diets) {
+    if (diets == null || diets.isBlank()) {
+      return List.of();
+    }
+
+    return Arrays.stream(diets.split(","))
+        .map(String::trim)
+        .filter(s -> !s.isBlank())
+        .map(
+            value -> {
+              try {
+                return Diet.valueOf(value);
+              } catch (IllegalArgumentException e) {
+                return null;
+              }
+            })
+        .filter(java.util.Objects::nonNull)
+        .toList();
   }
 }

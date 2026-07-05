@@ -1,15 +1,11 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_endpoints.dart';
-
 import '../../../core/errors/api_exception.dart';
-
 import '../../../core/network/dio_client.dart';
-
 import 'dish_result.dart';
 
 class DishRepository {
@@ -17,7 +13,11 @@ class DishRepository {
 
   final Dio _dio;
 
-  Future<DishResult> analyze(File image, String language) async {
+  Future<DishResult> analyze(
+    File image,
+    String language,
+    List<String> diets,
+  ) async {
     try {
       final formData = FormData.fromMap({
         'image': await MultipartFile.fromFile(
@@ -27,6 +27,7 @@ class DishRepository {
               : 'dish.jpg',
         ),
         'language': language,
+        'diets': diets.join(','),
       });
 
       final response = await _dio.post<Map<String, dynamic>>(

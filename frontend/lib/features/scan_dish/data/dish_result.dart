@@ -1,54 +1,101 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+class DishResult {
+  const DishResult({
+    this.filename,
+    this.contentType,
+    this.sizeBytes = 0,
+    this.status = '',
+    this.message = '',
+    this.dishName,
+    this.confidence,
+    this.candidates = const <DishCandidate>[],
+    this.ingredients = const <ProbableIngredient>[],
+    this.foodDataMatches = const <FoodDataMatch>[],
+    this.dietCompatible = false,
+  });
 
-part 'dish_result.freezed.dart';
+  final String? filename;
+  final String? contentType;
+  final int sizeBytes;
+  final String status;
+  final String message;
+  final String? dishName;
+  final double? confidence;
+  final List<DishCandidate> candidates;
+  final List<ProbableIngredient> ingredients;
+  final List<FoodDataMatch> foodDataMatches;
+  final bool dietCompatible;
 
-part 'dish_result.g.dart';
+  factory DishResult.fromJson(Map<String, dynamic> json) {
+    return DishResult(
+      filename: json['filename']?.toString(),
+      contentType: json['content_type']?.toString(),
+      sizeBytes: _toInt(json['size_bytes']) ?? 0,
+      status: json['status']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      dishName: json['dish_name']?.toString(),
+      confidence: _toDouble(json['confidence']),
+      candidates: _toList(json['candidates'], DishCandidate.fromJson),
+      ingredients: _toList(json['ingredients'], ProbableIngredient.fromJson),
+      foodDataMatches: _toList(
+        json['food_data_matches'],
+        FoodDataMatch.fromJson,
+      ),
+      dietCompatible: json['diet_compatible'] as bool? ?? false,
+    );
+  }
 
-@freezed
-abstract class DishResult with _$DishResult {
-  const factory DishResult({
-    String? filename,
-    @JsonKey(name: 'content_type') String? contentType,
-    @JsonKey(name: 'size_bytes') @Default(0) int sizeBytes,
-    @Default('') String status,
-    @Default('') String message,
-    @JsonKey(name: 'dish_name') String? dishName,
-    double? confidence,
-    @Default(<DishCandidate>[]) List<DishCandidate> candidates,
-    @Default(<ProbableIngredient>[]) List<ProbableIngredient> ingredients,
-    @JsonKey(name: 'food_data_matches')
-    @Default(<FoodDataMatch>[])
-    List<FoodDataMatch> foodDataMatches,
-  }) = _DishResult;
+  static int? _toInt(Object? value) {
+    if (value is num) return value.toInt();
+    if (value is String && value.isNotEmpty) return int.tryParse(value);
+    return null;
+  }
 
-  factory DishResult.fromJson(Map<String, dynamic> json) =>
-      _$DishResultFromJson(json);
+  static double? _toDouble(Object? value) {
+    if (value is num) return value.toDouble();
+    if (value is String && value.isNotEmpty) return double.tryParse(value);
+    return null;
+  }
+
+  static List<T> _toList<T>(
+    Object? value,
+    T Function(Map<String, dynamic>) fromJson,
+  ) {
+    if (value is! List) return <T>[];
+    return value
+        .whereType<Map>()
+        .map((item) => fromJson(item.cast<String, dynamic>()))
+        .toList();
+  }
 }
 
-@freezed
-abstract class DishCandidate with _$DishCandidate {
-  const factory DishCandidate({@Default('') String name, double? confidence}) =
-      _DishCandidate;
+class DishCandidate {
+  const DishCandidate({this.name = '', this.confidence});
 
-  factory DishCandidate.fromJson(Map<String, dynamic> json) =>
-      _$DishCandidateFromJson(json);
+  final String name;
+  final double? confidence;
+
+  factory DishCandidate.fromJson(Map<String, dynamic> json) {
+    return DishCandidate(
+      name: json['name']?.toString() ?? '',
+      confidence: DishResult._toDouble(json['confidence']),
+    );
+  }
 }
 
-@freezed
-abstract class ProbableIngredient with _$ProbableIngredient {
-  const factory ProbableIngredient({
-    @Default('') String name,
-    double? confidence,
-  }) = _ProbableIngredient;
+class ProbableIngredient {
+  const ProbableIngredient({this.name = '', this.confidence});
 
-  factory ProbableIngredient.fromJson(Map<String, dynamic> json) =>
-      _$ProbableIngredientFromJson(json);
+  final String name;
+  final double? confidence;
+
+  factory ProbableIngredient.fromJson(Map<String, dynamic> json) {
+    return ProbableIngredient(
+      name: json['name']?.toString() ?? '',
+      confidence: DishResult._toDouble(json['confidence']),
+    );
+  }
 }
 
-/// Returns the ingredient names from [ingredients] that match one of the
-/// user's [allergies] (case-insensitive substring match in either
-/// direction). Shared between the dish result UI and scan history so both
-/// agree on what counts as a flagged ingredient.
 Set<String> flaggedDishIngredients(
   List<ProbableIngredient> ingredients,
   List<String> allergies,
@@ -58,7 +105,8 @@ Set<String> flaggedDishIngredients(
   for (final ingredient in ingredients) {
     final name = ingredient.name.toLowerCase();
     for (final allergy in allergies) {
-      if (name.contains(allergy) || allergy.contains(name)) {
+      final normalizedAllergy = allergy.toLowerCase();
+      if (name.contains(normalizedAllergy) || normalizedAllergy.contains(name)) {
         flagged.add(ingredient.name);
         break;
       }
@@ -67,16 +115,28 @@ Set<String> flaggedDishIngredients(
   return flagged;
 }
 
-@freezed
-abstract class FoodDataMatch with _$FoodDataMatch {
-  const factory FoodDataMatch({
-    @JsonKey(name: 'fdc_id') int? fdcId,
-    String? description,
-    @JsonKey(name: 'data_type') String? dataType,
-    @JsonKey(name: 'brand_owner') String? brandOwner,
-    String? ingredients,
-  }) = _FoodDataMatch;
+class FoodDataMatch {
+  const FoodDataMatch({
+    this.fdcId,
+    this.description,
+    this.dataType,
+    this.brandOwner,
+    this.ingredients,
+  });
 
-  factory FoodDataMatch.fromJson(Map<String, dynamic> json) =>
-      _$FoodDataMatchFromJson(json);
+  final int? fdcId;
+  final String? description;
+  final String? dataType;
+  final String? brandOwner;
+  final String? ingredients;
+
+  factory FoodDataMatch.fromJson(Map<String, dynamic> json) {
+    return FoodDataMatch(
+      fdcId: DishResult._toInt(json['fdc_id']),
+      description: json['description']?.toString(),
+      dataType: json['data_type']?.toString(),
+      brandOwner: json['brand_owner']?.toString(),
+      ingredients: json['ingredients']?.toString(),
+    );
+  }
 }
