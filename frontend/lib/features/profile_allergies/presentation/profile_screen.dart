@@ -5,6 +5,7 @@ import '../../../core/constants/languages.dart';
 import 'allergy_controller.dart';
 import 'diet_controller.dart';
 import 'language_controller.dart';
+import 'trusted_item_controller.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -45,6 +46,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final allergiesAsync = ref.watch(allergyControllerProvider);
     final dietsAsync = ref.watch(dietControllerProvider);
     final languageAsync = ref.watch(languageControllerProvider);
+    final trustedItemsAsync = ref.watch(trustedItemControllerProvider);
 
     final theme = Theme.of(context);
 
@@ -179,6 +181,42 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.outline,
               ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Mes items de confiance',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            trustedItemsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Erreur : $e')),
+              data: (items) {
+                if (items.isEmpty) {
+                  return Text(
+                    'Aucun item de confiance enregistré.',
+                    style: theme.textTheme.bodyMedium,
+                  );
+                }
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final item in items)
+                      InputChip(
+                        label: Text(
+                          item.name?.isNotEmpty == true ? item.name! : item.ean,
+                        ),
+                        avatar: const Icon(Icons.verified, size: 18),
+                        onDeleted: () => ref
+                            .read(trustedItemControllerProvider.notifier)
+                            .remove(item.id),
+                      ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
             Text(

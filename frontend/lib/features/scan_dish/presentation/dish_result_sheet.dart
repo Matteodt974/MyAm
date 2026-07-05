@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../profile_allergies/data/trusted_item_local_store.dart';
 import '../../profile_allergies/presentation/allergy_controller.dart';
 import '../../profile_allergies/presentation/diet_controller.dart';
+import '../../profile_allergies/presentation/trusted_item_controller.dart';
 import '../data/dish_result.dart';
 
 class DishResultSheet extends ConsumerWidget {
@@ -15,8 +17,11 @@ class DishResultSheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final allergies =
         ref.watch(allergyControllerProvider).asData?.value ?? const <String>[];
-    final diets =
-        ref.watch(dietControllerProvider).asData?.value ?? const <String>[];
+    final diets = ref.watch(dietControllerProvider).asData?.value ?? const <String>[];
+    final trustedItems = ref.watch(trustedItemControllerProvider).value ?? const [];
+    final trustedId = _trustedId(result);
+    final isTrusted =
+        trustedId != null && trustedItems.any((item) => item.id == trustedId);
     final flagged = flaggedDishIngredients(result.ingredients, allergies);
 
     final unrecognized = result.status == 'unrecognized';
@@ -99,6 +104,38 @@ class DishResultSheet extends ConsumerWidget {
                   icon: Icons.warning_amber_rounded,
                   text:
                       'La photo ne permet pas une identification fiable. Reprenez une photo si nécessaire.',
+                ),
+              ],
+              if (trustedId != null) ...[
+                const SizedBox(height: 12),
+                FilledButton.icon(
+                  onPressed: isTrusted
+                      ? null
+                      : () async {
+                          await ref
+                              .read(trustedItemControllerProvider.notifier)
+                              .add(
+                                TrustedItem(
+                                  id: trustedId,
+                                  ean: trustedId,
+                                  name: result.dishName ?? result.message,
+                                ),
+                              );
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Ajouté aux items de confiance'),
+                              ),
+                            );
+                          }
+                        },
+                  icon: Icon(isTrusted ? Icons.verified : Icons.add_task),
+                  label: Text(
+                    isTrusted
+                        ? 'Déjà dans mes items'
+                        : 'Ajouter aux items fiables',
+                  ),
                 ),
               ],
               if (result.candidates.isNotEmpty) ...[
@@ -185,6 +222,22 @@ class DishResultSheet extends ConsumerWidget {
   static String _withConfidence(String label, double? confidence) {
     if (confidence == null) return label;
     return '$label ${(confidence * 100).round()} %';
+  }
+
+  static String? _trustedId(DishResult result) {
+    final source = result.dishName?.trim().isNotEmpty == true
+        ? result.dishName!.trim()
+        : result.message.trim();
+
+    if (source.isEmpty) return null;
+
+    final slug = source
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+
+    if (slug.isEmpty) return null;
+    return 'dish:$slug';
   }
 }
 

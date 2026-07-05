@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/nutriscore_badge.dart';
 import '../../../shared/widgets/risk_level_style.dart';
 
+import '../../profile_allergies/data/trusted_item_local_store.dart';
+import '../../profile_allergies/presentation/trusted_item_controller.dart';
 import '../../profile_allergies/presentation/diet_controller.dart';
 
 import '../data/product_result.dart';
@@ -20,6 +22,9 @@ class ProductResultSheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final selectedDiets =
         ref.watch(dietControllerProvider).value ?? const <String>[];
+    final trustedItems =
+        ref.watch(trustedItemControllerProvider).value ?? const [];
+    final isTrusted = trustedItems.any((item) => item.ean == product.ean);
 
     final matched = product.matchedAllergens;
     final isDanger = product.riskLevel == 'DANGER';
@@ -72,6 +77,39 @@ class ProductResultSheet extends ConsumerWidget {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                FilledButton.icon(
+                  onPressed: isTrusted
+                      ? null
+                      : () async {
+                          await ref
+                              .read(trustedItemControllerProvider.notifier)
+                              .add(
+                                TrustedItem(
+                                  ean: product.ean,
+                                  name: product.name,
+                                  brands: product.brands,
+                                  nutriscore: product.nutriscore,
+                                ),
+                              );
+
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Ajouté aux items de confiance'),
+                              ),
+                            );
+                          }
+                        },
+                  icon: Icon(isTrusted ? Icons.verified : Icons.add_task),
+                  label: Text(
+                    isTrusted ? 'Déjà dans mes items' : 'Ajouter aux items fiables',
                   ),
                 ),
               ],
