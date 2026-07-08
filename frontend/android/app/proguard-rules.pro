@@ -10,6 +10,16 @@
 -keep interface com.google.mlkit.** { *; }
 -keep class com.google.android.gms.internal.mlkit_vision_barcode.** { *; }
 
+# ML Kit's other script recognizers (Chinese, Japanese, Korean, Devanagari) are opt-in deps we don't include.
+-dontwarn com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions$Builder
+-dontwarn com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
+-dontwarn com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions$Builder
+-dontwarn com.google.mlkit.vision.text.devanagari.DevanagariTextRecognizerOptions
+-dontwarn com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions$Builder
+-dontwarn com.google.mlkit.vision.text.japanese.JapaneseTextRecognizerOptions
+-dontwarn com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions$Builder
+-dontwarn com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
+
 # mobile_scanner Flutter plugin bridge.
 -keep class dev.steenbakker.mobile_scanner.** { *; }
 
