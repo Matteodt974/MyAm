@@ -17,7 +17,7 @@ class DishRepository {
 
   final Dio _dio;
 
-  Future<DishResult> analyze(File image) async {
+  Future<DishResult> analyze(File image, String language) async {
     try {
       final formData = FormData.fromMap({
         'image': await MultipartFile.fromFile(
@@ -26,6 +26,7 @@ class DishRepository {
               ? image.uri.pathSegments.last
               : 'dish.jpg',
         ),
+        'language': language,
       });
 
       final response = await _dio.post<Map<String, dynamic>>(

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../profile_allergies/presentation/language_controller.dart';
 import '../data/label_repository.dart';
 import '../data/label_result.dart';
 
@@ -11,9 +12,10 @@ class LabelController extends Notifier<AsyncValue<LabelResult?>> {
   Future<void> analyze(String text) async {
     state = const AsyncLoading<LabelResult?>();
 
-    state = await AsyncValue.guard<LabelResult?>(
-      () => ref.read(labelRepositoryProvider).analyze(text),
-    );
+    state = await AsyncValue.guard<LabelResult?>(() async {
+      final language = await ref.read(languageControllerProvider.future);
+      return ref.read(labelRepositoryProvider).analyze(text, language);
+    });
   }
 
   void reset() => state = const AsyncData<LabelResult?>(null);

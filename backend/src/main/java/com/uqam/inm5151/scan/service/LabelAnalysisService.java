@@ -17,15 +17,18 @@ public class LabelAnalysisService {
     this.parser = parser;
   }
 
-  public LabelAnalysisResponse analyze(String text) {
+  public LabelAnalysisResponse analyze(String text, String language) {
     if (text == null || text.isBlank()) {
       throw new IllegalArgumentException("Le texte est requis");
     }
 
-    GeminiLabelClient.TranslationResult result = gemini.detectAndTranslate(text);
-    List<LabelIngredient> ingredients = parser.parse(result.translatedText());
+    GeminiLabelClient.TranslationResult result = gemini.detectAndTranslate(text, language);
+    List<LabelIngredient> ingredients =
+        !result.ingredients().isEmpty()
+            ? result.ingredients().stream().map(name -> new LabelIngredient(name, null)).toList()
+            : parser.parse(result.translatedText());
 
     return new LabelAnalysisResponse(
-        result.language(), !result.english(), result.translatedText(), ingredients);
+        result.language(), !result.matchesTarget(), result.translatedText(), ingredients);
   }
 }
