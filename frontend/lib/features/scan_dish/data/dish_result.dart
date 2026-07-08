@@ -45,6 +45,28 @@ abstract class ProbableIngredient with _$ProbableIngredient {
       _$ProbableIngredientFromJson(json);
 }
 
+/// Returns the ingredient names from [ingredients] that match one of the
+/// user's [allergies] (case-insensitive substring match in either
+/// direction). Shared between the dish result UI and scan history so both
+/// agree on what counts as a flagged ingredient.
+Set<String> flaggedDishIngredients(
+  List<ProbableIngredient> ingredients,
+  List<String> allergies,
+) {
+  if (allergies.isEmpty) return const {};
+  final flagged = <String>{};
+  for (final ingredient in ingredients) {
+    final name = ingredient.name.toLowerCase();
+    for (final allergy in allergies) {
+      if (name.contains(allergy) || allergy.contains(name)) {
+        flagged.add(ingredient.name);
+        break;
+      }
+    }
+  }
+  return flagged;
+}
+
 @freezed
 abstract class FoodDataMatch with _$FoodDataMatch {
   const factory FoodDataMatch({

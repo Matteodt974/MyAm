@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../history/data/scan_history_entry.dart';
 import '../../history/presentation/history_persistence.dart';
+import '../../profile_allergies/presentation/allergy_controller.dart';
 import '../../profile_allergies/presentation/language_controller.dart';
 import '../data/dish_repository.dart';
 
@@ -43,8 +44,10 @@ class DishController extends Notifier<AsyncValue<DishResult?>> {
     } catch (e) {
       debugPrint('Failed to persist dish thumbnail: $e');
     }
+    final allergies = await ref.read(allergyControllerProvider.future);
     return ScanHistoryEntry.fromDishResult(
       result,
+      allergies: allergies,
       thumbnailPath: thumbnailPath,
     );
   }

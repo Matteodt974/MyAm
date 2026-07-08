@@ -14,7 +14,7 @@ class DishResultSheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final allergies =
         ref.watch(allergyControllerProvider).asData?.value ?? const <String>[];
-    final flagged = _flaggedIngredients(result.ingredients, allergies);
+    final flagged = flaggedDishIngredients(result.ingredients, allergies);
 
     final unrecognized = result.status == 'unrecognized';
 
@@ -178,24 +178,6 @@ class DishResultSheet extends ConsumerWidget {
   static String _withConfidence(String label, double? confidence) {
     if (confidence == null) return label;
     return '$label ${(confidence * 100).round()} %';
-  }
-
-  static Set<String> _flaggedIngredients(
-    List<ProbableIngredient> ingredients,
-    List<String> allergies,
-  ) {
-    if (allergies.isEmpty) return const {};
-    final result = <String>{};
-    for (final ingredient in ingredients) {
-      final name = ingredient.name.toLowerCase();
-      for (final allergy in allergies) {
-        if (name.contains(allergy) || allergy.contains(name)) {
-          result.add(ingredient.name);
-          break;
-        }
-      }
-    }
-    return result;
   }
 }
 
