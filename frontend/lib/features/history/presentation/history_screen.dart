@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/scan_history_entry.dart';
+import '../data/scan_history_repository.dart';
 import 'history_controller.dart';
 import 'history_detail_sheet.dart';
 import 'history_filter_sheet.dart';
@@ -24,7 +25,7 @@ class HistoryScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.filter_list),
             tooltip: 'Filtrer',
-            onPressed: () => _openFilterSheet(context, ref, state),
+            onPressed: () => _openFilterSheet(context, ref),
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
@@ -86,14 +87,14 @@ class HistoryScreen extends ConsumerWidget {
     );
   }
 
-  void _openFilterSheet(
-    BuildContext context,
-    WidgetRef ref,
-    AsyncValue<List<ScanHistoryEntry>> state,
-  ) {
-    final entries = state.value ?? [];
+  Future<void> _openFilterSheet(BuildContext context, WidgetRef ref) async {
+    // Always drawn from the full history, not the currently filtered view,
+    // so applying a filter doesn't shrink the options available afterward.
+    final allEntries = await ref.read(scanHistoryRepositoryProvider).load();
     final availableAllergens =
-        entries.expand((e) => e.matchedAllergens).toSet().toList()..sort();
+        allEntries.expand((e) => e.matchedAllergens).toSet().toList()..sort();
+
+    if (!context.mounted) return;
 
     showModalBottomSheet<void>(
       context: context,
