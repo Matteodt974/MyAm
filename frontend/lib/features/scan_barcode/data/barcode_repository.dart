@@ -18,11 +18,15 @@ class BarcodeRepository {
   /// Interroge le backend pour l'EAN scanne et renvoie la fiche produit.
   ///
   /// Toute erreur reseau/HTTP est convertie en [ApiException] lisible.
-  Future<ProductResult> lookup(String ean, List<String> allergies) async {
+  Future<ProductResult> lookup(
+    String ean,
+    List<String> allergies,
+    String language,
+  ) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.scanBarcode,
-        data: {'ean': ean, 'allergies': allergies},
+        data: {'ean': ean, 'allergies': allergies, 'language': language},
       );
 
       return ProductResult.fromJson(response.data!);

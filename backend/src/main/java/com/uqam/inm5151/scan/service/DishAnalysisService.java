@@ -31,7 +31,7 @@ public class DishAnalysisService {
     this.foodDataCentral = foodDataCentral;
   }
 
-  public DishResponse analyze(MultipartFile image) {
+  public DishResponse analyze(MultipartFile image, String language) {
     byte[] bytes;
     try {
       bytes = image.getBytes();
@@ -44,7 +44,7 @@ public class DishAnalysisService {
 
     GeminiDishAnalysis analysis;
     try {
-      analysis = gemini.analyze(bytes, image.getContentType());
+      analysis = gemini.analyze(bytes, image.getContentType(), language);
     } catch (GeminiDishAnalysisException e) {
       log.warn("Gemini dish JSON could not be parsed: {}", e.getMessage());
       return unrecognized(image, "Gemini n'a pas pu identifier le plat avec certitude.");

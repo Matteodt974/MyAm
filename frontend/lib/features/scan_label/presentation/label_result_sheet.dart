@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/languages.dart';
 import '../../profile_allergies/presentation/allergy_controller.dart';
 import '../data/label_result.dart';
 
@@ -121,7 +122,7 @@ class LabelResultSheet extends ConsumerWidget {
   }
 
   static String _translatedFrom(String code) {
-    final label = _languageLabel(code);
+    final label = languageLabel(code);
     if (label.isEmpty) return code;
 
     final first = label[0].toLowerCase();
@@ -129,40 +130,6 @@ class LabelResultSheet extends ConsumerWidget {
       return "l'$label";
     }
     return 'le $label';
-  }
-
-  static String _languageLabel(String code) {
-    switch (code.toLowerCase()) {
-      case 'fr':
-        return 'français';
-      case 'en':
-        return 'anglais';
-      case 'es':
-        return 'espagnol';
-      case 'de':
-        return 'allemand';
-      case 'it':
-        return 'italien';
-      case 'pt':
-        return 'portugais';
-      case 'nl':
-        return 'néerlandais';
-      case 'pl':
-        return 'polonais';
-      case 'ru':
-        return 'russe';
-      case 'zh':
-      case 'zh-cn':
-        return 'chinois';
-      case 'ja':
-        return 'japonais';
-      case 'ko':
-        return 'coréen';
-      case 'ar':
-        return 'arabe';
-      default:
-        return code;
-    }
   }
 
   static Set<String> _flaggedIngredients(

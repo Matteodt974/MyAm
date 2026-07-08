@@ -36,7 +36,7 @@ public class ScanController {
 
   @PostMapping("/barcode")
   public BarcodeResponse scanBarcode(@RequestBody BarcodeRequest req) {
-    return openFoodFacts.fetchBarcode(req.ean(), req.allergies());
+    return openFoodFacts.fetchBarcode(req.ean(), req.allergies(), req.language());
   }
 
   /**
@@ -46,12 +46,14 @@ public class ScanController {
    * / RGPD : l'image n'est JAMAIS persistee.
    */
   @PostMapping(value = "/dish", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public DishResponse scanDish(@RequestParam("image") MultipartFile image) {
+  public DishResponse scanDish(
+      @RequestParam("image") MultipartFile image,
+      @RequestParam(value = "language", required = false) String language) {
     String contentType = image.getContentType();
     if (contentType == null || !contentType.startsWith("image/")) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le fichier doit être une image");
     }
 
-    return dishAnalysis.analyze(image);
+    return dishAnalysis.analyze(image, language);
   }
 }

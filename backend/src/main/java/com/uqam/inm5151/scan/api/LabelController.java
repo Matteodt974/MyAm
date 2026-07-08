@@ -17,7 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
  * UC6 - translate_and_structure_label : traduction et structuration d'une liste d'ingredients.
  *
  * <p>Le texte brut est extrait cote mobile (Google ML Kit, UC-04). Le backend detecte la langue via
- * Gemini, traduit en anglais si necessaire, puis decoupe la liste d'ingredients.
+ * Gemini, traduit vers la langue cible choisie par l'utilisateur si necessaire, puis decoupe la
+ * liste d'ingredients.
  */
 @RestController
 @RequestMapping("/v1/label")
@@ -32,7 +33,7 @@ public class LabelController {
   @PostMapping("/translate-and-structure")
   public LabelAnalysisResponse analyzeLabel(@RequestBody @Valid LabelTextRequest request) {
     try {
-      return labelAnalysis.analyze(request.text());
+      return labelAnalysis.analyze(request.text(), request.language());
     } catch (IllegalArgumentException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
     } catch (UnsupportedLanguageException | GeminiDishAnalysisException e) {
