@@ -3,13 +3,8 @@ package com.uqam.inm5151.scan.api;
 import com.uqam.inm5151.scan.dto.BarcodeRequest;
 import com.uqam.inm5151.scan.dto.BarcodeResponse;
 import com.uqam.inm5151.scan.dto.DishResponse;
-import com.uqam.inm5151.scan.dto.LabelRequest;
-import com.uqam.inm5151.scan.dto.LabelResponse;
-import com.uqam.inm5151.scan.service.AllergenCrossMatchService;
 import com.uqam.inm5151.scan.service.DishAnalysisService;
-import com.uqam.inm5151.scan.service.IngredientExtractorService;
 import com.uqam.inm5151.scan.service.OpenFoodFactsClient;
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,18 +28,10 @@ public class ScanController {
 
   private final OpenFoodFactsClient openFoodFacts;
   private final DishAnalysisService dishAnalysis;
-  private final IngredientExtractorService ingredientExtractor;
-  private final AllergenCrossMatchService allergenCrossmatch;
 
-  public ScanController(
-      OpenFoodFactsClient openFoodFacts,
-      DishAnalysisService dishAnalysis,
-      IngredientExtractorService ingredientExtractor,
-      AllergenCrossMatchService allergenCrossmatch) {
+  public ScanController(OpenFoodFactsClient openFoodFacts, DishAnalysisService dishAnalysis) {
     this.openFoodFacts = openFoodFacts;
     this.dishAnalysis = dishAnalysis;
-    this.ingredientExtractor = ingredientExtractor;
-    this.allergenCrossmatch = allergenCrossmatch;
   }
 
   @PostMapping("/barcode")
@@ -68,15 +55,5 @@ public class ScanController {
     }
 
     return dishAnalysis.analyze(image, language);
-  }
-
-  @PostMapping("/label")
-  public LabelResponse scanLabel(@RequestBody LabelRequest req) {
-    List<String> ingredients = ingredientExtractor.extract(req.rawText());
-    List<String> matched =
-        allergenCrossmatch.findMatchesInIngredients(ingredients, req.allergies());
-    List<String> undetermined = allergenCrossmatch.findUndetermined(ingredients, req.allergies());
-    String riskLevel = allergenCrossmatch.riskLevel(matched, List.of(), undetermined);
-    return new LabelResponse(ingredients, riskLevel, matched, undetermined);
   }
 }
