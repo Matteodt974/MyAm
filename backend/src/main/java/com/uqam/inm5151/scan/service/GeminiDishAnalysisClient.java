@@ -66,16 +66,29 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
     super(props, objectMapper);
   }
 
-  public GeminiDishAnalysis analyze(byte[] imageBytes, String contentType) {
+  public GeminiDishAnalysis analyze(byte[] imageBytes, String contentType, String language) {
     requireApiKey();
 
-    GeminiDishAnalysis analysis = requestAnalysis(imageBytes, contentType, PROMPT);
+    String target = language == null || language.isBlank() ? "fr" : language;
+    GeminiDishAnalysis analysis =
+        requestAnalysis(imageBytes, contentType, withLanguage(PROMPT, target));
     if (isUnrecognized(analysis)) {
       log.info(
           "Gemini returned no dish on first pass; retrying with broad consumable-product prompt");
-      return requestAnalysis(imageBytes, contentType, FALLBACK_PROMPT);
+      return requestAnalysis(imageBytes, contentType, withLanguage(FALLBACK_PROMPT, target));
     }
     return analysis;
+  }
+
+  private static String withLanguage(String prompt, String targetLanguage) {
+    return prompt
+        + "\nIMPORTANT : dish_name, ainsi que les noms dans candidates[].name et"
+        + " ingredients[].name, doivent tous etre exprimes dans la langue suivante (code ISO"
+        + " 639-1) : "
+        + targetLanguage
+        + ". en_name doit TOUJOURS rester en anglais peu importe la langue cible, car il sert de"
+        + " cle de recherche dans une base de donnees alimentaire anglophone (USDA FoodData"
+        + " Central).";
   }
 
   private GeminiDishAnalysis requestAnalysis(byte[] imageBytes, String contentType, String prompt) {

@@ -28,7 +28,7 @@ class ScanControllerTest {
   @Test
   void dishAcceptsImageAndReturnsAnalysis() throws Exception {
     var file = new MockMultipartFile("image", "plat.jpg", "image/jpeg", new byte[] {1, 2, 3});
-    when(dishAnalysis.analyze(any()))
+    when(dishAnalysis.analyze(any(), any()))
         .thenReturn(
             new DishResponse(
                 "plat.jpg",

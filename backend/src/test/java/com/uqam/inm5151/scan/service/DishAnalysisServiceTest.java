@@ -26,7 +26,7 @@ class DishAnalysisServiceTest {
 
   @Test
   void returnsIdentifiedDishWithIngredientsAndFoodDataMatches() {
-    when(gemini.analyze(any(), eq("image/jpeg")))
+    when(gemini.analyze(any(), eq("image/jpeg"), any()))
         .thenReturn(
             new GeminiDishAnalysis(
                 "Salade grecque",
@@ -40,7 +40,7 @@ class DishAnalysisServiceTest {
                 new DishResponse.FoodDataMatch(
                     170457, "Tomatoes, red, raw", "SR Legacy", null, null)));
 
-    DishResponse response = service().analyze(image());
+    DishResponse response = service().analyze(image(), null);
 
     assertThat(response.status()).isEqualTo("identified");
     assertThat(response.dishName()).isEqualTo("Salade grecque");
@@ -55,7 +55,7 @@ class DishAnalysisServiceTest {
 
   @Test
   void returnsLowConfidenceStatusBelowThreshold() {
-    when(gemini.analyze(any(), eq("image/jpeg")))
+    when(gemini.analyze(any(), eq("image/jpeg"), any()))
         .thenReturn(
             new GeminiDishAnalysis(
                 "Ragout",
@@ -64,7 +64,7 @@ class DishAnalysisServiceTest {
                 List.of(new GeminiDishAnalysis.DishCandidate("Ragout", 0.42)),
                 List.of()));
 
-    DishResponse response = service().analyze(image());
+    DishResponse response = service().analyze(image(), null);
 
     assertThat(response.status()).isEqualTo("low_confidence");
     assertThat(response.dishName()).isEqualTo("Ragout");
@@ -73,10 +73,10 @@ class DishAnalysisServiceTest {
 
   @Test
   void returnsUnrecognizedWhenGeminiJsonIsInvalid() {
-    when(gemini.analyze(any(), eq("image/jpeg")))
+    when(gemini.analyze(any(), eq("image/jpeg"), any()))
         .thenThrow(new GeminiDishAnalysisException("bad json"));
 
-    DishResponse response = service().analyze(image());
+    DishResponse response = service().analyze(image(), null);
 
     assertThat(response.status()).isEqualTo("unrecognized");
     assertThat(response.dishName()).isNull();
@@ -85,7 +85,7 @@ class DishAnalysisServiceTest {
 
   @Test
   void keepsGeminiResultWhenFoodDataCentralFails() {
-    when(gemini.analyze(any(), eq("image/jpeg")))
+    when(gemini.analyze(any(), eq("image/jpeg"), any()))
         .thenReturn(
             new GeminiDishAnalysis(
                 "Pates tomate",
@@ -95,7 +95,7 @@ class DishAnalysisServiceTest {
                 List.of(new GeminiDishAnalysis.ProbableIngredient("tomate", 0.7))));
     when(foodDataCentral.search(any(), anyInt())).thenThrow(new RuntimeException("fdc down"));
 
-    DishResponse response = service().analyze(image());
+    DishResponse response = service().analyze(image(), null);
 
     assertThat(response.status()).isEqualTo("identified");
     assertThat(response.dishName()).isEqualTo("Pates tomate");

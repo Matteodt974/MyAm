@@ -45,7 +45,8 @@ public class OpenFoodFactsClient {
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  public BarcodeResponse fetchBarcode(String ean, List<String> userAllergies) {
+  public BarcodeResponse fetchBarcode(String ean, List<String> userAllergies, String language) {
+    String lc = language == null || language.isBlank() ? "en" : language;
     ResponseEntity<Map> resp;
     try {
       resp =
@@ -55,6 +56,7 @@ public class OpenFoodFactsClient {
                   uri ->
                       uri.path("/api/v2/product/{ean}.json")
                           .queryParam("fields", FIELDS)
+                          .queryParam("lc", lc)
                           .build(ean))
               .header("User-Agent", userAgent)
               .retrieve()

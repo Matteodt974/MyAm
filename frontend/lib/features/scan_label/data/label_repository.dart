@@ -15,11 +15,11 @@ class LabelRepository {
   /// et structuration en liste d'ingredients.
   ///
   /// Toute erreur reseau/HTTP est convertie en [ApiException] lisible.
-  Future<LabelResult> analyze(String text) async {
+  Future<LabelResult> analyze(String text, String language) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.scanLabel,
-        data: {'text': text},
+        data: {'text': text, 'language': language},
       );
 
       final data = response.data;
