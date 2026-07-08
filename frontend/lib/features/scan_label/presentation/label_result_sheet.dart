@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/languages.dart';
-import '../../profile_allergies/presentation/allergy_controller.dart';
 import '../data/label_result.dart';
 
 /// Resultat d'analyse d'etiquette affiche en bottom sheet.
@@ -14,9 +13,7 @@ class LabelResultSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final allergies =
-        ref.watch(allergyControllerProvider).asData?.value ?? const <String>[];
-    final flagged = _flaggedIngredients(result.ingredients, allergies);
+    final flagged = result.matchedAllergens.toSet();
 
     return DraggableScrollableSheet(
       expand: false,
@@ -96,13 +93,15 @@ class LabelResultSheet extends ConsumerWidget {
                               ingredient.name,
                               ingredient.confidence,
                             ),
-                            style: flagged.contains(ingredient.name)
+                            style:
+                                flagged.contains(ingredient.name.toLowerCase())
                                 ? TextStyle(
                                     color: theme.colorScheme.onErrorContainer,
                                   )
                                 : null,
                           ),
-                          backgroundColor: flagged.contains(ingredient.name)
+                          backgroundColor:
+                              flagged.contains(ingredient.name.toLowerCase())
                               ? theme.colorScheme.errorContainer
                               : null,
                         ),
@@ -130,25 +129,6 @@ class LabelResultSheet extends ConsumerWidget {
       return "l'$label";
     }
     return 'le $label';
-  }
-
-  static Set<String> _flaggedIngredients(
-    List<LabelIngredient> ingredients,
-    List<String> allergies,
-  ) {
-    if (allergies.isEmpty) return const {};
-
-    final result = <String>{};
-    for (final ingredient in ingredients) {
-      final name = ingredient.name.toLowerCase();
-      for (final allergy in allergies) {
-        if (name.contains(allergy) || allergy.contains(name)) {
-          result.add(ingredient.name);
-          break;
-        }
-      }
-    }
-    return result;
   }
 }
 

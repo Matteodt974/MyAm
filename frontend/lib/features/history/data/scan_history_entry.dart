@@ -65,7 +65,7 @@ abstract class ScanHistoryEntry with _$ScanHistoryEntry {
     type: ScanType.label,
     title: 'Étiquette analysée',
     scannedAt: scannedAt ?? DateTime.now(),
-    matchedAllergens: const <String>[],
+    matchedAllergens: result.matchedAllergens,
     rawJson: jsonEncode(result.toJson()),
   );
 }
