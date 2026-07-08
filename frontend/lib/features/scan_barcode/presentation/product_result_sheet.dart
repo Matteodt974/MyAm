@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/nutriscore_badge.dart';
+import '../../../shared/widgets/risk_level_style.dart';
 
 import '../data/product_result.dart';
 
@@ -125,12 +126,9 @@ class _AllergyAlert extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDanger = level == 'DANGER';
-    final bg = isDanger
-        ? theme.colorScheme.errorContainer
-        : theme.colorScheme.tertiaryContainer;
-    final fg = isDanger
-        ? theme.colorScheme.onErrorContainer
-        : theme.colorScheme.onTertiaryContainer;
+    final colors = RiskLevelColors.forLevel(theme.colorScheme, level);
+    final bg = colors.background;
+    final fg = colors.foreground;
     final message = isDanger
         ? 'Allergène présent : ${matched.join(', ')}'
         : 'Peut contenir : ${matched.join(', ')}';

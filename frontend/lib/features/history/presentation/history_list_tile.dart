@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../shared/widgets/risk_level_style.dart';
 import '../data/scan_history_entry.dart';
 
 /// List tile displayed inside the scan history list.
@@ -50,35 +51,21 @@ class HistoryListTile extends StatelessWidget {
   /// Returns the visual theme for the risk level chip.
   (Color background, Color foreground, String label, IconData? icon)
   _riskChipTheme(ColorScheme colorScheme) {
+    final colors = RiskLevelColors.forLevel(colorScheme, entry.riskLevel);
     switch (entry.riskLevel) {
       case 'DANGER':
         return (
-          colorScheme.errorContainer,
-          colorScheme.onErrorContainer,
+          colors.background,
+          colors.foreground,
           'Danger',
           Icons.warning_amber_rounded,
         );
       case 'WARNING':
-        return (
-          colorScheme.tertiaryContainer,
-          colorScheme.onTertiaryContainer,
-          'Attention',
-          null,
-        );
+        return (colors.background, colors.foreground, 'Attention', null);
       case 'SAFE':
-        return (
-          colorScheme.surfaceContainerHighest,
-          colorScheme.onSurfaceVariant,
-          'Sûr',
-          null,
-        );
+        return (colors.background, colors.foreground, 'Sûr', null);
       default:
-        return (
-          colorScheme.surfaceContainerHighest,
-          colorScheme.onSurfaceVariant,
-          '—',
-          null,
-        );
+        return (colors.background, colors.foreground, '—', null);
     }
   }
 }
