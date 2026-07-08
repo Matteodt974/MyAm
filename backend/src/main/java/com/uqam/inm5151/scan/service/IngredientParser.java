@@ -17,10 +17,17 @@ public class IngredientParser {
 
   private static final Pattern SEPARATORS = Pattern.compile("[,;|•\\n]");
 
-  /** Supprime les quantites type "100g", "5%", "1.2 mg", "2 oz", etc. */
+  /**
+   * Supprime les quantites type "100g", "5%", "1.2 mg", "2 oz", "2 cups", "1 gallon", etc.
+   *
+   * <p>Les alternatives les plus longues/specifiques doivent precéder leurs prefixes (ex.
+   * "gallons?" avant "g", "lb" avant "l") : l'alternance regex retient la premiere alternative qui
+   * matche, donc un ordre inverse ne consommerait que le prefixe et laisserait un residu ("s",
+   * "allon", ...) colle a l'ingredient suivant.
+   */
   private static final Pattern QUANTITY =
       Pattern.compile(
-          "\\b\\d+(?:\\.\\d+)?\\s*(?:%|g|mg|mcg|µg|kg|oz|lb|ml|l|fl\\s*oz|tsp|tbsp|cup|cups|pint|quart|gallon)",
+          "\\b\\d+(?:\\.\\d+)?\\s*(?:fl\\s*oz|mcg|µg|mg|kg|tbsps?|tsps?|cups?|pints?|quarts?|gallons?|lb|oz|ml|l|%|g)",
           Pattern.CASE_INSENSITIVE);
 
   /** Contenu entre parentheses (y compris les parentheses). */

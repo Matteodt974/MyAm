@@ -30,6 +30,16 @@ class IngredientParserTest {
   }
 
   @Test
+  void parse_withPluralUnits_returnsIngredientsWithoutQuantities() {
+    List<LabelIngredient> ingredients =
+        parser.parse("2 cups sugar, 1 gallon milk, 3 tsps vanilla, 2 quarts water, 1 pint cream");
+
+    assertThat(ingredients)
+        .extracting(LabelIngredient::name)
+        .containsExactly("sugar", "milk", "vanilla", "water", "cream");
+  }
+
+  @Test
   void parse_withParentheses_returnsIngredientsWithoutParentheticalContent() {
     List<LabelIngredient> ingredients = parser.parse("sugar (beet), palm oil");
 
