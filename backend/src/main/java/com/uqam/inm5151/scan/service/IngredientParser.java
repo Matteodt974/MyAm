@@ -69,10 +69,30 @@ public class IngredientParser {
     // Supprime les espaces multiples introduits par les nettoyages.
     cleaned = cleaned.replaceAll("\\s+", " ").trim();
 
-    if (cleaned.isBlank()) {
+    // Bordure de ponctuation isolee (ex. ")", parenthese/asterisque residuel).
+    cleaned = cleaned.replaceAll("^[^\\p{L}\\p{Nd}]+", "").replaceAll("[^\\p{L}\\p{Nd}]+$", "");
+
+    if (cleaned.isBlank() || !hasEnoughLetters(cleaned)) {
       return null;
     }
     return cleaned;
+  }
+
+  /**
+   * Rejette les fragments issus de bruit OCR (codes, numeros de page, adresses) qui n'ont pas assez
+   * de lettres pour ressembler a un nom d'ingredient.
+   */
+  private static boolean hasEnoughLetters(String value) {
+    int letters = 0;
+    for (int i = 0; i < value.length(); i++) {
+      if (Character.isLetter(value.charAt(i))) {
+        letters++;
+        if (letters >= 2) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static String removePrefixes(String value) {
