@@ -9,9 +9,7 @@ import com.uqam.inm5151.scan.service.AllergenCrossMatchService;
 import com.uqam.inm5151.scan.service.DishAnalysisService;
 import com.uqam.inm5151.scan.service.IngredientExtractorService;
 import com.uqam.inm5151.scan.service.OpenFoodFactsClient;
-
 import java.util.List;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,11 +23,8 @@ import org.springframework.web.server.ResponseStatusException;
 /**
  * UC2 - scan_food_barcode.
  *
- * <p>
- * Endpoint REEL et fonctionnel : il interroge Open Food Facts et renvoie les
- * champs utiles.
- * Premier "vrai" use case de bout en bout (Flutter -> API -> service externe),
- * sans BD ni OCR.
+ * <p>Endpoint REEL et fonctionnel : il interroge Open Food Facts et renvoie les champs utiles.
+ * Premier "vrai" use case de bout en bout (Flutter -> API -> service externe), sans BD ni OCR.
  * Portage de backend/app/api/routes_scan.py.
  */
 @RestController
@@ -41,13 +36,15 @@ public class ScanController {
   private final IngredientExtractorService ingredientExtractor;
   private final AllergenCrossMatchService allergenCrossmatch;
 
-  public ScanController(OpenFoodFactsClient openFoodFacts, DishAnalysisService dishAnalysis,
-      IngredientExtractorService ingredientExtractor, AllergenCrossMatchService allergenCrossmatch) {
+  public ScanController(
+      OpenFoodFactsClient openFoodFacts,
+      DishAnalysisService dishAnalysis,
+      IngredientExtractorService ingredientExtractor,
+      AllergenCrossMatchService allergenCrossmatch) {
     this.openFoodFacts = openFoodFacts;
     this.dishAnalysis = dishAnalysis;
     this.ingredientExtractor = ingredientExtractor;
     this.allergenCrossmatch = allergenCrossmatch;
-
   }
 
   @PostMapping("/barcode")
@@ -58,9 +55,7 @@ public class ScanController {
   /**
    * UC7 - scan_dish : identification d'un plat a partir d'une photo.
    *
-   * <p>
-   * L'onglet "Picture" de l'app envoie ici une image en multipart (champ
-   * {@code image}). Loi 25
+   * <p>L'onglet "Picture" de l'app envoie ici une image en multipart (champ {@code image}). Loi 25
    * / RGPD : l'image n'est JAMAIS persistee.
    */
   @PostMapping(value = "/dish", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -78,10 +73,10 @@ public class ScanController {
   @PostMapping("/label")
   public LabelResponse scanLabel(@RequestBody LabelRequest req) {
     List<String> ingredients = ingredientExtractor.extract(req.rawText());
-    List<String> matched = allergenCrossmatch.findMatchesInIngredients(ingredients, req.allergies());
+    List<String> matched =
+        allergenCrossmatch.findMatchesInIngredients(ingredients, req.allergies());
     List<String> undetermined = allergenCrossmatch.findUndetermined(ingredients, req.allergies());
     String riskLevel = allergenCrossmatch.riskLevel(matched, List.of(), undetermined);
     return new LabelResponse(ingredients, riskLevel, matched, undetermined);
   }
-
 }

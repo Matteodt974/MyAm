@@ -81,7 +81,8 @@ public class AllergenCrossMatchService {
     return undetermined;
   }
 
-  public List<String> findMatchesInIngredients(List<String> ingredients, List<String> userAllergies) {
+  public List<String> findMatchesInIngredients(
+      List<String> ingredients, List<String> userAllergies) {
     if (userAllergies == null || userAllergies.isEmpty()) return List.of();
     List<String> result = new ArrayList<>();
     for (String ingredient : ingredients) {
