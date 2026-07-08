@@ -33,7 +33,7 @@ public class LabelController {
   @PostMapping("/translate-and-structure")
   public LabelAnalysisResponse analyzeLabel(@RequestBody @Valid LabelTextRequest request) {
     try {
-      return labelAnalysis.analyze(request.text(), request.language());
+      return labelAnalysis.analyze(request.text(), request.language(), request.allergies());
     } catch (IllegalArgumentException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
     } catch (UnsupportedLanguageException | GeminiDishAnalysisException e) {

@@ -20,6 +20,7 @@ class LabelAnalysisServiceTest {
   @Mock private GeminiLabelClient gemini;
 
   private final IngredientParser parser = new IngredientParser();
+  private final AllergenCrossMatchService allergenCrossMatch = new AllergenCrossMatchService();
 
   @Test
   void analyze_englishText_returnsNotTranslatedWithSameTextAndParsedIngredients() {
@@ -27,7 +28,7 @@ class LabelAnalysisServiceTest {
     when(gemini.detectAndTranslate(text, "en"))
         .thenReturn(new TranslationResult("en", text, List.of("sugar", "palm oil"), true));
 
-    LabelAnalysisResponse response = service().analyze(text, "en");
+    LabelAnalysisResponse response = service().analyze(text, "en", List.of());
 
     assertThat(response.originalLanguage()).isEqualTo("en");
     assertThat(response.translated()).isFalse();
@@ -44,7 +45,7 @@ class LabelAnalysisServiceTest {
     when(gemini.detectAndTranslate(text, "en"))
         .thenReturn(new TranslationResult("fr", translated, List.of("sugar", "palm oil"), false));
 
-    LabelAnalysisResponse response = service().analyze(text, "en");
+    LabelAnalysisResponse response = service().analyze(text, "en", List.of());
 
     assertThat(response.originalLanguage()).isEqualTo("fr");
     assertThat(response.translated()).isTrue();
@@ -61,7 +62,7 @@ class LabelAnalysisServiceTest {
     when(gemini.detectAndTranslate(text, "en"))
         .thenReturn(new TranslationResult("fr", translated, List.of(), false));
 
-    LabelAnalysisResponse response = service().analyze(text, "en");
+    LabelAnalysisResponse response = service().analyze(text, "en", List.of());
 
     assertThat(response.ingredients())
         .extracting(LabelIngredient::name)
@@ -70,14 +71,14 @@ class LabelAnalysisServiceTest {
 
   @Test
   void analyze_nullText_throwsIllegalArgumentException() {
-    assertThatThrownBy(() -> service().analyze(null, "en"))
+    assertThatThrownBy(() -> service().analyze(null, "en", List.of()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("requis");
   }
 
   @Test
   void analyze_blankText_throwsIllegalArgumentException() {
-    assertThatThrownBy(() -> service().analyze("   ", "en"))
+    assertThatThrownBy(() -> service().analyze("   ", "en", List.of()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("requis");
   }
@@ -88,12 +89,36 @@ class LabelAnalysisServiceTest {
     when(gemini.detectAndTranslate(any(), any()))
         .thenThrow(new UnsupportedLanguageException("Langue non identifiable"));
 
-    assertThatThrownBy(() -> service().analyze(text, "en"))
+    assertThatThrownBy(() -> service().analyze(text, "en", List.of()))
         .isInstanceOf(UnsupportedLanguageException.class)
         .hasMessageContaining("non identifiable");
   }
 
+  @Test
+  void analyze_matchingAllergy_returnsDangerRiskAndMatchedAllergen() {
+    String text = "lait, sucre";
+    when(gemini.detectAndTranslate(text, "en"))
+        .thenReturn(new TranslationResult("en", text, List.of("milk", "sugar"), true));
+
+    LabelAnalysisResponse response = service().analyze(text, "en", List.of("lait"));
+
+    assertThat(response.riskLevel()).isEqualTo("DANGER");
+    assertThat(response.matchedAllergens()).containsExactly("milk");
+  }
+
+  @Test
+  void analyze_noMatchingAllergy_returnsSafeRiskAndNoMatches() {
+    String text = "sugar, palm oil";
+    when(gemini.detectAndTranslate(text, "en"))
+        .thenReturn(new TranslationResult("en", text, List.of("sugar", "palm oil"), true));
+
+    LabelAnalysisResponse response = service().analyze(text, "en", null);
+
+    assertThat(response.riskLevel()).isEqualTo("SAFE");
+    assertThat(response.matchedAllergens()).isEmpty();
+  }
+
   private LabelAnalysisService service() {
-    return new LabelAnalysisService(gemini, parser);
+    return new LabelAnalysisService(gemini, parser, allergenCrossMatch);
   }
 }
