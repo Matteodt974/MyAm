@@ -30,11 +30,7 @@ class ScanHistoryDatabase {
     await Directory(databasesDir).create(recursive: true);
     final dbPath = join(databasesDir, scanHistoryDbName);
 
-    return openDatabase(
-      dbPath,
-      version: 1,
-      onCreate: _onCreate,
-    );
+    return openDatabase(dbPath, version: 1, onCreate: _onCreate);
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -62,10 +58,7 @@ class ScanHistoryDatabase {
   /// Returns every entry ordered from newest to oldest.
   Future<List<ScanHistoryEntry>> getAll() async {
     final db = await database;
-    final maps = await db.query(
-      'scan_history',
-      orderBy: 'scanned_at DESC',
-    );
+    final maps = await db.query('scan_history', orderBy: 'scanned_at DESC');
     return maps.map(_fromMap).toList();
   }
 
@@ -129,7 +122,8 @@ class ScanHistoryDatabase {
 
     if (allergen != null && allergen.isNotEmpty) {
       // JSON substring search is sufficient for the MVP filtering use case.
-      where.add("matched_allergens LIKE '%$allergen%'");
+      where.add('matched_allergens LIKE ?');
+      whereArgs.add('%$allergen%');
     }
 
     final whereClause = where.isEmpty ? null : where.join(' AND ');
@@ -158,11 +152,7 @@ class ScanHistoryDatabase {
   /// Deletes the entry with the given [id].
   Future<void> delete(int id) async {
     final db = await database;
-    await db.delete(
-      'scan_history',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('scan_history', where: 'id = ?', whereArgs: [id]);
   }
 
   /// Deletes all entries.
