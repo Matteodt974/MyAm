@@ -28,14 +28,15 @@ class LabelControllerTest {
 
   @Test
   void analyzeLabel_validRequest_returnsOkAndResponse() throws Exception {
-    when(labelAnalysis.analyze("sugar, palm oil", null))
+    when(labelAnalysis.analyze("sugar, palm oil", null, null))
         .thenReturn(
             new LabelAnalysisResponse(
                 "en",
                 false,
                 "sugar, palm oil",
-                List.of(
-                    new LabelIngredient("sugar", null), new LabelIngredient("palm oil", null))));
+                List.of(new LabelIngredient("sugar", null), new LabelIngredient("palm oil", null)),
+                "SAFE",
+                List.of()));
 
     mvc.perform(
             post("/v1/label/translate-and-structure")
@@ -60,7 +61,7 @@ class LabelControllerTest {
 
   @Test
   void analyzeLabel_unsupportedLanguage_returnsUnprocessableEntity() throws Exception {
-    when(labelAnalysis.analyze("inconnu", null))
+    when(labelAnalysis.analyze("inconnu", null, null))
         .thenThrow(new UnsupportedLanguageException("Langue non supportee"));
 
     mvc.perform(

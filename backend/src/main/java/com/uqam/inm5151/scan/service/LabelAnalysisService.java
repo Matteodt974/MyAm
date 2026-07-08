@@ -11,13 +11,18 @@ public class LabelAnalysisService {
 
   private final GeminiLabelClient gemini;
   private final IngredientParser parser;
+  private final AllergenCrossMatchService allergenCrossMatch;
 
-  public LabelAnalysisService(GeminiLabelClient gemini, IngredientParser parser) {
+  public LabelAnalysisService(
+      GeminiLabelClient gemini,
+      IngredientParser parser,
+      AllergenCrossMatchService allergenCrossMatch) {
     this.gemini = gemini;
     this.parser = parser;
+    this.allergenCrossMatch = allergenCrossMatch;
   }
 
-  public LabelAnalysisResponse analyze(String text, String language) {
+  public LabelAnalysisResponse analyze(String text, String language, List<String> allergies) {
     if (text == null || text.isBlank()) {
       throw new IllegalArgumentException("Le texte est requis");
     }
@@ -28,7 +33,18 @@ public class LabelAnalysisService {
             ? result.ingredients().stream().map(name -> new LabelIngredient(name, null)).toList()
             : parser.parse(result.translatedText());
 
+    List<String> ingredientNames = ingredients.stream().map(LabelIngredient::name).toList();
+    List<String> safeAllergies = allergies == null ? List.of() : allergies;
+    List<String> matched =
+        allergenCrossMatch.findMatchesInIngredients(ingredientNames, safeAllergies);
+    String riskLevel = matched.isEmpty() ? "SAFE" : "DANGER";
+
     return new LabelAnalysisResponse(
-        result.language(), !result.matchesTarget(), result.translatedText(), ingredients);
+        result.language(),
+        !result.matchesTarget(),
+        result.translatedText(),
+        ingredients,
+        riskLevel,
+        matched);
   }
 }
