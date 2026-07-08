@@ -1,9 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../history/data/scan_history_entry.dart';
-import '../../history/data/scan_history_repository.dart';
+import '../../history/presentation/history_persistence.dart';
 import '../../profile_allergies/presentation/language_controller.dart';
 import '../data/barcode_repository.dart';
 
@@ -25,10 +23,8 @@ class ScanController extends Notifier<AsyncValue<ProductResult?>> {
     });
 
     if (state.value != null) {
-      unawaited(
-        ref
-            .read(scanHistoryRepositoryProvider)
-            .save(ScanHistoryEntry.fromProductResult(state.value!)),
+      ref.persistScanToHistory(
+        () => ScanHistoryEntry.fromProductResult(state.value!),
       );
     }
   }
