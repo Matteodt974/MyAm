@@ -176,10 +176,3 @@ AImodels/
 .github/actions-runner/
 junit.xml
 test-results/
-
-
-CLAUDE.md
-objectifs.md
-
-AGENTS.md
-OPENCODE.md
