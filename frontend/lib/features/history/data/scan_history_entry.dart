@@ -10,11 +10,7 @@ part 'scan_history_entry.freezed.dart';
 
 part 'scan_history_entry.g.dart';
 
-enum ScanType {
-  barcode,
-  dish,
-  label,
-}
+enum ScanType { barcode, dish, label }
 
 @freezed
 abstract class ScanHistoryEntry with _$ScanHistoryEntry {
@@ -35,43 +31,41 @@ abstract class ScanHistoryEntry with _$ScanHistoryEntry {
   factory ScanHistoryEntry.fromProductResult(
     ProductResult result, {
     DateTime? scannedAt,
-  }) =>
-      ScanHistoryEntry(
-        type: ScanType.barcode,
-        title: result.name ?? 'Produit ${result.ean}',
-        scannedAt: scannedAt ?? DateTime.now(),
-        riskLevel: result.riskLevel,
-        matchedAllergens: result.matchedAllergens,
-        rawJson: jsonEncode(result.toJson()),
-      );
+  }) => ScanHistoryEntry(
+    type: ScanType.barcode,
+    title: result.name ?? 'Produit ${result.ean}',
+    scannedAt: scannedAt ?? DateTime.now(),
+    riskLevel: result.riskLevel,
+    matchedAllergens: result.matchedAllergens,
+    rawJson: jsonEncode(result.toJson()),
+  );
 
   factory ScanHistoryEntry.fromDishResult(
     DishResult result, {
+    List<String> allergies = const <String>[],
     String? thumbnailPath,
     DateTime? scannedAt,
-  }) =>
-      ScanHistoryEntry(
-        type: ScanType.dish,
-        title: result.dishName ?? 'Plat analysé',
-        scannedAt: scannedAt ?? DateTime.now(),
-        riskLevel: result.foodDataMatches.isNotEmpty ? 'DANGER' : 'SAFE',
-        matchedAllergens: result.foodDataMatches
-            .map((match) => match.description ?? '')
-            .where((description) => description.isNotEmpty)
-            .toList(),
-        thumbnailPath: thumbnailPath,
-        rawJson: jsonEncode(result.toJson()),
-      );
+  }) {
+    final flagged = flaggedDishIngredients(result.ingredients, allergies);
+    return ScanHistoryEntry(
+      type: ScanType.dish,
+      title: result.dishName ?? 'Plat analysé',
+      scannedAt: scannedAt ?? DateTime.now(),
+      riskLevel: flagged.isNotEmpty ? 'DANGER' : 'SAFE',
+      matchedAllergens: flagged.toList(),
+      thumbnailPath: thumbnailPath,
+      rawJson: jsonEncode(result.toJson()),
+    );
+  }
 
   factory ScanHistoryEntry.fromLabelResult(
     LabelResult result, {
     DateTime? scannedAt,
-  }) =>
-      ScanHistoryEntry(
-        type: ScanType.label,
-        title: 'Étiquette analysée',
-        scannedAt: scannedAt ?? DateTime.now(),
-        matchedAllergens: const <String>[],
-        rawJson: jsonEncode(result.toJson()),
-      );
+  }) => ScanHistoryEntry(
+    type: ScanType.label,
+    title: 'Étiquette analysée',
+    scannedAt: scannedAt ?? DateTime.now(),
+    matchedAllergens: const <String>[],
+    rawJson: jsonEncode(result.toJson()),
+  );
 }
