@@ -1,9 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../history/data/scan_history_entry.dart';
-import '../../history/data/scan_history_repository.dart';
+import '../../history/presentation/history_persistence.dart';
 import '../../profile_allergies/presentation/language_controller.dart';
 import '../data/label_repository.dart';
 import '../data/label_result.dart';
@@ -22,10 +20,8 @@ class LabelController extends Notifier<AsyncValue<LabelResult?>> {
     });
 
     if (state.value != null) {
-      unawaited(
-        ref
-            .read(scanHistoryRepositoryProvider)
-            .save(ScanHistoryEntry.fromLabelResult(state.value!)),
+      ref.persistScanToHistory(
+        () => ScanHistoryEntry.fromLabelResult(state.value!),
       );
     }
   }
