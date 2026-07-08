@@ -22,7 +22,11 @@ class AnimatedBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final alignX = (2 * currentIndex + 1) / _items.length - 1;
+    // Alignment interpolates over the slack space (parent - child width),
+    // so hitting slot i's left edge needs 2*i/(n-1) - 1, not (2*i+1)/n - 1.
+    final alignX = _items.length > 1
+        ? (2 * currentIndex / (_items.length - 1)) - 1
+        : 0.0;
 
     return SafeArea(
       top: false,
