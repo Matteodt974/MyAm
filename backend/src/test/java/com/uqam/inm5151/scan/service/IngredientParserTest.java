@@ -85,4 +85,14 @@ class IngredientParserTest {
 
     assertThat(ingredients).extracting(LabelIngredient::name).containsExactly("just water");
   }
+
+  @Test
+  void parse_ocrNoise_dropsTokensWithoutEnoughLetters() {
+    List<LabelIngredient> ingredients =
+        parser.parse("12-01, c, 7, 9, ), milk., leur quotidienne*, water");
+
+    assertThat(ingredients)
+        .extracting(LabelIngredient::name)
+        .containsExactly("milk", "leur quotidienne", "water");
+  }
 }
