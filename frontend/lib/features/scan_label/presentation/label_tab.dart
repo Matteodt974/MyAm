@@ -117,7 +117,10 @@ class _LabelTabState extends ConsumerState<LabelTab> {
               color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 16),
-            Text('Photographier l\'étiquette', style: theme.textTheme.titleLarge),
+            Text(
+              'Photographier l\'étiquette',
+              style: theme.textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Text(
               'Prenez une photo de la liste d\'ingrédients pour la traduire et l\'analyser.',

@@ -10,6 +10,10 @@ abstract class LabelResult with _$LabelResult {
     @Default(false) bool translated,
     @JsonKey(name: 'translated_text') String? translatedText,
     @Default(<LabelIngredient>[]) List<LabelIngredient> ingredients,
+    @JsonKey(name: 'risk_level') String? riskLevel,
+    @JsonKey(name: 'matched_allergens')
+    @Default(<String>[])
+    List<String> matchedAllergens,
   }) = _LabelResult;
 
   factory LabelResult.fromJson(Map<String, dynamic> json) =>
