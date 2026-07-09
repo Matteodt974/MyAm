@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../scan_barcode/data/barcode_repository.dart';
 import '../data/trusted_item_local_store.dart';
 import 'allergy_controller.dart';
+import 'language_controller.dart';
 
 class TrustedItemController extends AsyncNotifier<List<TrustedItem>> {
   @override
@@ -46,6 +47,7 @@ class TrustedItemController extends AsyncNotifier<List<TrustedItem>> {
     if (current == null || current.isEmpty) return;
 
     final repository = ref.read(barcodeRepositoryProvider);
+    final language = await ref.read(languageControllerProvider.future);
     final survivors = <TrustedItem>[];
 
     for (final item in current) {
@@ -55,7 +57,12 @@ class TrustedItemController extends AsyncNotifier<List<TrustedItem>> {
       }
 
       try {
-        final product = await repository.lookup(item.ean, allergies, const []);
+        final product = await repository.lookup(
+          item.ean,
+          allergies,
+          language,
+          const [],
+        );
         if (product.riskLevel == 'SAFE') {
           survivors.add(item);
         }

@@ -67,6 +67,26 @@ class ProductResult {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'ean': ean,
+      'name': name,
+      'brands': brands,
+      'nutriscore': nutriscore,
+      'nova_group': novaGroup,
+      'additives_tags': additivesTags,
+      'allergens_tags': allergensTags,
+      'traces_tags': tracesTags,
+      'ingredients_analysis_tags': ingredientsAnalysisTags,
+      'label_tags': labelTags,
+      'diet_compatible': dietCompatible,
+      'diet_warning_diet': dietWarningDiet,
+      'risk_level': riskLevel,
+      'matched_allergens': matchedAllergens,
+      'undetermined_allergens': undeterminedAllergens,
+    };
+  }
+
   static int? _toInt(Object? value) {
     if (value is num) return value.toInt();
     if (value is String && value.isNotEmpty) return int.tryParse(value);
