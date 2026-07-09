@@ -100,6 +100,7 @@ public class DishAnalysisService {
     try {
       ingredients = gemini.mergeIngredients(dishName, ingredients, matches, language);
     } catch (RuntimeException e) {
+      log.warn("Ingredient merge failed, keeping unmerged ingredients: {}", e.getMessage());
     }
     List<String> ingredientNames =
         ingredients.stream().map(DishResponse.ProbableIngredient::name).toList();

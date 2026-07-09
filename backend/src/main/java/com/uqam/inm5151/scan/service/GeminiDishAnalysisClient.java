@@ -93,19 +93,18 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
     }
 
     String target = normalizeLanguage(language);
-    if (target.equals("en")) {
-      return cheapMerge(visualIngredients, labelIngredients);
-    }
-
     try {
+      List<DishResponse.ProbableIngredient> cheap = cheapMerge(visualIngredients, labelIngredients);
+      if (target.equals("en")) {
+        return cheap;
+      }
       requireApiKey();
       String prompt = mergeIngredientsPrompt(dishName, visualIngredients, labelIngredients, target);
       Map<?, ?> response = generateContent(textOnlyBody(prompt));
-      return parseMergedIngredients(response, cheapMerge(visualIngredients, labelIngredients));
+      return parseMergedIngredients(response, cheap);
     } catch (RuntimeException e) {
-      log.warn(
-          "Gemini ingredient merge failed, falling back to untranslated merge: {}", e.getMessage());
-      return cheapMerge(visualIngredients, labelIngredients);
+      log.warn("Ingredient merge failed, keeping visual ingredients only: {}", e.getMessage());
+      return visualIngredients;
     }
   }
 

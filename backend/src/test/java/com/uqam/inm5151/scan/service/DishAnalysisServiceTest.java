@@ -106,6 +106,8 @@ class DishAnalysisServiceTest {
                 0.92,
                 List.of(),
                 List.of(new GeminiDishAnalysis.ProbableIngredient("tomate", 0.8))));
+    when(gemini.mergeIngredients(any(), any(), any(), any()))
+        .thenReturn(List.of(new DishResponse.ProbableIngredient("tomate", 0.8)));
     when(dietMatchService.isUserDietsCompatible(any(), any(), any())).thenReturn(true);
 
     DishResponse response = service().analyze(image(), null, List.of(Diet.VEGAN));
@@ -113,6 +115,9 @@ class DishAnalysisServiceTest {
     assertThat(response.dietCompatible()).isTrue();
     assertThat(response.dietStatus()).isEqualTo("compatible");
     assertThat(response.dietWarningDiet()).isNull();
+    assertThat(response.ingredients())
+        .extracting(DishResponse.ProbableIngredient::name)
+        .containsExactly("tomate");
   }
 
   @Test
@@ -125,6 +130,8 @@ class DishAnalysisServiceTest {
                 0.92,
                 List.of(),
                 List.of(new GeminiDishAnalysis.ProbableIngredient("poulet", 0.8))));
+    when(gemini.mergeIngredients(any(), any(), any(), any()))
+        .thenReturn(List.of(new DishResponse.ProbableIngredient("poulet", 0.8)));
     when(dietMatchService.isUserDietsCompatible(any(), any(), any())).thenReturn(false);
     when(dietMatchService.firstIncompatibleDiet(any(), any(), any())).thenReturn(Diet.VEGAN);
 
@@ -133,6 +140,9 @@ class DishAnalysisServiceTest {
     assertThat(response.dietCompatible()).isFalse();
     assertThat(response.dietStatus()).isEqualTo("incompatible");
     assertThat(response.dietWarningDiet()).isEqualTo("VEGAN");
+    assertThat(response.ingredients())
+        .extracting(DishResponse.ProbableIngredient::name)
+        .containsExactly("poulet");
   }
 
   @Test
@@ -167,12 +177,17 @@ class DishAnalysisServiceTest {
                 List.of(),
                 List.of(new GeminiDishAnalysis.ProbableIngredient("tomate", 0.7))));
     when(foodDataCentral.search(any(), anyInt())).thenThrow(new RuntimeException("fdc down"));
+    when(gemini.mergeIngredients(any(), any(), any(), any()))
+        .thenReturn(List.of(new DishResponse.ProbableIngredient("tomate", 0.7)));
 
     DishResponse response = service().analyze(image(), null);
 
     assertThat(response.status()).isEqualTo("identified");
     assertThat(response.dishName()).isEqualTo("Pates tomate");
     assertThat(response.foodDataMatches()).isEmpty();
+    assertThat(response.ingredients())
+        .extracting(DishResponse.ProbableIngredient::name)
+        .containsExactly("tomate");
   }
 
   @Test
