@@ -92,7 +92,6 @@ public class OpenFoodFactsClient {
     productTags.addAll(labelTags);
     productTags.addAll(ingredientsAnalysisTags);
     productTags.addAll(allergensTags);
-    productTags.addAll(tracesTags);
 
     boolean dietCompatible = dietMatch.isUserDietsCompatible(userDiets, productTags, List.of());
 
