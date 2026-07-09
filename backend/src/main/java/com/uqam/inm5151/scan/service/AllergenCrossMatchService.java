@@ -123,8 +123,8 @@ public class AllergenCrossMatchService {
       String normalizedTag = normalizeTag(tag);
       for (String allergy : userAllergies) {
         String normalizedAllergy = normalizeAllergy(allergy);
-        if (normalizedTag.contains(normalizedAllergy)
-            || normalizedAllergy.contains(normalizedTag)) {
+        if (TagMatcher.containsWord(List.of(normalizedTag), normalizedAllergy)
+            || TagMatcher.containsWord(List.of(normalizedAllergy), normalizedTag)) {
           result.add(normalizedTag);
           break;
         }
@@ -137,7 +137,7 @@ public class AllergenCrossMatchService {
   private String normalizeTag(String tag) {
     int idx = tag.indexOf(':');
     String value = idx >= 0 ? tag.substring(idx + 1) : tag;
-    return value.replace('-', ' ').toLowerCase().trim();
+    return TagMatcher.normalize(value);
   }
 
   // Normalise une allergie utilisateur : "lait" -> "milk" via le dictionnaire
