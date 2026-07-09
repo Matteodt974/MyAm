@@ -103,6 +103,34 @@ cd frontend && flutter analyze
 cd frontend && flutter test
 ```
 
+## Installation sur Android
+
+Chaque [release GitHub](https://github.com/MyAm-org/MyAm/releases) publie un APK (`myam-<version>.apk`).
+
+1. Télécharger le fichier `.apk` depuis la release sur l'appareil Android.
+2. À l'ouverture, si demandé, autoriser l'installation d'apps depuis cette source (Paramètres > Applications > Accès spécial > Installer des applications inconnues).
+3. Ouvrir le fichier téléchargé et confirmer l'installation.
+
+## Installation sur iPhone via SideStore
+
+On publie aussi un IPA non signé (`myam-<version>.ipa`), installable sans compte Apple Developer payant via [SideStore](https://sidestore.io/).
+
+### Prérequis :
+
+- Un iPhone/iPad avec iOS 15+ et un ordinateur (Windows, macOS ou Linux)
+- Un Apple ID et une connexion Wi-Fi
+- [iloader](https://docs.sidestore.io/docs/installation/prerequisites) installé sur l'ordinateur, et l'app `LocalDevVPN` installée et connectée sur l'appareil iOS
+
+Étapes :
+
+1. Connecter l'iPhone/iPad à l'ordinateur, ouvrir `iloader` et se connecter avec l'Apple ID.
+2. Sélectionner l'appareil puis "Install SideStore (Stable)".
+3. Sur l'appareil : Réglages > Général > VPN & Device Management, faire confiance à l'app liée à l'Apple ID, puis activer le "Developer Mode" (Confidentialité et sécurité) et redémarrer.
+4. Ouvrir `LocalDevVPN` et se connecter, puis ouvrir SideStore et se connecter avec le même Apple ID.
+5. Dans SideStore, importer le fichier `.ipa` téléchargé depuis la [release GitHub](https://github.com/MyAm-org/MyAm/releases) pour l'installer sur l'appareil.
+
+Voir la [documentation officielle SideStore](https://docs.sidestore.io/docs/installation/install) pour les détails (prérequis par OS, dépannage, etc.).
+
 ## Flux Git
 
 Branche (`feat/...`, `fix/...`, `chore/...`), commit, push, puis Pull Request vers `main`.
