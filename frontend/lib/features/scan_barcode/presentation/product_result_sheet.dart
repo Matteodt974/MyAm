@@ -82,38 +82,39 @@ class ProductResultSheet extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                FilledButton.icon(
-                  onPressed: isTrusted
-                      ? null
-                      : () async {
-                          await ref
-                              .read(trustedItemControllerProvider.notifier)
-                              .add(
-                                TrustedItem(
-                                  ean: product.ean,
-                                  name: product.name,
-                                  brands: product.brands,
-                                  nutriscore: product.nutriscore,
-                                ),
-                              );
+            if (isTrusted) ...[
+              const _TrustedBadge(),
+              const SizedBox(height: 12),
+            ] else if (product.riskLevel == 'SAFE') ...[
+              Row(
+                children: [
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await ref
+                          .read(trustedItemControllerProvider.notifier)
+                          .add(
+                            TrustedItem(
+                              ean: product.ean,
+                              name: product.name,
+                              brands: product.brands,
+                              nutriscore: product.nutriscore,
+                            ),
+                          );
 
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Ajouté aux items de confiance'),
-                              ),
-                            );
-                          }
-                        },
-                  icon: Icon(isTrusted ? Icons.verified : Icons.add_task),
-                  label: Text(
-                    isTrusted ? 'Déjà dans mes items' : 'Ajouter aux items fiables',
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Ajouté aux items de confiance'),
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.add_task),
+                    label: const Text('Ajouter aux items fiables'),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
             if (isDanger) ...[
               _AllergyAlert(matched: matched, level: 'DANGER'),
@@ -129,7 +130,10 @@ class ProductResultSheet extends ConsumerWidget {
               const SizedBox(height: 12),
             ],
             if (selectedDiets.isNotEmpty) ...[
-              _DietBanner(isCompatible: product.dietCompatible),
+              _DietBanner(
+                isCompatible: product.dietCompatible,
+                warningDietLabel: _dietLabel(product.dietWarningDiet),
+              ),
               const SizedBox(height: 12),
             ],
             _InfoRow(
@@ -168,10 +172,45 @@ class ProductResultSheet extends ConsumerWidget {
   }
 }
 
+class _TrustedBadge extends StatelessWidget {
+  const _TrustedBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.verified, color: theme.colorScheme.onSecondaryContainer),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Déjà vérifié : sûr pour votre profil',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSecondaryContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DietBanner extends StatelessWidget {
-  const _DietBanner({required this.isCompatible});
+  const _DietBanner({required this.isCompatible, this.warningDietLabel});
 
   final bool isCompatible;
+
+  final String? warningDietLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +223,9 @@ class _DietBanner extends StatelessWidget {
         : theme.colorScheme.onErrorContainer;
     final text = isCompatible
         ? 'Ce produit respecte vos régimes sélectionnés.'
-        : 'Ce produit ne respecte pas vos régimes sélectionnés.';
+        : warningDietLabel == null
+        ? 'Ce produit ne respecte pas vos régimes sélectionnés.'
+        : 'Ce produit ne respecte pas votre régime ${warningDietLabel!.toLowerCase()}.';
 
     return Container(
       width: double.infinity,
@@ -212,6 +253,30 @@ class _DietBanner extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+String? _dietLabel(String? value) {
+  if (value == null) return null;
+  switch (value) {
+    case 'VEGAN':
+      return 'vegan';
+    case 'VEGETARIAN':
+      return 'végétarien';
+    case 'PESCETARIAN':
+      return 'pescétarien';
+    case 'HALAL':
+      return 'halal';
+    case 'KOSHER':
+      return 'kasher';
+    case 'GLUTEN_FREE':
+      return 'sans gluten';
+    case 'LACTOSE_FREE':
+      return 'sans lactose';
+    case 'OMNIVORE':
+      return 'omnivore';
+    default:
+      return value.toLowerCase();
   }
 }
 

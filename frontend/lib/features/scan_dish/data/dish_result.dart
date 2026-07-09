@@ -11,6 +11,8 @@ class DishResult {
     this.ingredients = const <ProbableIngredient>[],
     this.foodDataMatches = const <FoodDataMatch>[],
     this.dietCompatible = false,
+    this.dietStatus = 'unknown',
+    this.dietWarningDiet,
   });
 
   final String? filename;
@@ -24,6 +26,10 @@ class DishResult {
   final List<ProbableIngredient> ingredients;
   final List<FoodDataMatch> foodDataMatches;
   final bool dietCompatible;
+
+  final String dietStatus;
+
+  final String? dietWarningDiet;
 
   factory DishResult.fromJson(Map<String, dynamic> json) {
     return DishResult(
@@ -41,6 +47,8 @@ class DishResult {
         FoodDataMatch.fromJson,
       ),
       dietCompatible: json['diet_compatible'] as bool? ?? false,
+      dietStatus: json['diet_status']?.toString() ?? 'unknown',
+      dietWarningDiet: json['diet_warning_diet']?.toString(),
     );
   }
 
