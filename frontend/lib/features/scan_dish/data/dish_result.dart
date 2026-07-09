@@ -52,6 +52,28 @@ class DishResult {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'filename': filename,
+      'content_type': contentType,
+      'size_bytes': sizeBytes,
+      'status': status,
+      'message': message,
+      'dish_name': dishName,
+      'confidence': confidence,
+      'candidates': candidates.map((candidate) => candidate.toJson()).toList(),
+      'ingredients': ingredients
+          .map((ingredient) => ingredient.toJson())
+          .toList(),
+      'food_data_matches': foodDataMatches
+          .map((match) => match.toJson())
+          .toList(),
+      'diet_compatible': dietCompatible,
+      'diet_status': dietStatus,
+      'diet_warning_diet': dietWarningDiet,
+    };
+  }
+
   static int? _toInt(Object? value) {
     if (value is num) return value.toInt();
     if (value is String && value.isNotEmpty) return int.tryParse(value);
@@ -88,6 +110,10 @@ class DishCandidate {
       confidence: DishResult._toDouble(json['confidence']),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {'name': name, 'confidence': confidence};
+  }
 }
 
 class ProbableIngredient {
@@ -102,6 +128,10 @@ class ProbableIngredient {
       confidence: DishResult._toDouble(json['confidence']),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {'name': name, 'confidence': confidence};
+  }
 }
 
 Set<String> flaggedDishIngredients(
@@ -114,7 +144,8 @@ Set<String> flaggedDishIngredients(
     final name = ingredient.name.toLowerCase();
     for (final allergy in allergies) {
       final normalizedAllergy = allergy.toLowerCase();
-      if (name.contains(normalizedAllergy) || normalizedAllergy.contains(name)) {
+      if (name.contains(normalizedAllergy) ||
+          normalizedAllergy.contains(name)) {
         flagged.add(ingredient.name);
         break;
       }
@@ -146,5 +177,15 @@ class FoodDataMatch {
       brandOwner: json['brand_owner']?.toString(),
       ingredients: json['ingredients']?.toString(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'fdc_id': fdcId,
+      'description': description,
+      'data_type': dataType,
+      'brand_owner': brandOwner,
+      'ingredients': ingredients,
+    };
   }
 }
