@@ -28,7 +28,7 @@ class ScanControllerTest {
   @Test
   void dishAcceptsImageAndReturnsAnalysis() throws Exception {
     var file = new MockMultipartFile("image", "plat.jpg", "image/jpeg", new byte[] {1, 2, 3});
-    when(dishAnalysis.analyze(any(), any()))
+    when(dishAnalysis.analyze(any(), any(), any()))
         .thenReturn(
             new DishResponse(
                 "plat.jpg",
@@ -42,7 +42,10 @@ class ScanControllerTest {
                 List.of(new DishResponse.ProbableIngredient("tomate", 0.84)),
                 List.of(
                     new DishResponse.FoodDataMatch(
-                        170457, "Tomatoes, red, raw", "SR Legacy", null, null))));
+                        170457, "Tomatoes, red, raw", "SR Legacy", null, null)),
+                true,
+                "unknown",
+                null));
 
     mvc.perform(multipart("/v1/scan/dish").file(file))
         .andExpect(status().isOk())
