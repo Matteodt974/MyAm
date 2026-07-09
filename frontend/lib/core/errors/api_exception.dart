@@ -43,6 +43,12 @@ class ApiException implements Exception {
       case 404:
         return ApiException('Produit introuvable.', statusCode: status);
 
+      case 413:
+        return ApiException(
+          'Photo trop volumineuse. Reessaie avec une photo plus legere.',
+          statusCode: status,
+        );
+
       case 502:
         return ApiException(
           'Service externe indisponible. Réessaie plus tard.',

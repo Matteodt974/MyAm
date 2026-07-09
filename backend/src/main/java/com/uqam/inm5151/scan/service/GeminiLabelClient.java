@@ -63,7 +63,7 @@ public class GeminiLabelClient extends AbstractGeminiClient {
                         "user",
                         "parts",
                         List.of(Map.of("text", PROMPT_TEMPLATE.formatted(target, text))))),
-            "generationConfig", Map.of("temperature", 0));
+            "generationConfig", Map.of("temperature", 0, "response_mime_type", "application/json"));
 
     Map<?, ?> response = generateContent(body);
     return parseResponse(text, response);
