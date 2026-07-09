@@ -133,4 +133,26 @@ abstract class AbstractGeminiClient {
     String value = node.asText(null);
     return value == null || value.isBlank() ? null : value.trim();
   }
+
+  protected static JsonNode field(JsonNode root, String... names) {
+    if (root == null) {
+      return null;
+    }
+    for (String name : names) {
+      JsonNode value = root.get(name);
+      if (value != null && !value.isMissingNode() && !value.isNull()) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  /** Defaults a blank/null target language to French and normalizes ISO 639-1 codes. */
+  protected static String normalizeLanguage(String language) {
+    if (language == null || language.isBlank()) {
+      return "fr";
+    }
+    String normalized = language.trim().toLowerCase();
+    return normalized.equals("zh-cn") ? "zh" : normalized;
+  }
 }
