@@ -1,7 +1,7 @@
 name: myam
 description: "Scanner alimentaire et cosmetique - INM5151"
 publish_to: "none"
-version: 2.0.3+7
+version: 2.0.4+8
 
 environment:
   sdk: ^3.12.0
