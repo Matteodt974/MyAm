@@ -3,6 +3,8 @@
 server:
   # Render injecte PORT ; en local on retombe sur 8080 (le FastAPI occupe deja 8000).
   port: ${PORT:8080}
+  # Pour X-Forwarded-Proto (nginx/Cloudflare TLS termination).
+  forward-headers-strategy: framework
 
 spring:
   config:
