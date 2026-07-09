@@ -11,6 +11,7 @@ class ProductResult {
     this.ingredientsAnalysisTags = const <String>[],
     this.labelTags = const <String>[],
     this.dietCompatible = false,
+    this.dietWarningDiet,
     this.riskLevel,
     this.matchedAllergens = const <String>[],
     this.undeterminedAllergens = const <String>[],
@@ -38,6 +39,8 @@ class ProductResult {
 
   final bool dietCompatible;
 
+  final String? dietWarningDiet;
+
   final String? riskLevel;
 
   final List<String> matchedAllergens;
@@ -57,6 +60,7 @@ class ProductResult {
       ingredientsAnalysisTags: _toStringList(json['ingredients_analysis_tags']),
       labelTags: _toStringList(json['label_tags']),
       dietCompatible: json['diet_compatible'] as bool? ?? false,
+      dietWarningDiet: json['diet_warning_diet']?.toString(),
       riskLevel: json['risk_level']?.toString(),
       matchedAllergens: _toStringList(json['matched_allergens']),
       undeterminedAllergens: _toStringList(json['undetermined_allergens']),

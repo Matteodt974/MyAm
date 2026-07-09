@@ -30,6 +30,11 @@ class DishResultSheet extends ConsumerWidget {
         result.status == 'low_confidence' ||
         ((result.confidence ?? 0) > 0 && (result.confidence ?? 0) < 0.70);
 
+    final dietState = result.dietStatus;
+    final dietWarningLabel = _dietLabel(result.dietWarningDiet);
+    final safeToTrust =
+        !unrecognized && flagged.isEmpty && dietState != 'incompatible';
+
     final title = unrecognized
         ? 'Plat non reconnu'
         : lowConfidence
@@ -106,36 +111,33 @@ class DishResultSheet extends ConsumerWidget {
                       'La photo ne permet pas une identification fiable. Reprenez une photo si nécessaire.',
                 ),
               ],
-              if (trustedId != null) ...[
+              if (isTrusted) ...[
+                const SizedBox(height: 12),
+                const _TrustedBadge(),
+              ] else if (trustedId != null && safeToTrust) ...[
                 const SizedBox(height: 12),
                 FilledButton.icon(
-                  onPressed: isTrusted
-                      ? null
-                      : () async {
-                          await ref
-                              .read(trustedItemControllerProvider.notifier)
-                              .add(
-                                TrustedItem(
-                                  id: trustedId,
-                                  ean: trustedId,
-                                  name: result.dishName ?? result.message,
-                                ),
-                              );
+                  onPressed: () async {
+                    await ref
+                        .read(trustedItemControllerProvider.notifier)
+                        .add(
+                          TrustedItem(
+                            id: trustedId,
+                            ean: trustedId,
+                            name: result.dishName ?? result.message,
+                          ),
+                        );
 
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Ajouté aux items de confiance'),
-                              ),
-                            );
-                          }
-                        },
-                  icon: Icon(isTrusted ? Icons.verified : Icons.add_task),
-                  label: Text(
-                    isTrusted
-                        ? 'Déjà dans mes items'
-                        : 'Ajouter aux items fiables',
-                  ),
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Ajouté aux items de confiance'),
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.add_task),
+                  label: const Text('Ajouter aux items fiables'),
                 ),
               ],
               if (result.candidates.isNotEmpty) ...[
@@ -202,7 +204,17 @@ class DishResultSheet extends ConsumerWidget {
               ],
               if (diets.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                _DietBanner(isCompatible: result.dietCompatible),
+                if (dietState == 'unknown')
+                  _DietUncertainBanner(
+                    text: lowConfidence || unrecognized
+                        ? 'Analyse photo insuffisante pour conclure sur vos régimes.'
+                        : 'Le plat a été identifié, mais le verdict de régime reste incertain.',
+                  )
+                else
+                  _DietBanner(
+                    isCompatible: dietState == 'compatible',
+                    warningDietLabel: dietWarningLabel,
+                  ),
               ],
               const SizedBox(height: 8),
               Text(
@@ -241,10 +253,45 @@ class DishResultSheet extends ConsumerWidget {
   }
 }
 
+class _TrustedBadge extends StatelessWidget {
+  const _TrustedBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.secondaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.verified, color: theme.colorScheme.onSecondaryContainer),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Déjà vérifié : sûr pour votre profil',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSecondaryContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _DietBanner extends StatelessWidget {
-  const _DietBanner({required this.isCompatible});
+  const _DietBanner({required this.isCompatible, this.warningDietLabel});
 
   final bool isCompatible;
+
+  final String? warningDietLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -255,9 +302,12 @@ class _DietBanner extends StatelessWidget {
     final fg = isCompatible
         ? theme.colorScheme.onSecondaryContainer
         : theme.colorScheme.onErrorContainer;
+    final warningText = warningDietLabel == null
+        ? 'Ce plat ne respecte pas vos régimes sélectionnés.'
+        : 'Ce plat ne respecte pas votre régime ${warningDietLabel!.toLowerCase()}.';
     final text = isCompatible
         ? 'Ce plat respecte vos régimes sélectionnés.'
-        : 'Ce plat ne respecte pas vos régimes sélectionnés.';
+        : warningText;
 
     return Container(
       width: double.infinity,
@@ -285,6 +335,68 @@ class _DietBanner extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _DietUncertainBanner extends StatelessWidget {
+  const _DietUncertainBanner({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiaryContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.info_outline,
+            color: theme.colorScheme.onTertiaryContainer,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onTertiaryContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String? _dietLabel(String? value) {
+  if (value == null) return null;
+  switch (value) {
+    case 'VEGAN':
+      return 'vegan';
+    case 'VEGETARIAN':
+      return 'végétarien';
+    case 'PESCETARIAN':
+      return 'pescétarien';
+    case 'HALAL':
+      return 'halal';
+    case 'KOSHER':
+      return 'kasher';
+    case 'GLUTEN_FREE':
+      return 'sans gluten';
+    case 'LACTOSE_FREE':
+      return 'sans lactose';
+    case 'OMNIVORE':
+      return 'omnivore';
+    default:
+      return value.toLowerCase();
   }
 }
 
