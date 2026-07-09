@@ -3,10 +3,14 @@ package com.uqam.inm5151.scan.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uqam.inm5151.scan.config.AppProperties;
+import com.uqam.inm5151.scan.dto.DishResponse;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -64,6 +68,131 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
 
   public GeminiDishAnalysisClient(AppProperties props, ObjectMapper objectMapper) {
     super(props, objectMapper);
+  }
+
+  /**
+   * Fusionne les ingredients observes visuellement avec ceux d'une fiche FoodData Central proche du
+   * plat. La fiche FDC est toujours en anglais (format etiquette) : si la langue cible est
+   * l'anglais, un simple merge de chaines suffit (aucun appel Gemini necessaire). Sinon, on demande
+   * a Gemini de dedupliquer les synonymes et de traduire les ingredients de la fiche dans la langue
+   * cible.
+   */
+  public List<DishResponse.ProbableIngredient> mergeIngredients(
+      String dishName,
+      List<DishResponse.ProbableIngredient> visualIngredients,
+      List<DishResponse.FoodDataMatch> matches,
+      String language) {
+    String labelIngredients =
+        matches.stream()
+            .map(DishResponse.FoodDataMatch::ingredients)
+            .filter(s -> s != null && !s.isBlank())
+            .findFirst()
+            .orElse(null);
+    if (labelIngredients == null) {
+      return visualIngredients;
+    }
+
+    String target = normalizeLanguage(language);
+    if (target.equals("en")) {
+      return cheapMerge(visualIngredients, labelIngredients);
+    }
+
+    try {
+      requireApiKey();
+      String prompt = mergeIngredientsPrompt(dishName, visualIngredients, labelIngredients, target);
+      Map<?, ?> response = generateContent(textOnlyBody(prompt));
+      return parseMergedIngredients(response, cheapMerge(visualIngredients, labelIngredients));
+    } catch (RuntimeException e) {
+      log.warn(
+          "Gemini ingredient merge failed, falling back to untranslated merge: {}", e.getMessage());
+      return cheapMerge(visualIngredients, labelIngredients);
+    }
+  }
+
+  private static List<DishResponse.ProbableIngredient> cheapMerge(
+      List<DishResponse.ProbableIngredient> visualIngredients, String labelIngredients) {
+    Set<String> seen =
+        visualIngredients.stream().map(i -> i.name().toLowerCase()).collect(Collectors.toSet());
+    List<DishResponse.ProbableIngredient> result = new ArrayList<>(visualIngredients);
+    Arrays.stream(labelIngredients.split(","))
+        .map(String::trim)
+        .filter(s -> !s.isBlank() && seen.add(s.toLowerCase()))
+        .forEach(name -> result.add(new DishResponse.ProbableIngredient(name, null)));
+    return result;
+  }
+
+  private static String mergeIngredientsPrompt(
+      String dishName,
+      List<DishResponse.ProbableIngredient> visualIngredients,
+      String labelIngredients,
+      String targetLanguage) {
+    String visualList =
+        visualIngredients.stream()
+            .map(
+                i ->
+                    i.name()
+                        + (i.confidence() == null ? "" : " (confidence " + i.confidence() + ")"))
+            .reduce("", (left, right) -> left.isBlank() ? right : left + ", " + right);
+    return """
+        Plat identifie: "%s"
+        Ingredients observes visuellement sur la photo: %s
+        Liste d'ingredients d'une fiche produit similaire (USDA FoodData Central, en anglais,
+        format etiquette d'emballage): "%s"
+
+        Fusionne ces deux sources en une seule liste d'ingredients probables pour ce plat, dans
+        la langue cible (code ISO 639-1: %s).
+        Regles:
+        - Deduplique les synonymes et variantes linguistiques d'un meme ingredient.
+        - Traduis tous les noms d'ingredients dans la langue cible.
+        - Conserve la valeur confidence fournie pour les ingredients observes visuellement.
+        - Pour les ingredients qui ne proviennent que de la fiche produit (non observes
+          visuellement), mets confidence a null.
+        - Ignore les mentions non alimentaires (allergenes, "may contain", pourcentages, codes E)
+          sauf si elles nomment un ingredient reel.
+        Reponds uniquement avec ce JSON strict, sans autre texte:
+        {"ingredients": [{"name": string, "confidence": number|null}]}
+        """
+        .formatted(
+            dishName,
+            visualList.isBlank() ? "aucun" : visualList,
+            labelIngredients,
+            targetLanguage);
+  }
+
+  private static Map<String, Object> textOnlyBody(String prompt) {
+    return Map.of(
+        "contents",
+        List.of(Map.of("role", "user", "parts", List.of(Map.of("text", prompt)))),
+        "generationConfig",
+        Map.of("temperature", 0, "response_mime_type", "application/json"));
+  }
+
+  private List<DishResponse.ProbableIngredient> parseMergedIngredients(
+      Map<?, ?> response, List<DishResponse.ProbableIngredient> fallback) {
+    String text = extractText(response);
+    if (text == null || text.isBlank()) {
+      return fallback;
+    }
+    try {
+      JsonNode root = objectMapper.readTree(stripCodeFence(text));
+      JsonNode node = root.get("ingredients");
+      if (node == null || !node.isArray()) {
+        return fallback;
+      }
+      List<DishResponse.ProbableIngredient> merged = new ArrayList<>();
+      for (JsonNode item : node) {
+        String name = textOrNull(item.get("name"));
+        if (name != null) {
+          merged.add(
+              new DishResponse.ProbableIngredient(name, doubleOrNull(item.get("confidence"))));
+        }
+      }
+      return merged.isEmpty() ? fallback : merged;
+    } catch (Exception e) {
+      log.warn(
+          "Gemini merged-ingredients JSON invalid, keeping untranslated merge: {}", e.getMessage());
+      return fallback;
+    }
   }
 
   public GeminiDishAnalysis analyze(byte[] imageBytes, String contentType, String language) {

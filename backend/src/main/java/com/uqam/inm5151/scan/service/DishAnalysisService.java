@@ -2,11 +2,7 @@ package com.uqam.inm5151.scan.service;
 
 import com.uqam.inm5151.scan.dto.DishResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,7 +12,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class DishAnalysisService {
-
   private static final Logger log = LoggerFactory.getLogger(DishAnalysisService.class);
   private static final double LOW_CONFIDENCE_THRESHOLD = 0.70;
   private static final int FOOD_MATCH_LIMIT = 5;
@@ -72,7 +67,8 @@ public class DishAnalysisService {
 
     if (dishName == null || dishName.isBlank() || confidence <= 0) {
       log.info(
-          "Gemini did not identify a dish. dishName={}, confidence={}, candidates={}, ingredients={}",
+          "Gemini did not identify a dish. dishName={}, "
+              + "confidence={}, candidates={}, ingredients={}",
           dishName,
           confidence,
           candidates.size(),
@@ -101,7 +97,10 @@ public class DishAnalysisService {
     } catch (RuntimeException e) {
       matches = List.of();
     }
-    ingredients = mergeWithFdcIngredients(ingredients, matches);
+    try {
+      ingredients = gemini.mergeIngredients(dishName, ingredients, matches, language);
+    } catch (RuntimeException e) {
+    }
     List<String> ingredientNames =
         ingredients.stream().map(DishResponse.ProbableIngredient::name).toList();
     boolean dietCompatible =
@@ -118,7 +117,7 @@ public class DishAnalysisService {
     String status = confidence < LOW_CONFIDENCE_THRESHOLD ? "low_confidence" : "identified";
     String message =
         confidence < LOW_CONFIDENCE_THRESHOLD
-            ? "Identification incertaine. Verifiez le resultat avant de l'utiliser."
+            ? "Identification incertaine. Verifiez le resultat avant de " + "l'utiliser."
             : "Plat identifie a partir de la photo.";
     String dietStatus =
         !hasUserDiets || confidence < LOW_CONFIDENCE_THRESHOLD
@@ -157,28 +156,6 @@ public class DishAnalysisService {
         dietCompatible,
         "unknown",
         null);
-  }
-
-  private static List<DishResponse.ProbableIngredient> mergeWithFdcIngredients(
-      List<DishResponse.ProbableIngredient> geminiIngredients,
-      List<DishResponse.FoodDataMatch> matches) {
-    String fdcStr =
-        matches.stream()
-            .map(DishResponse.FoodDataMatch::ingredients)
-            .filter(s -> s != null && !s.isBlank())
-            .findFirst()
-            .orElse(null);
-    if (fdcStr == null) {
-      return geminiIngredients;
-    }
-    Set<String> seen =
-        geminiIngredients.stream().map(i -> i.name().toLowerCase()).collect(Collectors.toSet());
-    List<DishResponse.ProbableIngredient> result = new ArrayList<>(geminiIngredients);
-    Arrays.stream(fdcStr.split(","))
-        .map(String::trim)
-        .filter(s -> !s.isBlank() && seen.add(s.toLowerCase()))
-        .forEach(name -> result.add(new DishResponse.ProbableIngredient(name, null)));
-    return result;
   }
 
   private static String foodQuery(

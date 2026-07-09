@@ -40,7 +40,17 @@ class DishAnalysisServiceTest {
         .thenReturn(
             List.of(
                 new DishResponse.FoodDataMatch(
-                    170457, "Tomatoes, red, raw", "SR Legacy", null, null)));
+                    170457,
+                    "Tomatoes, red, raw",
+                    "SR Legacy",
+                    null,
+                    "SPARKLING SPRING WATER, SUGAR")));
+    when(gemini.mergeIngredients(eq("Salade grecque"), any(), any(), any()))
+        .thenReturn(
+            List.of(
+                new DishResponse.ProbableIngredient("tomate", 0.8),
+                new DishResponse.ProbableIngredient("eau petillante", null),
+                new DishResponse.ProbableIngredient("sucre", null)));
 
     DishResponse response = service().analyze(image(), null);
 
@@ -50,7 +60,7 @@ class DishAnalysisServiceTest {
     assertThat(response.dietStatus()).isEqualTo("unknown");
     assertThat(response.ingredients())
         .extracting(DishResponse.ProbableIngredient::name)
-        .containsExactly("tomate");
+        .containsExactly("tomate", "eau petillante", "sucre");
     assertThat(response.foodDataMatches())
         .extracting(DishResponse.FoodDataMatch::fdcId)
         .containsExactly(170457);
