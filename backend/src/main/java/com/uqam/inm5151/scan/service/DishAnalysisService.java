@@ -39,6 +39,7 @@ public class DishAnalysisService {
   }
 
   public DishResponse analyze(MultipartFile image, String language, List<Diet> userDiets) {
+    boolean hasUserDiets = userDiets != null && !userDiets.isEmpty();
     byte[] bytes;
     try {
       bytes = image.getBytes();
@@ -55,9 +56,7 @@ public class DishAnalysisService {
     } catch (GeminiDishAnalysisException e) {
       log.warn("Gemini dish JSON could not be parsed: {}", e.getMessage());
       return unrecognized(
-          image,
-          "Gemini n'a pas pu identifier le plat avec certitude.",
-          userDiets == null || userDiets.isEmpty());
+          image, "Gemini n'a pas pu identifier le plat avec certitude.", !hasUserDiets);
     }
 
     String dishName = analysis.dishName();
@@ -89,7 +88,9 @@ public class DishAnalysisService {
           candidates,
           ingredients,
           List.of(),
-          userDiets == null || userDiets.isEmpty());
+          !hasUserDiets,
+          "unknown",
+          null);
     }
 
     String fdcQueryName =
@@ -104,12 +105,25 @@ public class DishAnalysisService {
     List<String> ingredientNames =
         ingredients.stream().map(DishResponse.ProbableIngredient::name).toList();
     boolean dietCompatible =
-        dietMatch.isUserDietsCompatible(userDiets, List.of(dishName, fdcQueryName), ingredientNames);
+        hasUserDiets
+            && dietMatch.isUserDietsCompatible(
+                userDiets, List.of(dishName, fdcQueryName), ingredientNames);
+    Diet warningDiet =
+        dietCompatible
+            ? null
+            : hasUserDiets
+                ? dietMatch.firstIncompatibleDiet(
+                    userDiets, List.of(dishName, fdcQueryName), ingredientNames)
+                : null;
     String status = confidence < LOW_CONFIDENCE_THRESHOLD ? "low_confidence" : "identified";
     String message =
         confidence < LOW_CONFIDENCE_THRESHOLD
             ? "Identification incertaine. Verifiez le resultat avant de l'utiliser."
             : "Plat identifie a partir de la photo.";
+    String dietStatus =
+        !hasUserDiets || confidence < LOW_CONFIDENCE_THRESHOLD
+            ? "unknown"
+            : dietCompatible ? "compatible" : "incompatible";
 
     return new DishResponse(
         image.getOriginalFilename(),
@@ -122,7 +136,9 @@ public class DishAnalysisService {
         candidates,
         ingredients,
         matches,
-        dietCompatible);
+        dietCompatible,
+        dietStatus,
+        warningDiet == null ? null : warningDiet.name());
   }
 
   private static DishResponse unrecognized(
@@ -138,7 +154,9 @@ public class DishAnalysisService {
         List.of(),
         List.of(),
         List.of(),
-        dietCompatible);
+        dietCompatible,
+        "unknown",
+        null);
   }
 
   private static List<DishResponse.ProbableIngredient> mergeWithFdcIngredients(
