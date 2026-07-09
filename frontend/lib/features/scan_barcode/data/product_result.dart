@@ -46,7 +46,7 @@ class ProductResult {
 
   factory ProductResult.fromJson(Map<String, dynamic> json) {
     return ProductResult(
-      ean: json['ean']?.toString() ?? '',
+      ean: json['ean'] as String,
       name: json['name']?.toString(),
       brands: json['brands']?.toString(),
       nutriscore: json['nutriscore']?.toString(),
