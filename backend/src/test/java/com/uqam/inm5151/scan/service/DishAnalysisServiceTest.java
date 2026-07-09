@@ -24,6 +24,8 @@ class DishAnalysisServiceTest {
 
   @Mock private FoodDataCentralClient foodDataCentral;
 
+  @Mock private DietMatchService dietMatchService;
+
   @Test
   void returnsIdentifiedDishWithIngredientsAndFoodDataMatches() {
     when(gemini.analyze(any(), eq("image/jpeg"), any()))
@@ -45,6 +47,7 @@ class DishAnalysisServiceTest {
     assertThat(response.status()).isEqualTo("identified");
     assertThat(response.dishName()).isEqualTo("Salade grecque");
     assertThat(response.confidence()).isEqualTo(0.92);
+    assertThat(response.dietStatus()).isEqualTo("unknown");
     assertThat(response.ingredients())
         .extracting(DishResponse.ProbableIngredient::name)
         .containsExactly("tomate");
@@ -81,6 +84,66 @@ class DishAnalysisServiceTest {
     assertThat(response.status()).isEqualTo("unrecognized");
     assertThat(response.dishName()).isNull();
     assertThat(response.ingredients()).isEmpty();
+  }
+
+  @Test
+  void identifiedDishReportsCompatibleWhenDietMatchServiceApproves() {
+    when(gemini.analyze(any(), eq("image/jpeg"), any()))
+        .thenReturn(
+            new GeminiDishAnalysis(
+                "Salade grecque",
+                null,
+                0.92,
+                List.of(),
+                List.of(new GeminiDishAnalysis.ProbableIngredient("tomate", 0.8))));
+    when(dietMatchService.isUserDietsCompatible(any(), any(), any())).thenReturn(true);
+
+    DishResponse response = service().analyze(image(), null, List.of(Diet.VEGAN));
+
+    assertThat(response.dietCompatible()).isTrue();
+    assertThat(response.dietStatus()).isEqualTo("compatible");
+    assertThat(response.dietWarningDiet()).isNull();
+  }
+
+  @Test
+  void identifiedDishReportsIncompatibleWhenDietMatchServiceRejects() {
+    when(gemini.analyze(any(), eq("image/jpeg"), any()))
+        .thenReturn(
+            new GeminiDishAnalysis(
+                "Poulet roti",
+                null,
+                0.92,
+                List.of(),
+                List.of(new GeminiDishAnalysis.ProbableIngredient("poulet", 0.8))));
+    when(dietMatchService.isUserDietsCompatible(any(), any(), any())).thenReturn(false);
+    when(dietMatchService.firstIncompatibleDiet(any(), any(), any())).thenReturn(Diet.VEGAN);
+
+    DishResponse response = service().analyze(image(), null, List.of(Diet.VEGAN));
+
+    assertThat(response.dietCompatible()).isFalse();
+    assertThat(response.dietStatus()).isEqualTo("incompatible");
+    assertThat(response.dietWarningDiet()).isEqualTo("VEGAN");
+  }
+
+  @Test
+  void lowConfidenceDishReportsUnknownDietStatusEvenWithUserDiets() {
+    when(gemini.analyze(any(), eq("image/jpeg"), any()))
+        .thenReturn(new GeminiDishAnalysis("Ragout", null, 0.42, List.of(), List.of()));
+
+    DishResponse response = service().analyze(image(), null, List.of(Diet.VEGAN));
+
+    assertThat(response.dietStatus()).isEqualTo("unknown");
+  }
+
+  @Test
+  void unrecognizedDishReportsUnknownDietStatusEvenWithUserDiets() {
+    when(gemini.analyze(any(), eq("image/jpeg"), any()))
+        .thenThrow(new GeminiDishAnalysisException("bad json"));
+
+    DishResponse response = service().analyze(image(), null, List.of(Diet.VEGAN));
+
+    assertThat(response.status()).isEqualTo("unrecognized");
+    assertThat(response.dietStatus()).isEqualTo("unknown");
   }
 
   @Test
@@ -138,7 +201,7 @@ class DishAnalysisServiceTest {
   }
 
   private DishAnalysisService service() {
-    return new DishAnalysisService(gemini, foodDataCentral);
+    return new DishAnalysisService(gemini, foodDataCentral, dietMatchService);
   }
 
   private static MockMultipartFile image() {
