@@ -52,7 +52,7 @@ public class GeminiLabelClient extends AbstractGeminiClient {
   public TranslationResult detectAndTranslate(String text, String targetLanguage) {
     requireApiKey();
 
-    String target = targetLanguage == null || targetLanguage.isBlank() ? "en" : targetLanguage;
+    String target = normalizeLanguage(targetLanguage);
 
     Map<String, Object> body =
         Map.of(
@@ -100,14 +100,6 @@ public class GeminiLabelClient extends AbstractGeminiClient {
     } catch (Exception e) {
       throw new GeminiDishAnalysisException("JSON Gemini invalide", e);
     }
-  }
-
-  private static JsonNode field(JsonNode root, String name) {
-    if (root == null) {
-      return null;
-    }
-    JsonNode value = root.get(name);
-    return value != null && !value.isMissingNode() && !value.isNull() ? value : null;
   }
 
   private static boolean booleanOrFalse(JsonNode node) {

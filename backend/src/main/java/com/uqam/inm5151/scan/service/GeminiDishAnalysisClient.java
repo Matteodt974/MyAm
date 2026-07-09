@@ -69,7 +69,7 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
   public GeminiDishAnalysis analyze(byte[] imageBytes, String contentType, String language) {
     requireApiKey();
 
-    String target = language == null || language.isBlank() ? "fr" : language;
+    String target = normalizeLanguage(language);
     GeminiDishAnalysis analysis =
         requestAnalysis(imageBytes, contentType, withLanguage(PROMPT, target));
     if (isUnrecognized(analysis)) {
@@ -81,14 +81,36 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
   }
 
   private static String withLanguage(String prompt, String targetLanguage) {
+    String target = normalizeLanguage(targetLanguage);
+    String displayName = languageName(target);
     return prompt
-        + "\nIMPORTANT : dish_name, ainsi que les noms dans candidates[].name et"
-        + " ingredients[].name, doivent tous etre exprimes dans la langue suivante (code ISO"
-        + " 639-1) : "
-        + targetLanguage
-        + ". en_name doit TOUJOURS rester en anglais peu importe la langue cible, car il sert de"
-        + " cle de recherche dans une base de donnees alimentaire anglophone (USDA FoodData"
-        + " Central).";
+        + "\nIMPORTANT - target output language: "
+        + displayName
+        + " (ISO 639-1 code: "
+        + target
+        + "). All user-facing JSON fields must be written in that target language: dish_name,"
+        + " candidates[].name, and ingredients[].name. Do not answer those fields in French unless"
+        + " the target language is fr. en_name must always remain English because it is used only as"
+        + " a search key for USDA FoodData Central.";
+  }
+
+  private static String languageName(String language) {
+    return switch (language) {
+      case "en" -> "English";
+      case "es" -> "Spanish";
+      case "de" -> "German";
+      case "it" -> "Italian";
+      case "pt" -> "Portuguese";
+      case "nl" -> "Dutch";
+      case "pl" -> "Polish";
+      case "ru" -> "Russian";
+      case "zh" -> "Chinese";
+      case "ja" -> "Japanese";
+      case "ko" -> "Korean";
+      case "ar" -> "Arabic";
+      case "fr" -> "French";
+      default -> language;
+    };
   }
 
   private GeminiDishAnalysis requestAnalysis(byte[] imageBytes, String contentType, String prompt) {
@@ -141,16 +163,6 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
     } catch (Exception e) {
       throw new GeminiDishAnalysisException("JSON Gemini invalide", e);
     }
-  }
-
-  private static JsonNode field(JsonNode root, String... names) {
-    for (String name : names) {
-      JsonNode value = root.get(name);
-      if (value != null && !value.isMissingNode() && !value.isNull()) {
-        return value;
-      }
-    }
-    return null;
   }
 
   private static List<GeminiDishAnalysis.DishCandidate> candidates(JsonNode node) {
