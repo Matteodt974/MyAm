@@ -63,7 +63,11 @@ public class GeminiLabelClient extends AbstractGeminiClient {
                         "user",
                         "parts",
                         List.of(Map.of("text", PROMPT_TEMPLATE.formatted(target, text))))),
-            "generationConfig", Map.of("temperature", 0, "response_mime_type", "application/json"));
+            "generationConfig",
+                Map.of(
+                    "temperature", 0,
+                    "response_mime_type", "application/json",
+                    "maxOutputTokens", 4096));
 
     Map<?, ?> response = generateContent(body);
     return parseResponse(text, response);
@@ -74,7 +78,10 @@ public class GeminiLabelClient extends AbstractGeminiClient {
     if (text == null || text.isBlank()) {
       throw new GeminiDishAnalysisException("Gemini n'a pas retourne de JSON");
     }
-    log.info("Gemini label JSON: {}", compactForLog(text));
+    log.info(
+        "Gemini label JSON (finishReason={}): {}",
+        extractFinishReason(response),
+        compactForLog(text));
 
     try {
       JsonNode root = objectMapper.readTree(stripCodeFence(text));

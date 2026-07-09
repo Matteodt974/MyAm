@@ -108,6 +108,20 @@ abstract class AbstractGeminiClient {
     return sb.toString();
   }
 
+  @SuppressWarnings("unchecked")
+  protected static String extractFinishReason(Map<?, ?> response) {
+    Object candidates = response.get("candidates");
+    if (!(candidates instanceof List<?> candidateList) || candidateList.isEmpty()) {
+      return null;
+    }
+    Object first = candidateList.getFirst();
+    if (!(first instanceof Map<?, ?> candidate)) {
+      return null;
+    }
+    Object reason = candidate.get("finishReason");
+    return reason instanceof String s ? s : null;
+  }
+
   protected static String compactForLog(String text) {
     String compact = text.replaceAll("\\s+", " ").trim();
     return compact.length() <= 1200 ? compact : compact.substring(0, 1200) + "...";
