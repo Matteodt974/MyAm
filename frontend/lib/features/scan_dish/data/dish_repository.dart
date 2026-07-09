@@ -33,6 +33,10 @@ class DishRepository {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.scanDish,
         data: formData,
+        options: Options(
+          sendTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
+       ),
       );
 
       return DishResult.fromJson(response.data!);
