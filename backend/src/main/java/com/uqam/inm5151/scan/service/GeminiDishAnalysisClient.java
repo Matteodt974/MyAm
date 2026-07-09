@@ -16,7 +16,8 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
 
   private static final Logger log = LoggerFactory.getLogger(GeminiDishAnalysisClient.class);
 
-  private static final String PROMPT = """
+  private static final String PROMPT =
+      """
       Analyse cette photo. Identifie l'element alimentaire principal si l'image montre un plat,
       une boisson, un aliment emballe, un complement alimentaire, des comprimes de cafeine,
       des ingredients, ou un produit destine a etre ingere.
@@ -40,7 +41,8 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
       etiquette alimentaire, ou objet clairement lie a l'alimentation.
       """;
 
-  private static final String FALLBACK_PROMPT = """
+  private static final String FALLBACK_PROMPT =
+      """
       Deuxieme verification: l'analyse precedente n'a rien identifie.
       Si l'image montre un produit consommable ou lie a l'alimentation, meme si ce n'est pas
       un plat cuisine, identifie-le. Les comprimes de cafeine, supplements, boissons,
@@ -90,23 +92,25 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
   }
 
   private GeminiDishAnalysis requestAnalysis(byte[] imageBytes, String contentType, String prompt) {
-    Map<String, Object> body = Map.of(
-        "contents",
-        List.of(
-            Map.of(
-                "role",
-                "user",
-                "parts",
-                List.of(
-                    Map.of(
-                        "inline_data",
+    Map<String, Object> body =
+        Map.of(
+            "contents",
+            List.of(
+                Map.of(
+                    "role",
+                    "user",
+                    "parts",
+                    List.of(
                         Map.of(
-                            "mime_type",
-                            contentType,
-                            "data",
-                            Base64.getEncoder().encodeToString(imageBytes))),
-                    Map.of("text", prompt)))),
-        "generationConfig", Map.of("temperature", 0, "response_mime_type", "application/json"));
+                            "inline_data",
+                            Map.of(
+                                "mime_type",
+                                contentType,
+                                "data",
+                                Base64.getEncoder().encodeToString(imageBytes))),
+                        Map.of("text", prompt)))),
+            "generationConfig",
+            Map.of("temperature", 0, "response_mime_type", "application/json"));
 
     Map<?, ?> response = generateContent(body);
     return parseResponse(response);

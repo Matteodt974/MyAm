@@ -16,22 +16,21 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Client Open Food Facts. Portage fidele de la logique de
- * backend/app/api/routes_scan.py.
+ * Client Open Food Facts. Portage fidele de la logique de backend/app/api/routes_scan.py.
  *
- * <p>
- * Comportement (identique a FastAPI) :
+ * <p>Comportement (identique a FastAPI) :
  *
  * <ul>
- * <li>erreur reseau / timeout -> 502 "Open Food Facts injoignable"
- * <li>reponse HTTP != 200 -> 502 "Reponse OFF invalide"
- * <li>corps avec status != 1 -> 404 "Produit introuvable"
+ *   <li>erreur reseau / timeout -> 502 "Open Food Facts injoignable"
+ *   <li>reponse HTTP != 200 -> 502 "Reponse OFF invalide"
+ *   <li>corps avec status != 1 -> 404 "Produit introuvable"
  * </ul>
  */
 @Service
 public class OpenFoodFactsClient {
 
-  private static final String FIELDS = "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags,ingredients_analysis_tags,label_tags";
+  private static final String FIELDS =
+      "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags,ingredients_analysis_tags,label_tags";
 
   private final RestClient client;
   private final String userAgent;
