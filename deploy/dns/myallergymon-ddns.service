@@ -1,0 +1,29 @@
+# /etc/systemd/system/myallergymon-ddns.service
+
+[Unit]
+Description=myallergymon.ca Dynamic DNS Update
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/myallergymon-ddns-update.sh
+
+# Run as a dedicated user for least-privilege
+User=cloudflare-ddns
+Group=cloudflare-ddns
+
+# State directory (writable by the service user)
+StateDirectory=myallergymon-ddns
+
+# Harden the service
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/myallergymon-ddns
+CapabilityBoundingSet=
+
+# Logging goes to journald automatically
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=myallergymon-ddns
