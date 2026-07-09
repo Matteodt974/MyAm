@@ -8,6 +8,7 @@ import com.uqam.inm5151.scan.service.DishAnalysisService;
 import com.uqam.inm5151.scan.service.OpenFoodFactsClient;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,7 +40,8 @@ public class ScanController {
 
   @PostMapping("/barcode")
   public BarcodeResponse scanBarcode(@RequestBody BarcodeRequest req) {
-    return openFoodFacts.fetchBarcode(req.ean(), req.allergies(), req.language(), req.diets());
+    return openFoodFacts.fetchBarcode(
+        req.ean(), req.allergies(), req.language(), parseDiets(req.diets()));
   }
 
   /**
@@ -58,26 +60,20 @@ public class ScanController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le fichier doit être une image");
     }
 
-    return dishAnalysis.analyze(image, language, parseDiets(diets));
+    return dishAnalysis.analyze(image, language, parseDiets(splitDiets(diets)));
   }
 
-  private static List<Diet> parseDiets(String diets) {
+  private static List<String> splitDiets(String diets) {
     if (diets == null || diets.isBlank()) {
       return List.of();
     }
+    return Arrays.stream(diets.split(",")).map(String::trim).filter(s -> !s.isBlank()).toList();
+  }
 
-    return Arrays.stream(diets.split(","))
-        .map(String::trim)
-        .filter(s -> !s.isBlank())
-        .map(
-            value -> {
-              try {
-                return Diet.valueOf(value);
-              } catch (IllegalArgumentException e) {
-                return null;
-              }
-            })
-        .filter(java.util.Objects::nonNull)
-        .toList();
+  private static List<Diet> parseDiets(List<String> diets) {
+    if (diets == null || diets.isEmpty()) {
+      return List.of();
+    }
+    return diets.stream().map(Diet::tryParse).flatMap(Optional::stream).toList();
   }
 }
