@@ -1,0 +1,70 @@
+package com.uqam.inm5151.scan.domain;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceException;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+class UserCheckConstraintTest {
+  @Autowired private EntityManager entityManager;
+
+  @Test
+  void standaloneWithoutPasswordHashIsRejected() {
+    User user = new User("Alex", AccountType.STANDALONE);
+    user.setEmail("alex@example.com");
+    // password_hash volontairement omis
+
+    assertThatThrownBy(
+            () -> {
+              entityManager.persist(user);
+              entityManager.flush();
+            })
+        .isInstanceOf(PersistenceException.class);
+  }
+
+  @Test
+  void managedWithoutGuardianIsRejected() {
+    User user = new User("Leo", AccountType.MANAGED);
+
+    assertThatThrownBy(
+            () -> {
+              entityManager.persist(user);
+              entityManager.flush();
+            })
+        .isInstanceOf(PersistenceException.class);
+  }
+
+  @Test
+  void managedWithEmailIsRejected() {
+    User user = new User("Leo", AccountType.MANAGED);
+    user.setGuardianUserId(1L);
+    user.setEmail("leo@example.com");
+
+    assertThatThrownBy(
+            () -> {
+              entityManager.persist(user);
+              entityManager.flush();
+            })
+        .isInstanceOf(PersistenceException.class);
+  }
+
+  @Test
+  void validStandaloneAndManagedAccountsAreAccepted() {
+    User guardian = new User("Parent", AccountType.STANDALONE);
+    guardian.setEmail("parent@example.com");
+    guardian.setPasswordHash("hashed");
+    entityManager.persist(guardian);
+    entityManager.flush();
+
+    User child = new User("Enfant", AccountType.MANAGED);
+    child.setGuardianUserId(guardian.getId());
+    entityManager.persist(child);
+    entityManager.flush();
+  }
+}
