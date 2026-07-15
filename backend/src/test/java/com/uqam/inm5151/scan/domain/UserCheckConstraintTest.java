@@ -14,7 +14,8 @@ import org.springframework.test.context.DynamicPropertySource;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class UserCheckConstraintTest {
-  @Autowired private EntityManager entityManager;
+  @Autowired
+  private EntityManager entityManager;
 
   @DynamicPropertySource
   static void postgresProperties(DynamicPropertyRegistry registry) {
@@ -33,10 +34,10 @@ class UserCheckConstraintTest {
     // password_hash volontairement omis
 
     assertThatThrownBy(
-            () -> {
-              entityManager.persist(user);
-              entityManager.flush();
-            })
+        () -> {
+          entityManager.persist(user);
+          entityManager.flush();
+        })
         .isInstanceOf(PersistenceException.class);
   }
 
@@ -45,10 +46,10 @@ class UserCheckConstraintTest {
     User user = new User("Leo", AccountType.MANAGED);
 
     assertThatThrownBy(
-            () -> {
-              entityManager.persist(user);
-              entityManager.flush();
-            })
+        () -> {
+          entityManager.persist(user);
+          entityManager.flush();
+        })
         .isInstanceOf(PersistenceException.class);
   }
 
@@ -59,10 +60,10 @@ class UserCheckConstraintTest {
     user.setEmail("leo@example.com");
 
     assertThatThrownBy(
-            () -> {
-              entityManager.persist(user);
-              entityManager.flush();
-            })
+        () -> {
+          entityManager.persist(user);
+          entityManager.flush();
+        })
         .isInstanceOf(PersistenceException.class);
   }
 
