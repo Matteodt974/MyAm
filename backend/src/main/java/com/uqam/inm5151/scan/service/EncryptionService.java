@@ -15,8 +15,9 @@ import org.springframework.stereotype.Service;
  * Chiffrement AES/GCM
  *
  * @see <a
- *     href="https://docs.oracle.com/en/java/javase/17/security/java-cryptography-architecture-jca-reference-guide.html">Guide
- *     JCA</a>
+ *      href=
+ *      "https://docs.oracle.com/en/java/javase/17/security/java-cryptography-architecture-jca-reference-guide.html">Guide
+ *      JCA</a>
  */
 @Service
 public class EncryptionService {
