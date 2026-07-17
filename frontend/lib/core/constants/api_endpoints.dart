@@ -34,4 +34,10 @@ class ApiEndpoints {
   static const String scanDish = '/v1/scan/dish';
 
   static const String scanLabel = '/v1/label/translate-and-structure';
+
+  static String childProfiles(int guardianId) =>
+      '/v1/parents/$guardianId/children';
+
+  static String childProfile(int guardianId, int childId) =>
+      '/v1/parents/$guardianId/children/$childId';
 }

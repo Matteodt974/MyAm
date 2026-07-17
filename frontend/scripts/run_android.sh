@@ -49,6 +49,7 @@ fi
 
 BACKEND_SCHEME="${BACKEND_SCHEME:-http}"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
+PARENT_USER_ID="${PARENT_USER_ID:-1}"
 if [[ -n "${API_BASE_URL:-}" ]]; then
     API_URL="$API_BASE_URL"
 elif [[ -n "${BACKEND_URL:-}" ]]; then
@@ -92,6 +93,7 @@ if [[ -n "$ADB" && -n "$DEVICE_ADDR" ]]; then
 fi
 
 echo "Backend → $API_URL"
+echo "Parent user ID → $PARENT_USER_ID"
 
 DEVICE_ARGS=()
 [[ -n "$DEVICE_ADDR" ]] && DEVICE_ARGS=("-d" "$DEVICE_ADDR")
@@ -101,5 +103,6 @@ cd "$REPO_ROOT"
     $MODE \
     --dart-define=API_BASE_URL="$API_URL" \
     --dart-define=BACKEND_URL="$API_URL" \
-    "${DEVICE_ARGS[@]}" \
-    "${EXTRA_ARGS[@]}"
+    --dart-define=PARENT_USER_ID="$PARENT_USER_ID" \
+    ${DEVICE_ARGS[@]+"${DEVICE_ARGS[@]}"} \
+    ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}

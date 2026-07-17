@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../../shared/widgets/animated_bottom_nav.dart';
 
+import '../../child_profiles/presentation/child_profile_selector.dart';
 import '../../profile_allergies/presentation/profile_screen.dart';
 
 import '../../scan_barcode/presentation/product_result_sheet.dart';
@@ -221,6 +222,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               ),
             ),
           Positioned.fill(child: _buildOverlay()),
+          if (_selectedIndex == _scanTabIndex)
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(child: ChildProfileSelector()),
+            ),
           if (isLoading)
             const Positioned.fill(
               child: ColoredBox(
@@ -356,7 +364,7 @@ class _ScanReticle extends StatelessWidget {
             child: Align(
               alignment: Alignment.topCenter,
               child: Padding(
-                padding: const EdgeInsets.only(top: 24),
+                padding: const EdgeInsets.only(top: 88),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
