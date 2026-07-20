@@ -1,6 +1,6 @@
 package com.uqam.inm5151.scan.service;
 
-import com.uqam.inm5151.scan.config.JwtProperties;
+import com.uqam.inm5151.scan.config.AppProperties;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -26,8 +26,8 @@ public class EncryptionService {
   private final SecretKeySpec key;
   private final SecureRandom random = new SecureRandom();
 
-  public EncryptionService(JwtProperties properties) {
-    this.key = new SecretKeySpec(sha256(properties.secret()), "AES");
+  public EncryptionService(AppProperties properties) {
+    this.key = new SecretKeySpec(sha256(properties.encryptionMasterKey()), "AES");
   }
 
   public byte[] encrypt(String plaintext) {
