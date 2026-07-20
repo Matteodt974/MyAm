@@ -45,3 +45,4 @@ scan:
   gemini-model: ${GEMINI_MODEL:gemini-3.5-flash}
   fdc-api-key: ${FDC_API_KEY:DEMO_KEY}
   fdc-base-url: ${FDC_BASE_URL:https://api.nal.usda.gov}
+  encryption-master-key: ${ENCRYPTION_MASTER_KEY:}
