@@ -6,16 +6,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../../features/auth/data/auth_repository.dart';
 import '../constants/api_endpoints.dart';
-
-const String authTokenKey = 'auth_token';
+import 'auth_interceptor.dart';
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
   return const FlutterSecureStorage();
 });
 
-final dioProvider = Provider<Dio>((ref) {
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final storage = ref.watch(secureStorageProvider);
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: ApiEndpoints.baseUrl,
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 15),
+      sendTimeout: const Duration(seconds: 15),
+      contentType: Headers.jsonContentType,
+    ),
+  );
+  return AuthRepository(dio, storage);
+});
+
+final dioProvider = Provider<Dio>((ref) {
+  final authRepository = ref.watch(authRepositoryProvider);
 
   final dio = Dio(
     BaseOptions(
@@ -27,18 +41,12 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
 
-  dio.interceptors.add(
-    InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await storage.read(key: authTokenKey);
-
-        if (token != null && token.isNotEmpty) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        handler.next(options);
-      },
-    ),
+  final authInterceptor = AuthInterceptor(
+    authenticatedDio: dio,
+    authRepository: authRepository,
   );
+
+  dio.interceptors.add(authInterceptor);
 
   if (kDebugMode) {
     dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));

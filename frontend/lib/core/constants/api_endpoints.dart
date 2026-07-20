@@ -29,6 +29,11 @@ class ApiEndpoints {
 
   static const String health = '/health';
 
+  static const String authRegister = '/auth/register';
+  static const String authLogin = '/auth/login';
+  static const String authRefresh = '/auth/refresh';
+  static const String authLogout = '/auth/logout';
+
   static const String scanBarcode = '/v1/scan/barcode';
 
   static const String scanDish = '/v1/scan/dish';
