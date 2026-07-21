@@ -18,8 +18,8 @@ class AuthRepository {
 
   AuthRepository(this._dio, this._storage);
 
-  Future<AuthResponse> register(String email, String password, String displayName) async {
-    final response = await _dio.post<Map<String, dynamic>>(
+  Future<void> register(String email, String password, String displayName) async {
+    await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.authRegister,
       data: {
         'email': email,
@@ -27,9 +27,6 @@ class AuthRepository {
         'displayName': displayName,
       },
     );
-    final auth = AuthResponse.fromJson(response.data!);
-    await _saveAuthResponse(auth);
-    return auth;
   }
 
   Future<AuthResponse> login(String email, String password) async {

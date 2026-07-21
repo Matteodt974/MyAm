@@ -69,6 +69,10 @@ class AuthController extends Notifier<AuthFormState> {
     }
   }
 
+  void reset() {
+    state = const AuthFormState();
+  }
+
   String _formatError(Object error) {
     final message = error.toString();
     if (message.contains('409') || message.contains('déjà utilisé')) {
@@ -79,6 +83,16 @@ class AuthController extends Notifier<AuthFormState> {
     }
     if (message.contains('401') || message.contains('UNAUTHORIZED')) {
       return 'Email ou mot de passe invalide.';
+    }
+    if (message.contains('Connection refused') ||
+        message.contains('Connection timeout') ||
+        message.contains('Connecting timed out') ||
+        message.contains('failed to connect') ||
+        message.contains('SocketException')) {
+      return 'Connexion au serveur impossible. Vérifie que le backend tourne et que tu es sur le même réseau.';
+    }
+    if (message.contains('Validation failed') || message.contains('must not be blank')) {
+      return 'Veuillez remplir tous les champs.';
     }
     return 'Une erreur est survenue. Réessaie.';
   }

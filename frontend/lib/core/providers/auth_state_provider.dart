@@ -50,14 +50,20 @@ class AuthStateNotifier extends AsyncNotifier<AuthState> {
       final response = await _repository.login(email, password);
       return AuthStateAuthenticated(response.user);
     });
+    if (state.hasError) {
+      throw state.error!;
+    }
   }
 
   Future<void> register(String email, String password, String displayName) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      final response = await _repository.register(email, password, displayName);
-      return AuthStateAuthenticated(response.user);
+      await _repository.register(email, password, displayName);
+      return const AuthStateUnauthenticated();
     });
+    if (state.hasError) {
+      throw state.error!;
+    }
   }
 
   Future<void> logout() async {
