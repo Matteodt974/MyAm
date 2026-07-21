@@ -33,14 +33,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _register() async {
-    final success = await ref.read(authControllerProvider.notifier).register(
+    final success = await ref
+        .read(authControllerProvider.notifier)
+        .register(
           _emailController.text.trim(),
           _passwordController.text,
           _displayNameController.text.trim(),
         );
 
     if (success && mounted) {
-      context.go('/login', extra: 'registered');
+      context.go('/login?registered=true');
     }
   }
 
@@ -81,15 +83,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Mot de passe',
-                  helperText: '8 caractères min, 1 majuscule, 1 minuscule, 1 chiffre',
-                  border: OutlineInputBorder(),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Mot de passe',
+                    helperText:
+                        '8 caractères min, 1 majuscule, 1 minuscule, 1 chiffre',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
                 if (state.errorMessage != null) ...[
                   const SizedBox(height: 16),
                   Text(

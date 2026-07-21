@@ -14,7 +14,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _hasShownSuccess = false;
 
   @override
   void initState() {
@@ -32,10 +31,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _login() async {
-    final success = await ref.read(authControllerProvider.notifier).login(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
+    final success = await ref
+        .read(authControllerProvider.notifier)
+        .login(_emailController.text.trim(), _passwordController.text);
 
     if (success && mounted) {
       context.go('/');
@@ -44,21 +42,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_hasShownSuccess) {
-      final extra = GoRouterState.of(context).extra;
-      if (extra == 'registered') {
-        _hasShownSuccess = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Compte créé avec succès. Connecte-toi.'),
-                duration: Duration(seconds: 4),
-              ),
-            );
-          }
-        });
-      }
+    final registered =
+        GoRouterState.of(context).uri.queryParameters['registered'] == 'true';
+    if (registered) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Compte créé avec succès. Connecte-toi.'),
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+      });
     }
 
     final state = ref.watch(authControllerProvider);
@@ -88,14 +84,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Mot de passe',
-                  border: OutlineInputBorder(),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Mot de passe',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
                 if (state.errorMessage != null) ...[
                   const SizedBox(height: 16),
                   Text(

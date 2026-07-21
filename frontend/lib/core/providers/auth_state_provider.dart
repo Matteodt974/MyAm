@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/data/auth_response.dart';
 import '../network/dio_client.dart';
+import 'router_refresh_provider.dart';
 
 sealed class AuthState {
   const AuthState();
@@ -53,9 +54,14 @@ class AuthStateNotifier extends AsyncNotifier<AuthState> {
     if (state.hasError) {
       throw state.error!;
     }
+    ref.read(routerRefreshProvider).notify();
   }
 
-  Future<void> register(String email, String password, String displayName) async {
+  Future<void> register(
+    String email,
+    String password,
+    String displayName,
+  ) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       await _repository.register(email, password, displayName);
@@ -64,10 +70,12 @@ class AuthStateNotifier extends AsyncNotifier<AuthState> {
     if (state.hasError) {
       throw state.error!;
     }
+    ref.read(routerRefreshProvider).notify();
   }
 
   Future<void> logout() async {
     await _repository.logout();
     state = const AsyncValue.data(AuthStateUnauthenticated());
+    ref.read(routerRefreshProvider).notify();
   }
 }
