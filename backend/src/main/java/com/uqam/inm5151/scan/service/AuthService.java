@@ -18,8 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
-  private static final String PASSWORD_PATTERN =
-      "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$";
+  private static final String PASSWORD_PATTERN = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$";
 
   private final UserRepository userRepository;
   private final RefreshTokenService refreshTokenService;
@@ -65,7 +64,8 @@ public class AuthService {
         userRepository
             .findByEmail(request.email())
             .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur non trouvé"));
+                () ->
+                    new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur non trouvé"));
 
     if (user.getAccountType() != AccountType.STANDALONE) {
       throw new ResponseStatusException(
@@ -81,7 +81,8 @@ public class AuthService {
         userRepository
             .findById(token.getUserId())
             .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur non trouvé"));
+                () ->
+                    new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur non trouvé"));
 
     String newRefreshToken = refreshTokenService.rotate(request.refreshToken());
     return buildAuthResponse(user, newRefreshToken);

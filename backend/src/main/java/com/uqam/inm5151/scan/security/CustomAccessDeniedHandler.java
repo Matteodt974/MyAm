@@ -26,7 +26,6 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
       throws IOException {
     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    objectMapper.writeValue(
-        response.getOutputStream(), Map.of("detail", "Accès refusé"));
+    objectMapper.writeValue(response.getOutputStream(), Map.of("detail", "Accès refusé"));
   }
 }

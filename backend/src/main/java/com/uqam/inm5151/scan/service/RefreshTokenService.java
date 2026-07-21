@@ -35,7 +35,8 @@ public class RefreshTokenService {
     String rawToken = UUID.randomUUID().toString();
     Instant now = Instant.now();
     RefreshToken token =
-        new RefreshToken(userId, hashToken(rawToken), now, now.plusMillis(jwtProperties.refreshExpiration()));
+        new RefreshToken(
+            userId, hashToken(rawToken), now, now.plusMillis(jwtProperties.refreshExpiration()));
     refreshTokenRepository.save(token);
     return rawToken;
   }

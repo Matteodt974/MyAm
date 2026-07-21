@@ -195,7 +195,19 @@ class DishAnalysisServiceTest {
     GeminiDishAnalysisClient client =
         new GeminiDishAnalysisClient(
             new AppProperties(
-                "test", "test", "", "", "", "", "", "", "test-key", "gemini-test", "DEMO_KEY", "", "test-master-key"),
+                "test",
+                "test",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "test-key",
+                "gemini-test",
+                "DEMO_KEY",
+                "",
+                "test-master-key"),
             new ObjectMapper());
     var method = GeminiDishAnalysisClient.class.getDeclaredMethod("parseResponse", Map.class);
     method.setAccessible(true);
