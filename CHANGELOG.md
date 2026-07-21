@@ -4,27 +4,42 @@
 
 ### Backend
 
-- **Add** endpoints `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout` avec JWT (access 15 min, refresh 7 jours).
-- **Add** `JwtService`, `RefreshTokenService` (SHA-256 hash, rotation, révocation), `AuthService`, `UserDetailsServiceImpl`.
-- **Add** `JwtAuthFilter`, `CustomAuthEntryPoint`, `CustomAccessDeniedHandler`, `GlobalExceptionHandler`.
-- **Add** `SecurityConfig` : `BCrypt`, `ADD` stateless, CORS restreint à `localhost` + `10.0.2.2`.
-- **Add** `JwtProperties`, étend `AppProperties` avec `encryptionMasterKey`.
-- **Security** seuls les comptes `STANDALONE` s'authentifient ; `MANAGED` exclus.
+- **Ajout** endpoints `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout` avec JWT (access 15 min, refresh 7 jours).
+- **Ajout** `JwtService`, `RefreshTokenService` (SHA-256 hash, rotation, révocation), `AuthService`, `UserDetailsServiceImpl`.
+- **Ajout** `JwtAuthFilter`, `CustomAuthEntryPoint`, `CustomAccessDeniedHandler`, `GlobalExceptionHandler`.
+- **Ajout** `SecurityConfig` : `BCrypt`, `ADD` stateless, CORS restreint à `localhost` + `10.0.2.2`.
+- **Ajout** `JwtProperties`, étend `AppProperties` avec `encryptionMasterKey`.
+- **Ajout** entité `User` avec `AccountType` (STANDALONE/MANAGED) et `UserRepository`.
+- **Ajout** entités et repositories : `DigestiveJournalEntry`, `ProfileShare`, `ScanHistory`.
+- **Ajout** `EncryptionService` pour le chiffrement AES des données sensibles.
+- **Sécurité** seuls les comptes `STANDALONE` s'authentifient ; `MANAGED` exclus.
 - **Routes publiques** : `/auth/**`, `/health`, `/docs/**`, `/v1/scan/**`, `/v1/label/**`.
-- **Fix** `EncryptionService` : découplé du JWT secret, utilise désormais `ENCRYPTION_MASTER_KEY`.
-- **Fix** `JwtAuthFilter` placé avant `AnonymousAuthenticationFilter` pour que le JWT ne soit pas ignoré.
-- **Fix** `JwtService.isTokenValid` compare le claim `email` au lieu du `subject` (userId).
-- **Fix** validation errors retournent `400 Bad Request` au lieu de `401`.
-- **Add** H2 test config, `DishAnalysisServiceTest` à jour.
+- **Correction** `EncryptionService` : découplé du JWT secret, utilise désormais `ENCRYPTION_MASTER_KEY`.
+- **Correction** `JwtAuthFilter` placé avant `AnonymousAuthenticationFilter` pour que le JWT ne soit pas ignoré.
+- **Correction** `JwtService.isTokenValid` compare le claim `email` au lieu du `subject` (userId).
+- **Correction** validation errors retournent `400 Bad Request` au lieu de `401`.
+- **Ajout** config H2 pour les tests, `DishAnalysisServiceTest` mis à jour.
 
 ### Frontend
 
-- **Add** écrans login / register avec validation.
-- **Add** `AuthRepository` (API calls + secure token storage via `flutter_secure_storage`).
-- **Add** `AuthInterceptor` avec verrou global pour éviter les refresh concurrents.
-- **Add** `AuthStateProvider` (Riverpod `AsyncNotifier`).
-- **Add** redirections de route GoRouter selon l'état d'authentification.
-- **Add** bouton déconnexion et section compte dans l'écran profil.
+- **Ajout** écrans login / register avec validation.
+- **Ajout** `AuthRepository` (API calls + secure token storage via `flutter_secure_storage`).
+- **Ajout** `AuthInterceptor` avec verrou global pour éviter les refresh concurrents.
+- **Ajout** `AuthStateProvider` (Riverpod `AsyncNotifier`).
+- **Ajout** redirections de route GoRouter selon l'état d'authentification.
+- **Ajout** bouton déconnexion et section compte dans l'écran profil.
+- **Correction** SnackBar de succès après inscription affiché sur l'écran de connexion.
+
+### CI / Outils
+
+- **Ajout** `.fvmrc` pour épingler Flutter 3.44.0.
+- **Ajout** service PostgreSQL 16 et variables d'environnement dans le workflow CI.
+
+### ⚠️ Bugs / Limites connues
+
+- **Flash login au démarrage** : si l'utilisateur est déjà connecté, l'écran de login apparaît 1-2 frames avant la redirection vers `/`. L'`authStateProvider` est en `loading` et le routeur le traite comme "non authentifié".
+- **Parsing d'erreurs fragile** : `AuthController._formatError()` fait du string matching sur `error.toString()`. Si Dio change son format ou si le backend modifie ses messages, les erreurs deviendront génériques.
+- **Pas de retry réseau** : si le serveur est temporairement indisponible, l'utilisateur doit cliquer manuellement à nouveau.
 
 ## [Previous] — Fixes lancement local & .env.example
 
