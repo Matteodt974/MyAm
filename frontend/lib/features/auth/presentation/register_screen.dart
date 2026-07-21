@@ -40,13 +40,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         );
 
     if (success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Compte créé avec succès. Connecte-toi.')),
-      );
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        context.go('/login');
-      }
+      context.go('/login', extra: 'registered');
     }
   }
 

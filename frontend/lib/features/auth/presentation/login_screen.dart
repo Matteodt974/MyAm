@@ -14,6 +14,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _hasShownSuccess = false;
 
   @override
   void initState() {
@@ -43,6 +44,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_hasShownSuccess) {
+      final extra = GoRouterState.of(context).extra;
+      if (extra == 'registered') {
+        _hasShownSuccess = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Compte créé avec succès. Connecte-toi.'),
+                duration: Duration(seconds: 4),
+              ),
+            );
+          }
+        });
+      }
+    }
+
     final state = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
 
