@@ -3,18 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/auth_state_provider.dart';
 
 class AuthFormState {
-  const AuthFormState({
-    this.isLoading = false,
-    this.errorMessage,
-  });
+  const AuthFormState({this.isLoading = false, this.errorMessage});
 
   final bool isLoading;
   final String? errorMessage;
 
-  AuthFormState copyWith({
-    bool? isLoading,
-    String? errorMessage,
-  }) {
+  AuthFormState copyWith({bool? isLoading, String? errorMessage}) {
     return AuthFormState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage ?? this.errorMessage,
@@ -22,8 +16,9 @@ class AuthFormState {
   }
 }
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthFormState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthFormState>(
+  AuthController.new,
+);
 
 class AuthController extends Notifier<AuthFormState> {
   @override
@@ -39,10 +34,7 @@ class AuthController extends Notifier<AuthFormState> {
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: _formatError(e),
-      );
+      state = state.copyWith(isLoading: false, errorMessage: _formatError(e));
       return false;
     }
   }
@@ -61,12 +53,13 @@ class AuthController extends Notifier<AuthFormState> {
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: _formatError(e),
-      );
+      state = state.copyWith(isLoading: false, errorMessage: _formatError(e));
       return false;
     }
+  }
+
+  void setError(String message) {
+    state = state.copyWith(isLoading: false, errorMessage: message);
   }
 
   void reset() {
@@ -91,7 +84,8 @@ class AuthController extends Notifier<AuthFormState> {
         message.contains('SocketException')) {
       return 'Connexion au serveur impossible. Vérifie que le backend tourne et que tu es sur le même réseau.';
     }
-    if (message.contains('Validation failed') || message.contains('must not be blank')) {
+    if (message.contains('Validation failed') ||
+        message.contains('must not be blank')) {
       return 'Veuillez remplir tous les champs.';
     }
     return 'Une erreur est survenue. Réessaie.';
