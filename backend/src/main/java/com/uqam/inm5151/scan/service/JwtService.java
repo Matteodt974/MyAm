@@ -20,8 +20,7 @@ public class JwtService {
 
   public JwtService(JwtProperties jwtProperties) {
     this.jwtProperties = jwtProperties;
-    this.signingKey =
-        Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
+    this.signingKey = Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
   }
 
   public String generateAccessToken(UserDetails userDetails, Long userId) {
