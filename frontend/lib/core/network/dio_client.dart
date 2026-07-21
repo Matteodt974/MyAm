@@ -25,6 +25,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
       contentType: Headers.jsonContentType,
     ),
   );
+  if (kDebugMode) {
+    dio.interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
+  }
   return AuthRepository(dio, storage);
 });
 
