@@ -8,11 +8,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class UserCheckConstraintTest {
   @Autowired private EntityManager entityManager;
+
+  @DynamicPropertySource
+  static void postgresProperties(DynamicPropertyRegistry registry) {
+    registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5432/scan");
+    registry.add("spring.datasource.username", () -> "scan");
+    registry.add("spring.datasource.password", () -> "scan");
+    registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+    registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
+  }
 
   @Test
   void standaloneWithoutPasswordHashIsRejected() {

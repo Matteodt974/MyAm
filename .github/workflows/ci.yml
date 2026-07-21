@@ -26,11 +26,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    env:
-      DATABASE_URL: jdbc:postgresql://localhost:5432/scan
-      DATABASE_USER: scan
-      DATABASE_PASSWORD: scan
-      JWT_SECRET: ci-test-secret-not-for-production
     steps:
       - uses: actions/checkout@v4
 
