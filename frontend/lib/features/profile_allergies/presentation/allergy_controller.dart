@@ -7,7 +7,10 @@ class AllergyController extends AsyncNotifier<List<String>> {
   @override
   Future<List<String>> build() {
     final profileState = ref.watch(childProfileControllerProvider).value;
-    final parentId = ref.watch(parentUserIdProvider);
+    final parentId = ref.watch(guardianIdProvider);
+    if (parentId == null) {
+      throw StateError('Utilisateur non authentifié');
+    }
     final profileId = profileState?.activeProfileId ?? parentId;
     return ref
         .read(allergyLocalStoreProvider)
@@ -38,9 +41,9 @@ class AllergyController extends AsyncNotifier<List<String>> {
     state = AsyncData(list);
 
     final profileState = ref.read(childProfileControllerProvider).value;
-    final int profileId = profileState == null
-        ? ref.read(parentUserIdProvider)
-        : profileState.activeProfileId;
+    final parentId = ref.read(guardianIdProvider);
+    if (parentId == null) return;
+    final int profileId = profileState?.activeProfileId ?? parentId;
     await ref.read(allergyLocalStoreProvider).save(profileId, list);
   }
 }

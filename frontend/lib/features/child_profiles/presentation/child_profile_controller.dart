@@ -1,17 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/auth_state_provider.dart';
 import '../data/active_profile_store.dart';
 import '../data/child_profile.dart';
 import '../data/child_profile_repository.dart';
 
-const _configuredParentId = int.fromEnvironment(
-  'PARENT_USER_ID',
-  defaultValue: 1,
-);
-
-// À remplacer par l'identifiant extrait du JWT lorsque l'authentification
-// exposera l'utilisateur connecté.
-final parentUserIdProvider = Provider<int>((ref) => _configuredParentId);
+final guardianIdProvider = Provider<int?>((ref) {
+  final auth = ref.watch(authStateProvider).value;
+  return auth is AuthStateAuthenticated ? auth.user.id : null;
+});
 
 class ChildProfileState {
   const ChildProfileState({
@@ -41,7 +38,10 @@ class ChildProfileState {
 class ChildProfileController extends AsyncNotifier<ChildProfileState> {
   @override
   Future<ChildProfileState> build() async {
-    final guardianId = ref.watch(parentUserIdProvider);
+    final guardianId = ref.watch(guardianIdProvider);
+    if (guardianId == null) {
+      throw StateError('Utilisateur non authentifié');
+    }
     final children = await ref
         .read(childProfileRepositoryProvider)
         .list(guardianId);
@@ -56,9 +56,9 @@ class ChildProfileController extends AsyncNotifier<ChildProfileState> {
 
   Future<void> createChild(String displayName) async {
     final current = state.value;
-    if (current == null) return;
+    final guardianId = ref.read(guardianIdProvider);
+    if (current == null || guardianId == null) return;
 
-    final guardianId = ref.read(parentUserIdProvider);
     final child = await ref
         .read(childProfileRepositoryProvider)
         .create(guardianId, displayName.trim());
@@ -72,9 +72,9 @@ class ChildProfileController extends AsyncNotifier<ChildProfileState> {
 
   Future<void> renameChild(int childId, String displayName) async {
     final current = state.value;
-    if (current == null) return;
+    final guardianId = ref.read(guardianIdProvider);
+    if (current == null || guardianId == null) return;
 
-    final guardianId = ref.read(parentUserIdProvider);
     final updated = await ref
         .read(childProfileRepositoryProvider)
         .update(guardianId, childId, displayName.trim());
@@ -86,9 +86,9 @@ class ChildProfileController extends AsyncNotifier<ChildProfileState> {
 
   Future<void> deleteChild(int childId) async {
     final current = state.value;
-    if (current == null) return;
+    final guardianId = ref.read(guardianIdProvider);
+    if (current == null || guardianId == null) return;
 
-    final guardianId = ref.read(parentUserIdProvider);
     await ref.read(childProfileRepositoryProvider).delete(guardianId, childId);
     final profiles = current.profiles
         .where((profile) => profile.id != childId)
