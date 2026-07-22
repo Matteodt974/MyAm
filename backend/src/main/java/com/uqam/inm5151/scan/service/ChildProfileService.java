@@ -14,9 +14,11 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class ChildProfileService {
   private final UserRepository users;
+  private final CurrentUserService currentUser;
 
-  public ChildProfileService(UserRepository users) {
+  public ChildProfileService(UserRepository users, CurrentUserService currentUser) {
     this.users = users;
+    this.currentUser = currentUser;
   }
 
   @Transactional(readOnly = true)
@@ -74,6 +76,10 @@ public class ChildProfileService {
     if (guardian.getAccountType() != AccountType.STANDALONE) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Un sous-profil ne peut pas gérer des enfants");
+    }
+
+    if (!guardianId.equals(currentUser.getAuthenticatedUser().getId())) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compte parent introuvable");
     }
 
     return guardian;
