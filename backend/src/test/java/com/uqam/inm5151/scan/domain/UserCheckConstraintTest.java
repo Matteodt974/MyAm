@@ -18,7 +18,8 @@ class UserCheckConstraintTest {
 
   @DynamicPropertySource
   static void postgresProperties(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5432/scan");
+    // Port 5433 car Docker Compose expose PostgreSQL sur 127.0.0.1:5433 (pas 5432).
+    registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5433/scan");
     registry.add("spring.datasource.username", () -> "scan");
     registry.add("spring.datasource.password", () -> "scan");
     registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
