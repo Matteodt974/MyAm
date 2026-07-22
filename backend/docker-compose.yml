@@ -1,9 +1,12 @@
 services:
   api:
     build: .
-    ports: ['127.0.0.1:8545:8080']
+    ports: ['127.0.0.1:8545:8545']
     env_file: .env
-    depends_on: [db]
+    restart: on-failure:5
+    depends_on:
+      db:
+        condition: service_healthy
 
   db:
     image: postgres:16
@@ -14,6 +17,11 @@ services:
     ports: ['5433:5432']
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U scan -d scan']
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
 volumes:
   pgdata:

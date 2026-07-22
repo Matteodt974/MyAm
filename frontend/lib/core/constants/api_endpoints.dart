@@ -4,7 +4,7 @@ class ApiEndpoints {
   static const String _backendHost = String.fromEnvironment('BACKEND_HOST');
   static const String _backendPort = String.fromEnvironment(
     'BACKEND_PORT',
-    defaultValue: '8080',
+    defaultValue: '8545',
   );
   static const String _backendScheme = String.fromEnvironment(
     'BACKEND_SCHEME',
@@ -17,7 +17,7 @@ class ApiEndpoints {
     if (_backendHost.isNotEmpty) {
       return _normalize('$_backendScheme://$_backendHost:$_backendPort');
     }
-    return 'http://10.0.2.2:8080';
+    return 'http://10.0.2.2:8545';
   }
 
   static String _normalize(String value) {
