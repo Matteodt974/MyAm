@@ -23,13 +23,13 @@ Widget createTestApp({
     routes: [
       GoRoute(
         path: '/',
-        builder: (_, __) => const Scaffold(body: Text('Home')),
+        builder: (_, _) => const Scaffold(body: Text('Home')),
       ),
       GoRoute(
         path: '/login',
-        builder: (_, __) => const Scaffold(body: Text('Login')),
+        builder: (_, _) => const Scaffold(body: Text('Login')),
       ),
-      GoRoute(path: '/register', builder: (_, __) => child),
+      GoRoute(path: '/register', builder: (_, _) => child),
     ],
   );
 
