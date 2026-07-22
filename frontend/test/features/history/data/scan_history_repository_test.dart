@@ -33,9 +33,9 @@ void main() {
   group('ScanHistoryRepository.save', () {
     test('calls database.insert', () async {
       final entry = makeEntry(type: ScanType.barcode, title: 'Product');
-      when(() => mockDatabase.insert(entry)).thenAnswer(
-        (_) async => entry.copyWith(id: 1),
-      );
+      when(
+        () => mockDatabase.insert(entry),
+      ).thenAnswer((_) async => entry.copyWith(id: 1));
 
       await repository.save(entry);
 
@@ -53,57 +53,59 @@ void main() {
   });
 
   group('ScanHistoryRepository.load', () {
-    test('returns entries from database.getAll when no filter is provided',
-        () async {
-      final entries = [
-        makeEntry(id: 1, type: ScanType.barcode, title: 'A'),
-        makeEntry(id: 2, type: ScanType.label, title: 'B'),
-      ];
-      when(() => mockDatabase.getAll()).thenAnswer((_) async => entries);
+    test(
+      'returns entries from database.getAll when no filter is provided',
+      () async {
+        final entries = [
+          makeEntry(id: 1, type: ScanType.barcode, title: 'A'),
+          makeEntry(id: 2, type: ScanType.label, title: 'B'),
+        ];
+        when(() => mockDatabase.getAll()).thenAnswer((_) async => entries);
 
-      final result = await repository.load();
+        final result = await repository.load();
 
-      expect(result, entries);
-      verify(() => mockDatabase.getAll()).called(1);
-      verifyNever(() => mockDatabase.getFiltered());
-    });
+        expect(result, entries);
+        verify(() => mockDatabase.getAll()).called(1);
+        verifyNever(() => mockDatabase.getFiltered());
+      },
+    );
 
-    test('delegates to database.getFiltered when a filter is provided',
-        () async {
-      final entries = [
-        makeEntry(id: 3, type: ScanType.dish, title: 'C'),
-      ];
-      final filter = HistoryFilter(
-        from: DateTime(2025, 1, 1),
-        to: DateTime(2025, 1, 2),
-        types: [ScanType.dish],
-        riskLevels: ['SAFE'],
-        allergen: 'lactose',
-      );
-      when(
-        () => mockDatabase.getFiltered(
-          from: filter.from,
-          to: filter.to,
-          types: filter.types,
-          riskLevels: filter.riskLevels,
-          allergen: filter.allergen,
-        ),
-      ).thenAnswer((_) async => entries);
+    test(
+      'delegates to database.getFiltered when a filter is provided',
+      () async {
+        final entries = [makeEntry(id: 3, type: ScanType.dish, title: 'C')];
+        final filter = HistoryFilter(
+          from: DateTime(2025, 1, 1),
+          to: DateTime(2025, 1, 2),
+          types: [ScanType.dish],
+          riskLevels: ['SAFE'],
+          allergen: 'lactose',
+        );
+        when(
+          () => mockDatabase.getFiltered(
+            from: filter.from,
+            to: filter.to,
+            types: filter.types,
+            riskLevels: filter.riskLevels,
+            allergen: filter.allergen,
+          ),
+        ).thenAnswer((_) async => entries);
 
-      final result = await repository.load(filter: filter);
+        final result = await repository.load(filter: filter);
 
-      expect(result, entries);
-      verify(
-        () => mockDatabase.getFiltered(
-          from: filter.from,
-          to: filter.to,
-          types: filter.types,
-          riskLevels: filter.riskLevels,
-          allergen: filter.allergen,
-        ),
-      ).called(1);
-      verifyNever(() => mockDatabase.getAll());
-    });
+        expect(result, entries);
+        verify(
+          () => mockDatabase.getFiltered(
+            from: filter.from,
+            to: filter.to,
+            types: filter.types,
+            riskLevels: filter.riskLevels,
+            allergen: filter.allergen,
+          ),
+        ).called(1);
+        verifyNever(() => mockDatabase.getAll());
+      },
+    );
   });
 
   group('ScanHistoryRepository.delete', () {

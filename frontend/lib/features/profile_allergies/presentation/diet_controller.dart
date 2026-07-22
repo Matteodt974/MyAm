@@ -28,6 +28,4 @@ class DietController extends AsyncNotifier<List<String>> {
 }
 
 final dietControllerProvider =
-    AsyncNotifierProvider<DietController, List<String>>(
-      DietController.new,
-    );
+    AsyncNotifierProvider<DietController, List<String>>(DietController.new);

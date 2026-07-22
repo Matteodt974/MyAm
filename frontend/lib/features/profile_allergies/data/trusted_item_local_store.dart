@@ -54,12 +54,12 @@ class TrustedItem {
   final String? nutriscore;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'ean': ean,
-        'name': name,
-        'brands': brands,
-        'nutriscore': nutriscore,
-      };
+    'id': id,
+    'ean': ean,
+    'name': name,
+    'brands': brands,
+    'nutriscore': nutriscore,
+  };
 
   factory TrustedItem.fromJson(Map<String, dynamic> json) {
     final ean = json['ean']?.toString() ?? '';

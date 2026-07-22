@@ -18,24 +18,21 @@ class AuthRepository {
 
   AuthRepository(this._dio, this._storage);
 
-  Future<void> register(String email, String password, String displayName) async {
+  Future<void> register(
+    String email,
+    String password,
+    String displayName,
+  ) async {
     await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.authRegister,
-      data: {
-        'email': email,
-        'password': password,
-        'displayName': displayName,
-      },
+      data: {'email': email, 'password': password, 'displayName': displayName},
     );
   }
 
   Future<AuthResponse> login(String email, String password) async {
     final response = await _dio.post<Map<String, dynamic>>(
       ApiEndpoints.authLogin,
-      data: {
-        'email': email,
-        'password': password,
-      },
+      data: {'email': email, 'password': password},
     );
     final auth = AuthResponse.fromJson(response.data!);
     await _saveAuthResponse(auth);
@@ -111,11 +108,7 @@ class AuthRepository {
 
     if (id == null || email == null || displayName == null) return null;
 
-    return UserDto(
-      id: int.parse(id),
-      email: email,
-      displayName: displayName,
-    );
+    return UserDto(id: int.parse(id), email: email, displayName: displayName);
   }
 
   Future<void> _saveAuthResponse(AuthResponse auth) async {
@@ -126,8 +119,14 @@ class AuthRepository {
     await Future.wait([
       _storage.write(key: _accessTokenKey, value: auth.accessToken),
       _storage.write(key: _refreshTokenKey, value: auth.refreshToken),
-      _storage.write(key: _accessTokenExpiryKey, value: accessExpiry.toIso8601String()),
-      _storage.write(key: _refreshTokenExpiryKey, value: refreshExpiry.toIso8601String()),
+      _storage.write(
+        key: _accessTokenExpiryKey,
+        value: accessExpiry.toIso8601String(),
+      ),
+      _storage.write(
+        key: _refreshTokenExpiryKey,
+        value: refreshExpiry.toIso8601String(),
+      ),
       _storage.write(key: _userIdKey, value: auth.user.id.toString()),
       _storage.write(key: _userEmailKey, value: auth.user.email),
       _storage.write(key: _userDisplayNameKey, value: auth.user.displayName),

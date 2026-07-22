@@ -261,9 +261,7 @@ void main() {
       await database.insert(safe);
       await database.insert(danger);
 
-      final filtered = await database.getFiltered(
-        riskLevels: ['', 'SAFE'],
-      );
+      final filtered = await database.getFiltered(riskLevels: ['', 'SAFE']);
 
       expect(filtered.map((e) => e.title).toSet(), {
         'No risk',

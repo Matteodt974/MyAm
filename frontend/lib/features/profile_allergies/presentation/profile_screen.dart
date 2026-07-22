@@ -50,7 +50,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Widget _buildAccountSection(AsyncValue<AuthState> authState, ThemeData theme) {
+  Widget _buildAccountSection(
+    AsyncValue<AuthState> authState,
+    ThemeData theme,
+  ) {
     final user = authState.maybeWhen(
       data: (state) => state is AuthStateAuthenticated ? state.user : null,
       orElse: () => null,
@@ -67,15 +70,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         const SizedBox(height: 8),
         if (user != null)
-          Text(
-            user.displayName,
-            style: theme.textTheme.titleSmall,
-          )
+          Text(user.displayName, style: theme.textTheme.titleSmall)
         else
-          Text(
-            'Connecté',
-            style: theme.textTheme.titleSmall,
-          ),
+          Text('Connecté', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
         Text(
           user?.email ?? '',
@@ -84,10 +81,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: _logout,
-          child: const Text('Se déconnecter'),
-        ),
+        OutlinedButton(onPressed: _logout, child: const Text('Se déconnecter')),
       ],
     );
   }
@@ -145,7 +139,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
                 onChanged: (code) {
                   if (code == null) return;
-                  ref.read(languageControllerProvider.notifier).setLanguage(code);
+                  ref
+                      .read(languageControllerProvider.notifier)
+                      .setLanguage(code);
                 },
               ),
             ),
