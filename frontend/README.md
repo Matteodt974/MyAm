@@ -16,12 +16,12 @@ flutter run
 
 ## Configuration
 
-Par défaut, l'app pointe vers `http://10.0.2.2:8080`.
+Par défaut, l'app pointe vers `http://10.0.2.2:8545`.
 
 **Option 1 : variable d'environnement complète**
 
 ```bash
-flutter run --dart-define=BACKEND_URL=http://10.0.2.2:8080
+flutter run --dart-define=BACKEND_URL=http://10.0.2.2:8545
 ```
 
 **Option 2 : hôte et port séparés (utile si un des options n'est pas changé)**

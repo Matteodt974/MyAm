@@ -65,24 +65,26 @@ pre-commit run --all-files
 
 ## Backend
 
+`JWT_SECRET` et `ENCRYPTION_MASTER_KEY` (dans `.env`) sont obligatoires et doivent faire au moins 32 caracteres, sinon le backend refuse de demarrer.
+
 ```bash
 cd backend
 cp .env.example .env
 ./mvnw spring-boot:run
 ```
 
-Avec Docker :
+Avec Docker (bind sur `127.0.0.1` par defaut, comme en prod derriere nginx ; pour tester depuis un telephone sur le LAN, voir `backend/README.md`) :
 
 ```bash
 docker compose up --build
 ```
 
-Swagger : http://localhost:8080/docs
+Swagger : http://localhost:8545/docs
 
 Verification :
 
 ```bash
-curl http://localhost:8080/health
+curl http://localhost:8545/health
 ```
 
 ## Frontend
@@ -90,10 +92,11 @@ curl http://localhost:8080/health
 ```bash
 cd frontend
 flutter pub get
-flutter run --dart-define=BACKEND_URL=http://10.0.2.2:8080
+flutter run --dart-define=BACKEND_URL=http://10.0.2.2:8545
 ```
 
 Sur telephone physique, remplacer `10.0.2.2` par l'adresse LAN de la machine qui lance le backend.
+`scripts/run_android.sh` automatise cette detection (adresse LAN, `adb reverse`): voir `frontend/README.md`.
 
 ## Tests
 
