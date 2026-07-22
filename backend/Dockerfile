@@ -16,7 +16,8 @@ FROM eclipse-temurin:21-jre@${JRE_DIGEST}
 LABEL org.opencontainers.image.source="https://github.com/MyAm-org/MyAm"
 LABEL org.opencontainers.image.description="MyAm Backend"
 
-RUN useradd --create-home --uid 1001 --shell /sbin/nologin appuser
+RUN useradd --create-home --uid 1001 --shell /sbin/nologin appuser \
+    && rm -f /usr/bin/pebble
 
 WORKDIR /app
 COPY --from=build --chown=appuser:appuser /app/target/*.jar app.jar
