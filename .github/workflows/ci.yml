@@ -164,7 +164,7 @@ jobs:
           ignore-unfixed: true
 
   build-check:
-    name: Build image + scan (trivy)
+    name: Build image + scan (Trivy)
     needs: [backend]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
