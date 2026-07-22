@@ -5,4 +5,4 @@
 /.github/workflows/ @George-Fam @rr-djk
 
 # Revue obligatoire sur le Dockerfile.
-/Dockerfile @George-Fam
+/backend/Dockerfile @George-Fam
