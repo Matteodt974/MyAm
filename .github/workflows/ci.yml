@@ -102,8 +102,8 @@ jobs:
         with:
           name: frontend-codegen
           path: |
-            frontend/lib/**/*.g.dart
-            frontend/lib/**/*.freezed.dart
+            lib/**/*.g.dart
+            lib/**/*.freezed.dart
 
   frontend-analyze:
     name: Frontend Static Analysis
