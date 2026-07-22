@@ -153,7 +153,7 @@ jobs:
           cache: maven
 
       - name: Build JAR
-        run: mvn -f backend/pom.xml package -DskipTests
+        run: mvn -f backend/pom.xml -C package -DskipTests
 
       - name: Upload JAR
         uses: actions/upload-artifact@v7
