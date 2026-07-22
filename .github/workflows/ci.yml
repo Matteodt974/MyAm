@@ -56,10 +56,10 @@ jobs:
       - name: Build + tests (mvnw package)
         run: ./mvnw -C -B -ntp package
 
-  frontend-codegen:
-    name: Frontend Codegen
+  frontend-analyze:
+    name: Frontend Static Analysis
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 8
     permissions:
       contents: read
     defaults:
@@ -89,64 +89,13 @@ jobs:
       - name: Generate code (build_runner)
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Debug — list generated files
-        run: find . -name '*.freezed.dart' -o -name '*.g.dart' | head -30
-
-      - name: Upload generated code
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: frontend-codegen
-          path: |
-            frontend/lib/**/*.g.dart
-            frontend/lib/**/*.freezed.dart
-
-  frontend-analyze:
-    name: Frontend Static Analysis
-    needs: [frontend-codegen]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - name: Harden runner
-        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
-        with:
-          egress-policy: audit
-
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
-        with:
-          flutter-version: '3.44.0'
-          channel: stable
-          cache: true
-
-      - name: Download generated code
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: frontend-codegen
-
-      - name: Debug — verify downloaded files
-        run: find . -name '*.freezed.dart' -o -name '*.g.dart' | head -30
-
-      - name: Flutter Dependencies
-        run: flutter pub get
-
       - name: Flutter Analyze
         run: flutter analyze
 
   frontend-test:
     name: Frontend Tests
-    needs: [frontend-codegen]
     runs-on: ubuntu-24.04
-    timeout-minutes: 5
+    timeout-minutes: 8
     permissions:
       contents: read
     defaults:
@@ -170,16 +119,11 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Download generated code
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: frontend-codegen
-
-      - name: Debug — verify downloaded files
-        run: find . -name '*.freezed.dart' -o -name '*.g.dart' | head -30
-
       - name: Flutter Dependencies
         run: flutter pub get
+
+      - name: Generate code (build_runner)
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Flutter Test
         run: flutter test
