@@ -1,0 +1,17 @@
+# Override local pour tester depuis un telephone physique sur le LAN.
+# docker compose charge automatiquement docker-compose.override.yml s'il existe
+# (ignoré par Git: ne JAMAIS committer une version bindée sur 0.0.0.0 en prod).
+#
+# Usage :
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+#   docker compose up --build
+#
+# Le fichier de base (docker-compose.yml) reste bind sur 127.0.0.1 :
+# c'est ce qui est deploye en prod, derriere nginx
+# (voir deploy/nginx/api-myallergymon.conf).
+#
+# Ne modifier jamais docker-compose.yml pour ouvrir 0.0.0.0: utiliser ce override.
+
+services:
+  api:
+    ports: !override ['0.0.0.0:8545:8545']

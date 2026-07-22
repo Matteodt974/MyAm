@@ -48,12 +48,7 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 BACKEND_SCHEME="${BACKEND_SCHEME:-http}"
-BACKEND_PORT="${BACKEND_PORT:-8080}"
-
-# Auto-detect Docker backend on port 8545
-if curl -s http://localhost:8545/health >/dev/null 2>&1; then
-    BACKEND_PORT="8545"
-fi
+BACKEND_PORT="${BACKEND_PORT:-8545}"
 
 # Check if adb reverse is active for USB debugging
 ADB_REVERSE_ACTIVE=false
