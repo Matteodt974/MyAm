@@ -1,39 +1,50 @@
 # Changelog
 
-## [Unreleased] — JWT Authentication
+## [Unreleased]
 
-### Backend
+### Ajouté
 
-- **Ajout** endpoints `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout` avec JWT (access 15 min, refresh 7 jours).
-- **Ajout** `JwtService`, `RefreshTokenService` (SHA-256 hash, rotation, révocation), `AuthService`, `UserDetailsServiceImpl`.
-- **Ajout** `JwtAuthFilter`, `CustomAuthEntryPoint`, `CustomAccessDeniedHandler`, `GlobalExceptionHandler`.
-- **Ajout** `SecurityConfig` : `BCrypt`, `ADD` stateless, CORS restreint à `localhost` + `10.0.2.2`.
-- **Ajout** `JwtProperties`, étend `AppProperties` avec `encryptionMasterKey`.
-- **Ajout** entité `User` avec `AccountType` (STANDALONE/MANAGED) et `UserRepository`.
-- **Ajout** entités et repositories : `DigestiveJournalEntry`, `ProfileShare`, `ScanHistory`.
-- **Ajout** `EncryptionService` pour le chiffrement AES des données sensibles.
-- **Sécurité** seuls les comptes `STANDALONE` s'authentifient ; `MANAGED` exclus.
-- **Routes publiques** : `/auth/**`, `/health`, `/docs/**`, `/v1/scan/**`, `/v1/label/**`.
-- **Correction** `EncryptionService` : découplé du JWT secret, utilise désormais `ENCRYPTION_MASTER_KEY`.
-- **Correction** `JwtAuthFilter` placé avant `AnonymousAuthenticationFilter` pour que le JWT ne soit pas ignoré.
-- **Correction** `JwtService.isTokenValid` compare le claim `email` au lieu du `subject` (userId).
-- **Correction** validation errors retournent `400 Bad Request` au lieu de `401`.
-- **Ajout** config H2 pour les tests, `DishAnalysisServiceTest` mis à jour.
+- **Authentification JWT complète** — endpoints `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/logout`
+  - Tokens access (15 min) + refresh (7 jours) avec rotation et révocation
+  - Hash SHA-256 des refresh tokens en base
+  - Seuls les comptes STANDALONE s'authentifient ; les MANAGED sont exclus
+- **Écrans login et register** avec validation des champs
+  - Bascule de visibilité du mot de passe
+  - Message de succès après inscription redirigeant vers login
+- **Gestion persistante de l'authentification** côté client
+  - Stockage sécurisé des tokens (flutter_secure_storage)
+  - Intercepteur Dio avec verrou global anti-conflits de refresh
+  - Redirection GoRouter dynamique selon l'état connecté
+- **Chiffrement AES** des données sensibles du journal digestif (EncryptionService)
+- **Entités et repositories** : User (STANDALONE/MANAGED), DigestiveJournalEntry, ProfileShare, ScanHistory
+- **Tests d'authentification** (repository, controller, widgets)
+- **Scan Trivy** des vulnérabilités HIGH/CRITICAL dans le CI
+- **Service PostgreSQL 16** dans le CI pour les tests d'intégration
+- **Fichier .fvmrc** pour épingler Flutter 3.44.0
 
-### Frontend
+### Modifié
 
-- **Ajout** écrans login / register avec validation.
-- **Ajout** `AuthRepository` (API calls + secure token storage via `flutter_secure_storage`).
-- **Ajout** `AuthInterceptor` avec verrou global pour éviter les refresh concurrents.
-- **Ajout** `AuthStateProvider` (Riverpod `AsyncNotifier`).
-- **Ajout** redirections de route GoRouter selon l'état d'authentification.
-- **Ajout** bouton déconnexion et section compte dans l'écran profil.
-- **Correction** SnackBar de succès après inscription affiché sur l'écran de connexion.
+- Architecture backend migrée vers JWT (SecurityConfig, JwtAuthFilter, CORS)
+- Routes publiques : /auth/**, /health, /docs/**, /v1/**
+- Variables d'environnement CI déplacées dans DynamicPropertySource (plus de secrets en dur)
+- Permissions du CI restreintes à contents: read
+- .env.example mis à jour avec les nouvelles variables
 
-### CI / Outils
+### Corrigé
 
-- **Ajout** `.fvmrc` pour épingler Flutter 3.44.0.
-- **Ajout** service PostgreSQL 16 et variables d'environnement dans le workflow CI.
+- SnackBar de succès après inscription désormais visible sur l'écran de connexion
+- Recréation intempestive du GoRouter lors des changements d'état auth
+- Validation errors retournent 400 Bad Request au lieu de 401
+- EncryptionService découplé du JWT secret, utilise ENCRYPTION_MASTER_KEY
+- JwtAuthFilter placé avant AnonymousAuthenticationFilter
+- Comparaison du claim email au lieu de subject dans isTokenValid
+- Format jdbc:... requis pour DATABASE_URL dans Spring Boot
+
+### Sécurité
+
+- Seuls les comptes STANDALONE peuvent s'authentifier
+- Refresh tokens révocables avec rotation automatique
+- CI en read-only, plus aucun secret en dur dans les fichiers YAML
 
 ### ⚠️ Bugs / Limites connues
 
