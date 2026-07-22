@@ -1,7 +1,6 @@
 # Configuration de l'API. Toutes les valeurs surchageables par variable d'environnement
 server:
-  # Render injecte PORT ; en local on retombe sur 8080 (le FastAPI occupe deja 8000).
-  port: ${PORT:8080}
+  port: ${PORT:8545}
   # Pour X-Forwarded-Proto (nginx/Cloudflare TLS termination).
   forward-headers-strategy: framework
 
@@ -30,6 +29,8 @@ springdoc:
 
 jwt:
   secret: ${JWT_SECRET:}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:900000} # 15 minutes
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 jours
 
 scan:
   app-name: INM5151 Scan API
@@ -43,3 +44,4 @@ scan:
   gemini-model: ${GEMINI_MODEL:gemini-3.5-flash}
   fdc-api-key: ${FDC_API_KEY:DEMO_KEY}
   fdc-base-url: ${FDC_BASE_URL:https://api.nal.usda.gov}
+  encryption-master-key: ${ENCRYPTION_MASTER_KEY:}

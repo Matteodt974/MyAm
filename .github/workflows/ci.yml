@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   backend:
     name: Run Backend Tests
@@ -20,17 +24,12 @@ jobs:
           POSTGRES_USER: scan
           POSTGRES_PASSWORD: scan
           POSTGRES_DB: scan
-        ports: ['5432:5432']
+        ports: ['5433:5432']
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    env:
-      DATABASE_URL: jdbc:postgresql://localhost:5432/scan
-      DATABASE_USER: scan
-      DATABASE_PASSWORD: scan
-      JWT_SECRET: ci-test-secret-not-for-production
     steps:
       - uses: actions/checkout@v4
 
@@ -50,7 +49,7 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - uses: subosito/flutter-action@v2
         with:
@@ -68,3 +67,27 @@ jobs:
         run: |
           flutter analyze
           flutter test
+
+  security:
+    name: Vulnerability Scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Trivy (backend)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: backend/
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL
+
+      - name: Run Trivy (frontend)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: frontend/
+          format: table
+          exit-code: 1
+          severity: HIGH,CRITICAL

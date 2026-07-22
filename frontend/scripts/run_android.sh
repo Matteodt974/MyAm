@@ -48,16 +48,27 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 BACKEND_SCHEME="${BACKEND_SCHEME:-http}"
-BACKEND_PORT="${BACKEND_PORT:-8080}"
+BACKEND_PORT="${BACKEND_PORT:-8545}"
 PARENT_USER_ID="${PARENT_USER_ID:-1}"
+
+# Check if adb reverse is active for USB debugging
+ADB_REVERSE_ACTIVE=false
+if [[ -n "$ADB" ]] && "$ADB" reverse --list 2>/dev/null | grep -q "tcp:8545 tcp:8545"; then
+    ADB_REVERSE_ACTIVE=true
+fi
+
 if [[ -n "${API_BASE_URL:-}" ]]; then
     API_URL="$API_BASE_URL"
 elif [[ -n "${BACKEND_URL:-}" ]]; then
     API_URL="$BACKEND_URL"
 elif [[ -n "${BACKEND_HOST:-}" ]]; then
     API_URL="${BACKEND_SCHEME}://${BACKEND_HOST}:${BACKEND_PORT}"
+elif [[ "$ADB_REVERSE_ACTIVE" == true ]]; then
+    # USB debugging with adb reverse — use localhost
+    API_URL="http://localhost:${BACKEND_PORT}"
 else
-    API_URL="http://${LAN_IP}:8080"
+    # Wireless debugging — use LAN IP
+    API_URL="http://${LAN_IP}:${BACKEND_PORT}"
 fi
 
 MODE="--release"

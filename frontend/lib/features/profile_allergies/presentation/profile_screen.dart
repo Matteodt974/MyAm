@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/languages.dart';
+import '../../../core/providers/auth_state_provider.dart';
 import '../../child_profiles/presentation/child_profile_controller.dart';
 import '../../child_profiles/presentation/child_profile_management_section.dart';
 import 'allergy_controller.dart';
@@ -43,6 +45,49 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _controller.clear();
   }
 
+  Future<void> _logout() async {
+    await ref.read(authStateProvider.notifier).logout();
+    if (mounted) {
+      context.go('/login');
+    }
+  }
+
+  Widget _buildAccountSection(
+    AsyncValue<AuthState> authState,
+    ThemeData theme,
+  ) {
+    final user = authState.maybeWhen(
+      data: (state) => state is AuthStateAuthenticated ? state.user : null,
+      orElse: () => null,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Compte',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (user != null)
+          Text(user.displayName, style: theme.textTheme.titleSmall)
+        else
+          Text('Connecté', style: theme.textTheme.titleSmall),
+        const SizedBox(height: 8),
+        Text(
+          user?.email ?? '',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton(onPressed: _logout, child: const Text('Se déconnecter')),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allergiesAsync = ref.watch(allergyControllerProvider);
@@ -53,6 +98,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         .watch(childProfileControllerProvider)
         .value
         ?.activeProfile;
+    final authState = ref.watch(authStateProvider);
 
     final theme = Theme.of(context);
 
@@ -62,10 +108,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: ListView(
           children: [
             Text('Profil', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            _buildAccountSection(authState, theme),
+            const SizedBox(height: 24),
             const ChildProfileManagementSection(),
             const SizedBox(height: 24),
-            const SizedBox(height: 4),
             Text(
               'Langue de sortie',
               style: theme.textTheme.titleMedium?.copyWith(
