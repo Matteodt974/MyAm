@@ -37,6 +37,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   bool _permissionPermanentlyDenied = false;
 
+  static const _pictureTabIndex = 0;
+
   static const _scanTabIndex = 1;
 
   static const _labelTabIndex = 2;
@@ -55,6 +57,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   int _selectedIndex = _scanTabIndex;
 
   bool _isProcessing = false;
+
+  bool get _isAnalysisTab =>
+      _selectedIndex == _pictureTabIndex ||
+      _selectedIndex == _scanTabIndex ||
+      _selectedIndex == _labelTabIndex;
 
   @override
   void initState() {
@@ -222,7 +229,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               ),
             ),
           Positioned.fill(child: _buildOverlay()),
-          if (_selectedIndex == _scanTabIndex)
+          if (_isAnalysisTab)
             const Positioned(
               top: 0,
               left: 0,
@@ -252,7 +259,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   Widget _buildOverlay() {
     switch (_selectedIndex) {
-      case 0:
+      case _pictureTabIndex:
         return const PictureTab();
 
       case _labelTabIndex:

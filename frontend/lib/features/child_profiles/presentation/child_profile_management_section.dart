@@ -165,20 +165,25 @@ class ChildProfileManagementSection extends ConsumerWidget {
     required String title,
     String initialValue = '',
   }) async {
-    final controller = TextEditingController(text: initialValue);
+    String name = initialValue;
     final result = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text(title),
-        content: TextField(
-          controller: controller,
+        content: TextFormField(
+          initialValue: initialValue,
           autofocus: true,
           maxLength: 80,
           textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(labelText: "Nom de l'enfant"),
-          onSubmitted: (value) {
-            final name = value.trim();
-            if (name.isNotEmpty) Navigator.pop(dialogContext, name);
+          onChanged: (value) {
+            name = value;
+          },
+          onFieldSubmitted: (value) {
+            final trimmedName = value.trim();
+            if (trimmedName.isNotEmpty) {
+              Navigator.pop(dialogContext, trimmedName);
+            }
           },
         ),
         actions: [
@@ -188,15 +193,16 @@ class ChildProfileManagementSection extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () {
-              final name = controller.text.trim();
-              if (name.isNotEmpty) Navigator.pop(dialogContext, name);
+              final trimmedName = name.trim();
+              if (trimmedName.isNotEmpty) {
+                Navigator.pop(dialogContext, trimmedName);
+              }
             },
             child: const Text('Enregistrer'),
           ),
         ],
       ),
     );
-    controller.dispose();
     return result;
   }
 }
