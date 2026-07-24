@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:myam/features/digestive_journal/data/consent_local_store.dart';
-import 'package:myam/features/digestive_journal/presentation/consent_controller.dart';
 import 'package:myam/features/digestive_journal/presentation/consent_screen.dart';
 
 class MockConsentLocalStore extends Mock implements ConsentLocalStore {}
