@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/consent_local_store.dart';
@@ -15,8 +16,8 @@ class ConsentController extends AsyncNotifier<ConsentDecision> {
     if (rememberChoice) {
       try {
         await ref.read(consentLocalStoreProvider).save(true);
-      } catch (_) {
-        // Ignore storage failures — the user has still given consent in-memory.
+      } catch (e) {
+        debugPrint('ConsentLocalStore.save failed: $e');
       }
     }
     state = const AsyncData(ConsentDecision.granted);

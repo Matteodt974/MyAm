@@ -63,10 +63,10 @@ elif [[ -n "${BACKEND_URL:-}" ]]; then
 elif [[ -n "${BACKEND_HOST:-}" ]]; then
     API_URL="${BACKEND_SCHEME}://${BACKEND_HOST}:${BACKEND_PORT}"
 elif [[ "$ADB_REVERSE_ACTIVE" == true ]]; then
-    # USB debugging with adb reverse — use localhost
+    # USB debugging with adb reverse, use localhost
     API_URL="http://localhost:${BACKEND_PORT}"
 else
-    # Wireless debugging — use LAN IP
+    # Wireless debugging, use LAN IP
     API_URL="http://${LAN_IP}:${BACKEND_PORT}"
 fi
 

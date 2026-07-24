@@ -116,7 +116,7 @@ void main() {
       expect(find.text('Avertissement de confidentialité'), findsNothing);
     });
 
-    testWidgets('"Ne plus me demander" checkbox is visible and toggleable', (
+    testWidgets('"Mémoriser mon choix" checkbox is visible and toggleable', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -137,7 +137,7 @@ void main() {
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Ne plus me demander'), findsOneWidget);
+      expect(find.text('Mémoriser mon choix'), findsOneWidget);
 
       final checkbox = find.byType(Checkbox);
       expect(checkbox, findsOneWidget);
@@ -205,7 +205,7 @@ void main() {
       final acceptButton = find.text('Accepter et continuer');
 
       // Double-tap quickly. The second tap may miss because the dialog is
-      // dismissed after the first tap — this is expected and must not crash.
+      // dismissed after the first tap, this is expected and must not crash.
       await tester.tap(acceptButton);
       await tester.tap(acceptButton, warnIfMissed: false);
       await tester.pumpAndSettle();
