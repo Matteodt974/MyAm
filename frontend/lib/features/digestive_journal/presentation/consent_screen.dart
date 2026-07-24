@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,7 +10,10 @@ import 'consent_controller.dart';
 /// Returns:
 /// - `true` — user accepted
 /// - `false` — user refused via button
-/// - `null` — user dismissed (back button / tap outside)
+/// - `null` — user pressed the system back button (Android only)
+///
+/// The dialog cannot be dismissed by tapping outside
+/// ([barrierDismissible] is false).
 Future<bool?> showConsentDialog(BuildContext context) {
   return showDialog<bool>(
     context: context,
@@ -28,9 +33,11 @@ class _ConsentScreenState extends ConsumerState<_ConsentScreen> {
   bool _rememberChoice = false;
 
   void _accept() {
-    ref
-        .read(consentControllerProvider.notifier)
-        .giveConsent(rememberChoice: _rememberChoice);
+    unawaited(
+      ref
+          .read(consentControllerProvider.notifier)
+          .giveConsent(rememberChoice: _rememberChoice),
+    );
     Navigator.of(context).pop(true);
   }
 
@@ -77,7 +84,7 @@ class _ConsentScreenState extends ConsumerState<_ConsentScreen> {
             CheckboxListTile(
               value: _rememberChoice,
               onChanged: (v) => setState(() => _rememberChoice = v ?? false),
-              title: const Text('Ne plus me demander'),
+              title: const Text('Mémoriser mon choix'),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
             ),

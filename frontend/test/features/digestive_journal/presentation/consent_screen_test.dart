@@ -116,7 +116,7 @@ void main() {
       expect(find.text('Avertissement de confidentialité'), findsNothing);
     });
 
-    testWidgets('"Ne plus me demander" checkbox is visible and toggleable', (
+    testWidgets('"Mémoriser mon choix" checkbox is visible and toggleable', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -137,7 +137,7 @@ void main() {
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Ne plus me demander'), findsOneWidget);
+      expect(find.text('Mémoriser mon choix'), findsOneWidget);
 
       final checkbox = find.byType(Checkbox);
       expect(checkbox, findsOneWidget);
