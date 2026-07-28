@@ -8,6 +8,7 @@ import '../../features/auth/presentation/register_screen.dart';
 import '../../features/digestive_journal/presentation/digestive_journal_screen.dart';
 import '../../features/history/presentation/history_screen.dart';
 import '../../features/home/presentation/home_shell.dart';
+import '../../features/intolerance_analysis/presentation/analysis_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final refresh = ref.watch(routerRefreshProvider);
@@ -45,6 +46,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/digestive-journal',
         builder: (context, state) => const DigestiveJournalScreen(),
+      ),
+      GoRoute(
+        path: '/analysis',
+        builder: (context, state) => const AnalysisScreen(),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(

@@ -41,4 +41,6 @@ class ApiEndpoints {
   static const String scanLabel = '/v1/label/translate-and-structure';
 
   static const String digestiveJournal = '/v1/digestive-journal';
+
+  static const String analysisIntolerance = '/v1/analysis/intolerance';
 }

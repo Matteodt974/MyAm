@@ -117,6 +117,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/digestive-journal'),
               ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.insights),
+                title: const Text('Analyse des tendances'),
+                subtitle: const Text(
+                  'Croiser le journal avec vos scans des 72 dernières heures',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/analysis'),
+              ),
             ],
           ),
         ),
