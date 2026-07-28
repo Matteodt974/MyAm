@@ -9,4 +9,6 @@ public interface DigestiveJournalEntryRepository
     extends JpaRepository<DigestiveJournalEntry, Long> {
   List<DigestiveJournalEntry> findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(
       Long userId, Instant since);
+
+  List<DigestiveJournalEntry> findByUserIdOrderByOccurredAtDesc(Long userId);
 }
