@@ -5,6 +5,13 @@ import 'package:myam/features/child_profiles/data/child_profile.dart';
 import 'package:myam/features/child_profiles/presentation/child_profile_controller.dart';
 import 'package:myam/features/child_profiles/presentation/child_profile_management_section.dart';
 import 'package:myam/features/child_profiles/presentation/child_profile_selector.dart';
+import 'package:myam/features/profile_allergies/data/allergy_local_store.dart';
+import 'package:myam/features/profile_allergies/data/diet_local_store.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockAllergyLocalStore extends Mock implements AllergyLocalStore {}
+
+class MockDietLocalStore extends Mock implements DietLocalStore {}
 
 class FakeChildProfileController extends ChildProfileController {
   FakeChildProfileController(this.initialState);
@@ -51,12 +58,20 @@ void main() {
   Future<FakeChildProfileController> pumpWidget(
     WidgetTester tester,
     Widget childWidget,
+    {
+    AllergyLocalStore? allergyLocalStore,
+    DietLocalStore? dietLocalStore,
+  }
   ) async {
     final controller = FakeChildProfileController(initialState);
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           childProfileControllerProvider.overrideWith(() => controller),
+          if (allergyLocalStore != null)
+            allergyLocalStoreProvider.overrideWithValue(allergyLocalStore),
+          if (dietLocalStore != null)
+            dietLocalStoreProvider.overrideWithValue(dietLocalStore),
         ],
         child: MaterialApp(home: Scaffold(body: childWidget)),
       ),
@@ -133,5 +148,35 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(controller.deletedProfileIds, [child.id]);
+  });
+
+  testWidgets('management section generates a QR from the saved child data', (
+    tester,
+  ) async {
+    final allergyLocalStore = MockAllergyLocalStore();
+    final dietLocalStore = MockDietLocalStore();
+    when(
+      () => allergyLocalStore.load(child.id, isParent: false),
+    ).thenAnswer((_) async => ['arachide', 'lait']);
+    when(
+      () => dietLocalStore.load(child.id, isParent: false),
+    ).thenAnswer((_) async => ['VEGAN']);
+
+    await pumpWidget(
+      tester,
+      const ChildProfileManagementSection(),
+      allergyLocalStore: allergyLocalStore,
+      dietLocalStore: dietLocalStore,
+    );
+
+    await tester.tap(find.byTooltip('Afficher le code QR'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(find.byType(ChildProfileManagementSection), findsOneWidget);
+    expect(find.byType(SizedBox), findsWidgets);
+
+    verify(() => allergyLocalStore.load(child.id, isParent: false)).called(1);
+    verify(() => dietLocalStore.load(child.id, isParent: false)).called(1);
   });
 }
