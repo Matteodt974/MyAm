@@ -112,5 +112,5 @@ cd "$REPO_ROOT"
     $MODE \
     --dart-define=API_BASE_URL="$API_URL" \
     --dart-define=BACKEND_URL="$API_URL" \
-    "${DEVICE_ARGS[@]}" \
-    "${EXTRA_ARGS[@]}"
+    ${DEVICE_ARGS[@]+"${DEVICE_ARGS[@]}"} \
+    ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../child_profiles/presentation/child_profile_controller.dart';
 import '../data/scan_history_entry.dart';
 import '../data/scan_history_export.dart';
 import '../data/scan_history_repository.dart';
@@ -11,10 +12,24 @@ class HistoryController extends AsyncNotifier<List<ScanHistoryEntry>> {
   HistoryFilter? _currentFilter;
 
   @override
-  Future<List<ScanHistoryEntry>> build() => _load();
+  Future<List<ScanHistoryEntry>> build() {
+    ref.watch(childProfileControllerProvider);
+    return _load();
+  }
 
   Future<List<ScanHistoryEntry>> _load() {
-    return ref.read(scanHistoryRepositoryProvider).load(filter: _currentFilter);
+    final profileId = _activeProfileId();
+    if (profileId == null) return Future.value(const <ScanHistoryEntry>[]);
+    return ref
+        .read(scanHistoryRepositoryProvider)
+        .load(profileId, filter: _currentFilter);
+  }
+
+  int? _activeProfileId() {
+    final profileState = ref.read(childProfileControllerProvider).value;
+    final parentId = ref.read(guardianIdProvider);
+    if (parentId == null) return null;
+    return profileState?.activeProfileId ?? parentId;
   }
 
   /// Reloads the history while preserving the current filter.
@@ -37,13 +52,17 @@ class HistoryController extends AsyncNotifier<List<ScanHistoryEntry>> {
 
   /// Deletes a single history entry and refreshes the list.
   Future<void> delete(int id) async {
-    await ref.read(scanHistoryRepositoryProvider).delete(id);
+    final profileId = _activeProfileId();
+    if (profileId == null) return;
+    await ref.read(scanHistoryRepositoryProvider).delete(id, profileId);
     await refresh();
   }
 
   /// Deletes every history entry and refreshes the list.
   Future<void> clearAll() async {
-    await ref.read(scanHistoryRepositoryProvider).clear();
+    final profileId = _activeProfileId();
+    if (profileId == null) return;
+    await ref.read(scanHistoryRepositoryProvider).clear(profileId);
     await refresh();
   }
 

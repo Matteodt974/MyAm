@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/languages.dart';
 import '../../../core/providers/auth_state_provider.dart';
+import '../../child_profiles/presentation/child_profile_controller.dart';
+import '../../child_profiles/presentation/child_profile_management_section.dart';
 import 'allergy_controller.dart';
 import 'diet_controller.dart';
 import 'language_controller.dart';
@@ -50,7 +52,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Widget _buildAccountSection(AsyncValue<AuthState> authState, ThemeData theme) {
+  Widget _buildAccountSection(
+    AsyncValue<AuthState> authState,
+    ThemeData theme,
+  ) {
     final user = authState.maybeWhen(
       data: (state) => state is AuthStateAuthenticated ? state.user : null,
       orElse: () => null,
@@ -67,15 +72,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         const SizedBox(height: 8),
         if (user != null)
-          Text(
-            user.displayName,
-            style: theme.textTheme.titleSmall,
-          )
+          Text(user.displayName, style: theme.textTheme.titleSmall)
         else
-          Text(
-            'Connecté',
-            style: theme.textTheme.titleSmall,
-          ),
+          Text('Connecté', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
         Text(
           user?.email ?? '',
@@ -84,10 +83,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: _logout,
-          child: const Text('Se déconnecter'),
-        ),
+        OutlinedButton(onPressed: _logout, child: const Text('Se déconnecter')),
       ],
     );
   }
@@ -98,6 +94,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final dietsAsync = ref.watch(dietControllerProvider);
     final languageAsync = ref.watch(languageControllerProvider);
     final trustedItemsAsync = ref.watch(trustedItemControllerProvider);
+    final activeProfile = ref
+        .watch(childProfileControllerProvider)
+        .value
+        ?.activeProfile;
     final authState = ref.watch(authStateProvider);
 
     final theme = Theme.of(context);
@@ -110,6 +110,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Text('Profil', style: theme.textTheme.headlineSmall),
             const SizedBox(height: 16),
             _buildAccountSection(authState, theme),
+            const SizedBox(height: 24),
+            const ChildProfileManagementSection(),
             const SizedBox(height: 24),
             Text(
               'Langue de sortie',
@@ -145,17 +147,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
                 onChanged: (code) {
                   if (code == null) return;
-                  ref.read(languageControllerProvider.notifier).setLanguage(code);
+                  ref
+                      .read(languageControllerProvider.notifier)
+                      .setLanguage(code);
                 },
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              'Mes allergies',
+              activeProfile?.isChild == true
+                  ? 'Allergies de ${activeProfile!.displayName}'
+                  : 'Mes allergies',
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.primary,
               ),
             ),
+            if (activeProfile?.isChild == true) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Les nouvelles allergies seront Sévères par défaut (UC-13).',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Row(
               children: [

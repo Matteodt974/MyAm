@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../child_profiles/presentation/child_profile_controller.dart';
 import '../data/scan_history_entry.dart';
 import '../data/scan_history_repository.dart';
 import 'history_controller.dart';
@@ -88,9 +89,16 @@ class HistoryScreen extends ConsumerWidget {
   }
 
   Future<void> _openFilterSheet(BuildContext context, WidgetRef ref) async {
+    final profileState = ref.read(childProfileControllerProvider).value;
+    final parentId = ref.read(guardianIdProvider);
+    final profileId = profileState?.activeProfileId ?? parentId;
+    if (profileId == null) return;
+
     // Always drawn from the full history, not the currently filtered view,
     // so applying a filter doesn't shrink the options available afterward.
-    final allEntries = await ref.read(scanHistoryRepositoryProvider).load();
+    final allEntries = await ref
+        .read(scanHistoryRepositoryProvider)
+        .load(profileId);
     final availableAllergens =
         allEntries.expand((e) => e.matchedAllergens).toSet().toList()..sort();
 
