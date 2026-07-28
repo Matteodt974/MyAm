@@ -52,7 +52,7 @@ public class DigestiveJournalService {
     Long userId = resolveUserId(email);
     List<DigestiveJournalEntry> entries =
         since == null
-            ? repository.findByUserIdOrderByOccurredAtDesc(userId)
+            ? repository.findTop1000ByUserIdOrderByOccurredAtDesc(userId)
             : repository.findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(userId, since);
     return entries.stream().map(this::toResponse).toList();
   }

@@ -10,5 +10,6 @@ public interface DigestiveJournalEntryRepository
   List<DigestiveJournalEntry> findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(
       Long userId, Instant since);
 
-  List<DigestiveJournalEntry> findByUserIdOrderByOccurredAtDesc(Long userId);
+  /** Plafonnee a 1000 entrees pour eviter une reponse non bornee sur /v1/digestive-journal. */
+  List<DigestiveJournalEntry> findTop1000ByUserIdOrderByOccurredAtDesc(Long userId);
 }

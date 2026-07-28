@@ -92,7 +92,7 @@ class DigestiveJournalServiceTest {
   void list_decryptsEntriesFromRepository() {
     when(users.findByEmail(EMAIL)).thenReturn(Optional.of(userWithId(7L)));
     DigestiveJournalEntry entry = new DigestiveJournalEntry(7L, OCCURRED_AT, bytes("enc-2"), null);
-    when(repository.findByUserIdOrderByOccurredAtDesc(7L)).thenReturn(List.of(entry));
+    when(repository.findTop1000ByUserIdOrderByOccurredAtDesc(7L)).thenReturn(List.of(entry));
     when(encryption.decrypt(bytes("enc-2"))).thenReturn("2");
 
     List<DigestiveEntryResponse> entries = service().list(EMAIL, null);
