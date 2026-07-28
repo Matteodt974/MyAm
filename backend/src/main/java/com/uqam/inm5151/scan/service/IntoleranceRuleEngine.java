@@ -110,18 +110,35 @@ public class IntoleranceRuleEngine {
       }
     }
 
-    String dominant = "MIXTE";
-    int half = episodes.size() / 2;
-    if (constipation > half) {
-      dominant = "CONSTIPATION";
-    } else if (diarrhea > half) {
-      dominant = "DIARRHEE";
-    } else if (normal > half) {
-      dominant = "NORMAL";
-    }
-
     return new BristolSummary(
-        episodes.size(), typeCounts, dominant, constipation, diarrhea, normal);
+        episodes.size(),
+        typeCounts,
+        dominantProfile(constipation, diarrhea, normal),
+        constipation,
+        diarrhea,
+        normal);
+  }
+
+  /**
+   * Profil dominant = la categorie ayant le plus d'episodes ; {@code MIXTE} en cas d'egalite entre
+   * plusieurs categories (y compris quand toutes valent 0).
+   */
+  private static String dominantProfile(int constipation, int diarrhea, int normal) {
+    int max = Math.max(constipation, Math.max(diarrhea, normal));
+    int tied = 0;
+    if (constipation == max) tied++;
+    if (diarrhea == max) tied++;
+    if (normal == max) tied++;
+
+    if (tied > 1) {
+      return "MIXTE";
+    } else if (constipation == max) {
+      return "CONSTIPATION";
+    } else if (diarrhea == max) {
+      return "DIARRHEE";
+    } else {
+      return "NORMAL";
+    }
   }
 
   private static List<String> deficiencies(

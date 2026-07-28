@@ -124,6 +124,25 @@ class IntoleranceRuleEngineTest {
   }
 
   @Test
+  void analyze_pluralityWithoutAbsoluteMajority_profileIsDominantCategory() {
+    IntoleranceAnalysisResponse response =
+        engine.analyze(
+            List.of(
+                new DigestiveEpisode(NOW, 1),
+                new DigestiveEpisode(NOW.minusSeconds(1000), 2),
+                new DigestiveEpisode(NOW.minusSeconds(2000), 1),
+                new DigestiveEpisode(NOW.minusSeconds(3000), 6),
+                new DigestiveEpisode(NOW.minusSeconds(4000), 7),
+                new DigestiveEpisode(NOW.minusSeconds(5000), 3)),
+            threeSafeFoods());
+
+    assertThat(response.bristolSummary().dominantProfile()).isEqualTo("CONSTIPATION");
+    assertThat(response.bristolSummary().constipationEpisodes()).isEqualTo(3);
+    assertThat(response.bristolSummary().diarrheaEpisodes()).isEqualTo(2);
+    assertThat(response.bristolSummary().normalEpisodes()).isEqualTo(1);
+  }
+
+  @Test
   void analyze_typeFiveTreatedAsNormal() {
     IntoleranceAnalysisResponse response =
         engine.analyze(List.of(new DigestiveEpisode(NOW, 5)), threeSafeFoods());
