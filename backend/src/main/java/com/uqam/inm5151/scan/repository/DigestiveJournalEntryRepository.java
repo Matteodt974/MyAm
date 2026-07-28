@@ -9,4 +9,7 @@ public interface DigestiveJournalEntryRepository
     extends JpaRepository<DigestiveJournalEntry, Long> {
   List<DigestiveJournalEntry> findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(
       Long userId, Instant since);
+
+  /** Plafonnee a 1000 entrees pour eviter une reponse non bornee sur /v1/digestive-journal. */
+  List<DigestiveJournalEntry> findTop1000ByUserIdOrderByOccurredAtDesc(Long userId);
 }

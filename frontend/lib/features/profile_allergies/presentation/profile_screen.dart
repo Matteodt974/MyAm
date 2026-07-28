@@ -88,6 +88,54 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  /// Acces au journal digestif (UC-23) et a l'analyse des tendances (UC-26).
+  Widget _buildDigestiveHealthSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Santé digestive',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Données de santé : leur enregistrement est soumis à votre '
+          'consentement explicite.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          margin: EdgeInsets.zero,
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.event_note),
+                title: const Text('Journal digestif'),
+                subtitle: const Text('Noter un épisode (échelle de Bristol)'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/digestive-journal'),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.insights),
+                title: const Text('Analyse des tendances'),
+                subtitle: const Text(
+                  'Croiser le journal avec vos scans des 72 dernières heures',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/analysis'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allergiesAsync = ref.watch(allergyControllerProvider);
@@ -111,6 +159,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: 16),
             _buildAccountSection(authState, theme),
             const SizedBox(height: 24),
+            _buildDigestiveHealthSection(theme),
             const ChildProfileManagementSection(),
             const SizedBox(height: 24),
             Text(

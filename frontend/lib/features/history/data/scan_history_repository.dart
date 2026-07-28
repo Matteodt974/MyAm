@@ -29,24 +29,29 @@ class ScanHistoryRepository {
 
   final ScanHistoryDatabase _db;
 
-  /// Persists [entry] without ever surfacing an error to callers.
+  /// Persists [entry] under [profileId] without ever surfacing an error to
+  /// callers.
   ///
   /// History persistence is a best-effort side effect: if SQLite is unavailable
   /// or the write fails, the error is logged and the UI flow continues.
-  Future<void> save(ScanHistoryEntry entry) async {
+  Future<void> save(ScanHistoryEntry entry, int profileId) async {
     try {
-      await _db.insert(entry);
+      await _db.insert(entry, profileId);
     } catch (e, st) {
       debugPrint('Failed to save scan history entry: $e\n$st');
     }
   }
 
-  /// Loads persisted entries, optionally filtered.
-  Future<List<ScanHistoryEntry>> load({HistoryFilter? filter}) async {
+  /// Loads entries belonging to [profileId], optionally filtered.
+  Future<List<ScanHistoryEntry>> load(
+    int profileId, {
+    HistoryFilter? filter,
+  }) async {
     if (filter == null) {
-      return _db.getAll();
+      return _db.getAll(profileId);
     }
     return _db.getFiltered(
+      profileId: profileId,
       from: filter.from,
       to: filter.to,
       types: filter.types,
@@ -55,11 +60,11 @@ class ScanHistoryRepository {
     );
   }
 
-  /// Deletes the entry with the given [id].
-  Future<void> delete(int id) => _db.delete(id);
+  /// Deletes the entry with the given [id] belonging to [profileId].
+  Future<void> delete(int id, int profileId) => _db.delete(id, profileId);
 
-  /// Deletes all entries.
-  Future<void> clear() => _db.deleteAll();
+  /// Deletes every entry belonging to [profileId].
+  Future<void> clear(int profileId) => _db.deleteAll(profileId);
 }
 
 final scanHistoryDatabaseProvider = Provider<ScanHistoryDatabase>((ref) {

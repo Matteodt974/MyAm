@@ -17,8 +17,10 @@ class DishResultSheet extends ConsumerWidget {
     final theme = Theme.of(context);
     final allergies =
         ref.watch(allergyControllerProvider).asData?.value ?? const <String>[];
-    final diets = ref.watch(dietControllerProvider).asData?.value ?? const <String>[];
-    final trustedItems = ref.watch(trustedItemControllerProvider).value ?? const [];
+    final diets =
+        ref.watch(dietControllerProvider).asData?.value ?? const <String>[];
+    final trustedItems =
+        ref.watch(trustedItemControllerProvider).value ?? const [];
     final trustedId = _trustedId(result);
     final isTrusted =
         trustedId != null && trustedItems.any((item) => item.id == trustedId);

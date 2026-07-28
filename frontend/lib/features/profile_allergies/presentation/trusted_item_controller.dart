@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../child_profiles/presentation/child_profile_controller.dart';
 import '../../scan_barcode/data/barcode_repository.dart';
 import '../data/trusted_item_local_store.dart';
 import 'allergy_controller.dart';
@@ -21,7 +22,15 @@ class TrustedItemController extends AsyncNotifier<List<TrustedItem>> {
       unawaited(_revokeUnsafeBarcodeItems(nextAllergies));
     });
 
-    return ref.read(trustedItemLocalStoreProvider).load();
+    final profileState = ref.watch(childProfileControllerProvider).value;
+    final parentId = ref.watch(guardianIdProvider);
+    if (parentId == null) {
+      throw StateError('Utilisateur non authentifié');
+    }
+    final profileId = profileState?.activeProfileId ?? parentId;
+    return ref
+        .read(trustedItemLocalStoreProvider)
+        .load(profileId, isParent: profileId == parentId);
   }
 
   Future<void> add(TrustedItem item) async {
@@ -78,7 +87,12 @@ class TrustedItemController extends AsyncNotifier<List<TrustedItem>> {
 
   Future<void> _persist(List<TrustedItem> list) async {
     state = AsyncData(list);
-    await ref.read(trustedItemLocalStoreProvider).save(list);
+
+    final profileState = ref.read(childProfileControllerProvider).value;
+    final parentId = ref.read(guardianIdProvider);
+    if (parentId == null) return;
+    final profileId = profileState?.activeProfileId ?? parentId;
+    await ref.read(trustedItemLocalStoreProvider).save(profileId, list);
   }
 }
 

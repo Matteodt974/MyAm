@@ -7,7 +7,7 @@
         <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.5</version>
+        <version>3.4.5</version>
         <relativePath/>
     </parent>
 
@@ -20,6 +20,11 @@
     <properties>
         <java.version>21</java.version>
         <springdoc.version>2.6.0</springdoc.version>
+        <postgresql.version>42.7.12</postgresql.version>
+        <tomcat.version>10.1.55</tomcat.version>
+        <jackson-bom.version>2.18.8</jackson-bom.version>
+        <spring-framework.version>6.2.11</spring-framework.version>
+        <spring-security.version>6.5.9</spring-security.version>
     </properties>
 
     <dependencies>
@@ -92,6 +97,11 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -114,7 +124,7 @@
                         <path>
                             <groupId>org.springframework.boot</groupId>
                             <artifactId>spring-boot-configuration-processor</artifactId>
-                            <version>3.3.5</version>
+                            <version>3.4.5</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -134,6 +144,7 @@
                     </java>
                 </configuration>
             </plugin>
+
         </plugins>
     </build>
 </project>
