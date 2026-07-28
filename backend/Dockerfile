@@ -30,4 +30,5 @@ USER appuser
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
     CMD wget -qO- http://localhost:8545/health || exit 1
 
+# ${PORT} isn't shell-expanded here (exec form); Spring resolves it from env at startup.
 CMD ["java", "-jar", "app.jar", "--server.port=${PORT}"]
