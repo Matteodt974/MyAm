@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../core/constants/api_endpoints.dart';
+import '../../history/data/scan_history_database.dart';
 import 'auth_response.dart';
 
 const String _accessTokenKey = 'access_token';
@@ -11,6 +12,13 @@ const String _refreshTokenExpiryKey = 'refresh_token_expiry';
 const String _userIdKey = 'user_id';
 const String _userEmailKey = 'user_email';
 const String _userDisplayNameKey = 'user_display_name';
+
+const List<String> _profileScopedKeyPrefixes = [
+  'user_allergies',
+  'user_diets',
+  'trusted_items',
+  'active_profile_id',
+];
 
 class AuthRepository {
   final Dio _dio;
@@ -134,6 +142,12 @@ class AuthRepository {
   }
 
   Future<void> clearAuthData() async {
+    final allKeys = await _storage.readAll();
+    final profileScopedKeys = allKeys.keys.where(
+      (key) =>
+          _profileScopedKeyPrefixes.any((prefix) => key.startsWith(prefix)),
+    );
+
     await Future.wait([
       _storage.delete(key: _accessTokenKey),
       _storage.delete(key: _refreshTokenKey),
@@ -142,6 +156,11 @@ class AuthRepository {
       _storage.delete(key: _userIdKey),
       _storage.delete(key: _userEmailKey),
       _storage.delete(key: _userDisplayNameKey),
+      for (final key in profileScopedKeys) _storage.delete(key: key),
     ]);
+
+    try {
+      await ScanHistoryDatabase.instance.deleteAllProfiles();
+    } catch (_) {}
   }
 }

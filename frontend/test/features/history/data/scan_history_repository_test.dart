@@ -11,6 +11,8 @@ void main() {
   late MockScanHistoryDatabase mockDatabase;
   late ScanHistoryRepository repository;
 
+  const profileId = 1;
+
   setUp(() {
     mockDatabase = MockScanHistoryDatabase();
     repository = ScanHistoryRepository(mockDatabase);
@@ -34,21 +36,23 @@ void main() {
     test('calls database.insert', () async {
       final entry = makeEntry(type: ScanType.barcode, title: 'Product');
       when(
-        () => mockDatabase.insert(entry),
+        () => mockDatabase.insert(entry, profileId),
       ).thenAnswer((_) async => entry.copyWith(id: 1));
 
-      await repository.save(entry);
+      await repository.save(entry, profileId);
 
-      verify(() => mockDatabase.insert(entry)).called(1);
+      verify(() => mockDatabase.insert(entry, profileId)).called(1);
     });
 
     test('does not throw when insert throws', () async {
       final entry = makeEntry(type: ScanType.dish, title: 'Dish');
-      when(() => mockDatabase.insert(entry)).thenThrow(Exception('db error'));
+      when(
+        () => mockDatabase.insert(entry, profileId),
+      ).thenThrow(Exception('db error'));
 
-      await expectLater(repository.save(entry), completes);
+      await expectLater(repository.save(entry, profileId), completes);
 
-      verify(() => mockDatabase.insert(entry)).called(1);
+      verify(() => mockDatabase.insert(entry, profileId)).called(1);
     });
   });
 
@@ -60,13 +64,15 @@ void main() {
           makeEntry(id: 1, type: ScanType.barcode, title: 'A'),
           makeEntry(id: 2, type: ScanType.label, title: 'B'),
         ];
-        when(() => mockDatabase.getAll()).thenAnswer((_) async => entries);
+        when(
+          () => mockDatabase.getAll(profileId),
+        ).thenAnswer((_) async => entries);
 
-        final result = await repository.load();
+        final result = await repository.load(profileId);
 
         expect(result, entries);
-        verify(() => mockDatabase.getAll()).called(1);
-        verifyNever(() => mockDatabase.getFiltered());
+        verify(() => mockDatabase.getAll(profileId)).called(1);
+        verifyNever(() => mockDatabase.getFiltered(profileId: profileId));
       },
     );
 
@@ -83,6 +89,7 @@ void main() {
         );
         when(
           () => mockDatabase.getFiltered(
+            profileId: profileId,
             from: filter.from,
             to: filter.to,
             types: filter.types,
@@ -91,11 +98,12 @@ void main() {
           ),
         ).thenAnswer((_) async => entries);
 
-        final result = await repository.load(filter: filter);
+        final result = await repository.load(profileId, filter: filter);
 
         expect(result, entries);
         verify(
           () => mockDatabase.getFiltered(
+            profileId: profileId,
             from: filter.from,
             to: filter.to,
             types: filter.types,
@@ -103,26 +111,26 @@ void main() {
             allergen: filter.allergen,
           ),
         ).called(1);
-        verifyNever(() => mockDatabase.getAll());
+        verifyNever(() => mockDatabase.getAll(profileId));
       },
     );
   });
 
   group('ScanHistoryRepository.delete', () {
     test('calls database.delete with the given id', () async {
-      when(() => mockDatabase.delete(42)).thenAnswer((_) async {});
+      when(() => mockDatabase.delete(42, profileId)).thenAnswer((_) async {});
 
-      await repository.delete(42);
+      await repository.delete(42, profileId);
 
-      verify(() => mockDatabase.delete(42)).called(1);
+      verify(() => mockDatabase.delete(42, profileId)).called(1);
     });
 
     test('clear calls database.deleteAll', () async {
-      when(() => mockDatabase.deleteAll()).thenAnswer((_) async {});
+      when(() => mockDatabase.deleteAll(profileId)).thenAnswer((_) async {});
 
-      await repository.clear();
+      await repository.clear(profileId);
 
-      verify(() => mockDatabase.deleteAll()).called(1);
+      verify(() => mockDatabase.deleteAll(profileId)).called(1);
     });
   });
 

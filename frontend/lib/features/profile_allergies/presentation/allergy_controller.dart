@@ -1,11 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../child_profiles/presentation/child_profile_controller.dart';
 import '../data/allergy_local_store.dart';
 
 class AllergyController extends AsyncNotifier<List<String>> {
   @override
   Future<List<String>> build() {
-    return ref.read(allergyLocalStoreProvider).load();
+    final profileState = ref.watch(childProfileControllerProvider).value;
+    final parentId = ref.watch(guardianIdProvider);
+    if (parentId == null) {
+      throw StateError('Utilisateur non authentifié');
+    }
+    final profileId = profileState?.activeProfileId ?? parentId;
+    return ref
+        .read(allergyLocalStoreProvider)
+        .load(profileId, isParent: profileId == parentId);
   }
 
   Future<void> add(String allergy) async {
@@ -31,7 +40,11 @@ class AllergyController extends AsyncNotifier<List<String>> {
   Future<void> _persist(List<String> list) async {
     state = AsyncData(list);
 
-    await ref.read(allergyLocalStoreProvider).save(list);
+    final profileState = ref.read(childProfileControllerProvider).value;
+    final parentId = ref.read(guardianIdProvider);
+    if (parentId == null) return;
+    final int profileId = profileState?.activeProfileId ?? parentId;
+    await ref.read(allergyLocalStoreProvider).save(profileId, list);
   }
 }
 
