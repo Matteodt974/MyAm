@@ -50,7 +50,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  Widget _buildAccountSection(AsyncValue<AuthState> authState, ThemeData theme) {
+  Widget _buildAccountSection(
+    AsyncValue<AuthState> authState,
+    ThemeData theme,
+  ) {
     final user = authState.maybeWhen(
       data: (state) => state is AuthStateAuthenticated ? state.user : null,
       orElse: () => null,
@@ -67,15 +70,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         const SizedBox(height: 8),
         if (user != null)
-          Text(
-            user.displayName,
-            style: theme.textTheme.titleSmall,
-          )
+          Text(user.displayName, style: theme.textTheme.titleSmall)
         else
-          Text(
-            'Connecté',
-            style: theme.textTheme.titleSmall,
-          ),
+          Text('Connecté', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
         Text(
           user?.email ?? '',
@@ -84,9 +81,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        OutlinedButton(
-          onPressed: _logout,
-          child: const Text('Se déconnecter'),
+        OutlinedButton(onPressed: _logout, child: const Text('Se déconnecter')),
+      ],
+    );
+  }
+
+  /// Acces au journal digestif (UC-23) et a l'analyse des tendances (UC-26).
+  Widget _buildDigestiveHealthSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Santé digestive',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Données de santé : leur enregistrement est soumis à votre '
+          'consentement explicite.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          margin: EdgeInsets.zero,
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.event_note),
+                title: const Text('Journal digestif'),
+                subtitle: const Text('Noter un épisode (échelle de Bristol)'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/digestive-journal'),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -110,6 +142,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             Text('Profil', style: theme.textTheme.headlineSmall),
             const SizedBox(height: 16),
             _buildAccountSection(authState, theme),
+            const SizedBox(height: 24),
+            _buildDigestiveHealthSection(theme),
             const SizedBox(height: 24),
             Text(
               'Langue de sortie',
@@ -145,7 +179,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
                 onChanged: (code) {
                   if (code == null) return;
-                  ref.read(languageControllerProvider.notifier).setLanguage(code);
+                  ref
+                      .read(languageControllerProvider.notifier)
+                      .setLanguage(code);
                 },
               ),
             ),
