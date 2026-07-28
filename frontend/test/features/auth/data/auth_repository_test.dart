@@ -3,7 +3,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:myam/features/auth/data/auth_repository.dart';
-import 'package:myam/features/auth/data/auth_response.dart';
 
 class MockDio extends Mock implements Dio {}
 

@@ -58,10 +58,6 @@ class UserDto {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'email': email,
-      'displayName': displayName,
-    };
+    return {'id': id, 'email': email, 'displayName': displayName};
   }
 }
