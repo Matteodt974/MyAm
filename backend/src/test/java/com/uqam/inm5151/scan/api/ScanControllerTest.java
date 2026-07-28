@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -26,6 +27,7 @@ class ScanControllerTest {
   @MockBean private DishAnalysisService dishAnalysis;
 
   @Test
+  @WithMockUser(username = "user@test.com")
   void dishAcceptsImageAndReturnsAnalysis() throws Exception {
     var file = new MockMultipartFile("image", "plat.jpg", "image/jpeg", new byte[] {1, 2, 3});
     when(dishAnalysis.analyze(any(), any(), any()))
@@ -60,9 +62,17 @@ class ScanControllerTest {
   }
 
   @Test
+  @WithMockUser(username = "user@test.com")
   void dishRejectsNonImage() throws Exception {
     var file = new MockMultipartFile("image", "notes.txt", "text/plain", "hello".getBytes());
 
     mvc.perform(multipart("/v1/scan/dish").file(file)).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void dishAnonymous_returnsUnauthorized() throws Exception {
+    var file = new MockMultipartFile("image", "plat.jpg", "image/jpeg", new byte[] {1, 2, 3});
+
+    mvc.perform(multipart("/v1/scan/dish").file(file)).andExpect(status().isUnauthorized());
   }
 }

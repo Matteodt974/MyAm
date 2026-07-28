@@ -16,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -27,6 +28,7 @@ class LabelControllerTest {
   @MockBean private LabelAnalysisService labelAnalysis;
 
   @Test
+  @WithMockUser(username = "user@test.com")
   void analyzeLabel_validRequest_returnsOkAndResponse() throws Exception {
     when(labelAnalysis.analyze("sugar, palm oil", null, null))
         .thenReturn(
@@ -51,6 +53,7 @@ class LabelControllerTest {
   }
 
   @Test
+  @WithMockUser(username = "user@test.com")
   void analyzeLabel_blankText_returnsBadRequest() throws Exception {
     mvc.perform(
             post("/v1/label/translate-and-structure")
@@ -60,6 +63,7 @@ class LabelControllerTest {
   }
 
   @Test
+  @WithMockUser(username = "user@test.com")
   void analyzeLabel_unsupportedLanguage_returnsUnprocessableEntity() throws Exception {
     when(labelAnalysis.analyze("inconnu", null, null))
         .thenThrow(new UnsupportedLanguageException("Langue non supportee"));
@@ -69,5 +73,14 @@ class LabelControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"text\":\"inconnu\"}"))
         .andExpect(status().isUnprocessableEntity());
+  }
+
+  @Test
+  void analyzeLabel_anonymous_returnsUnauthorized() throws Exception {
+    mvc.perform(
+            post("/v1/label/translate-and-structure")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"text\":\"sugar\"}"))
+        .andExpect(status().isUnauthorized());
   }
 }

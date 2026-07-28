@@ -48,8 +48,6 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers("/docs/**", "/swagger-ui/**", "/v3/api-docs/**")
                     .permitAll()
-                    .requestMatchers("/v1/scan/**", "/v1/label/**")
-                    .permitAll()
                     .anyRequest()
                     .authenticated())
         .sessionManagement(
