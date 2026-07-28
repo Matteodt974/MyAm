@@ -30,7 +30,12 @@ class ScanHistoryDatabase {
     await Directory(databasesDir).create(recursive: true);
     final dbPath = join(databasesDir, scanHistoryDbName);
 
-    return openDatabase(dbPath, version: 1, onCreate: _onCreate);
+    return openDatabase(
+      dbPath,
+      version: 2,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -43,22 +48,38 @@ class ScanHistoryDatabase {
         risk_level TEXT,
         matched_allergens TEXT,
         thumbnail_path TEXT,
-        raw_json TEXT NOT NULL
+        raw_json TEXT NOT NULL,
+        profile_id INTEGER
       )
     ''');
   }
 
-  /// Inserts a new entry and returns it with the assigned [id].
-  Future<ScanHistoryEntry> insert(ScanHistoryEntry entry) async {
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+        'ALTER TABLE scan_history ADD COLUMN profile_id INTEGER',
+      );
+    }
+  }
+
+  /// Inserts a new entry scoped to [profileId] and returns it with the
+  /// assigned [id].
+  Future<ScanHistoryEntry> insert(ScanHistoryEntry entry, int profileId) async {
     final db = await database;
-    final id = await db.insert('scan_history', _toMap(entry));
+    final id = await db.insert('scan_history', _toMap(entry, profileId));
     return entry.copyWith(id: id);
   }
 
-  /// Returns every entry ordered from newest to oldest.
-  Future<List<ScanHistoryEntry>> getAll() async {
+  /// Returns every entry belonging to [profileId], ordered from newest to
+  /// oldest.
+  Future<List<ScanHistoryEntry>> getAll(int profileId) async {
     final db = await database;
-    final maps = await db.query('scan_history', orderBy: 'scanned_at DESC');
+    final maps = await db.query(
+      'scan_history',
+      where: 'profile_id = ?',
+      whereArgs: [profileId],
+      orderBy: 'scanned_at DESC',
+    );
     return maps.map(_fromMap).toList();
   }
 
@@ -71,6 +92,7 @@ class ScanHistoryDatabase {
   /// - [allergen]: substring match against the JSON-encoded
   ///   [matched_allergens] column.
   Future<List<ScanHistoryEntry>> getFiltered({
+    required int profileId,
     DateTime? from,
     DateTime? to,
     List<ScanType>? types,
@@ -78,8 +100,8 @@ class ScanHistoryDatabase {
     String? allergen,
   }) async {
     final db = await database;
-    final where = <String>[];
-    final whereArgs = <Object?>[];
+    final where = <String>['profile_id = ?'];
+    final whereArgs = <Object?>[profileId];
 
     if (from != null) {
       where.add('scanned_at >= ?');
@@ -136,27 +158,42 @@ class ScanHistoryDatabase {
     return maps.map(_fromMap).toList();
   }
 
-  /// Returns the entry with the given [id], or null if not found.
-  Future<ScanHistoryEntry?> getById(int id) async {
+  /// Returns the entry with the given [id] belonging to [profileId], or null
+  /// if not found.
+  Future<ScanHistoryEntry?> getById(int id, int profileId) async {
     final db = await database;
     final maps = await db.query(
       'scan_history',
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'id = ? AND profile_id = ?',
+      whereArgs: [id, profileId],
       limit: 1,
     );
     if (maps.isEmpty) return null;
     return _fromMap(maps.first);
   }
 
-  /// Deletes the entry with the given [id].
-  Future<void> delete(int id) async {
+  /// Deletes the entry with the given [id] belonging to [profileId].
+  Future<void> delete(int id, int profileId) async {
     final db = await database;
-    await db.delete('scan_history', where: 'id = ?', whereArgs: [id]);
+    await db.delete(
+      'scan_history',
+      where: 'id = ? AND profile_id = ?',
+      whereArgs: [id, profileId],
+    );
   }
 
-  /// Deletes all entries.
-  Future<void> deleteAll() async {
+  /// Deletes every entry belonging to [profileId].
+  Future<void> deleteAll(int profileId) async {
+    final db = await database;
+    await db.delete(
+      'scan_history',
+      where: 'profile_id = ?',
+      whereArgs: [profileId],
+    );
+  }
+
+  /// Deletes every entry for every profile.
+  Future<void> deleteAllProfiles() async {
     final db = await database;
     await db.delete('scan_history');
   }
@@ -165,7 +202,7 @@ class ScanHistoryDatabase {
     return List<String>.filled(count, '?').join(', ');
   }
 
-  Map<String, Object?> _toMap(ScanHistoryEntry entry) {
+  Map<String, Object?> _toMap(ScanHistoryEntry entry, int profileId) {
     return <String, Object?>{
       if (entry.id != null) 'id': entry.id,
       'type': entry.type.name,
@@ -175,6 +212,7 @@ class ScanHistoryDatabase {
       'matched_allergens': jsonEncode(entry.matchedAllergens),
       'thumbnail_path': entry.thumbnailPath,
       'raw_json': entry.rawJson,
+      'profile_id': profileId,
     };
   }
 

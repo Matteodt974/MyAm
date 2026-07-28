@@ -26,8 +26,10 @@ void main() {
     database = ScanHistoryDatabase.instance;
   });
 
+  const profileId = 1;
+
   tearDown(() async {
-    await database.deleteAll();
+    await database.deleteAllProfiles();
   });
 
   ScanHistoryEntry makeEntry({
@@ -55,7 +57,7 @@ void main() {
         scannedAt: DateTime(2025, 1, 1),
       );
 
-      final inserted = await database.insert(entry);
+      final inserted = await database.insert(entry, profileId);
 
       expect(inserted.id, isNotNull);
       expect(inserted.id, isPositive);
@@ -80,11 +82,11 @@ void main() {
         scannedAt: DateTime(2025, 1, 1, 12, 0),
       );
 
-      await database.insert(oldest);
-      await database.insert(middle);
-      await database.insert(newest);
+      await database.insert(oldest, profileId);
+      await database.insert(middle, profileId);
+      await database.insert(newest, profileId);
 
-      final entries = await database.getAll();
+      final entries = await database.getAll(profileId);
 
       expect(entries.length, 3);
       expect(entries.map((e) => e.title).toList(), [
@@ -111,11 +113,14 @@ void main() {
         scannedAt: DateTime(2025, 1, 1, 12, 0),
       );
 
-      await database.insert(barcode);
-      await database.insert(dish);
-      await database.insert(label);
+      await database.insert(barcode, profileId);
+      await database.insert(dish, profileId);
+      await database.insert(label, profileId);
 
-      final filtered = await database.getFiltered(types: [ScanType.dish]);
+      final filtered = await database.getFiltered(
+        profileId: profileId,
+        types: [ScanType.dish],
+      );
 
       expect(filtered.length, 1);
       expect(filtered.single.type, ScanType.dish);
@@ -139,11 +144,13 @@ void main() {
         scannedAt: DateTime(2025, 1, 1, 18, 0),
       );
 
-      await database.insert(before);
-      await database.insert(inside);
-      await database.insert(after);
+      await database.insert(before, profileId);
+      await database.insert(inside, profileId);
+      await database.insert(after, profileId);
 
       final filtered = await database.getFiltered(
+        profileId: profileId,
+
         from: DateTime(2025, 1, 1, 9, 0),
         to: DateTime(2025, 1, 1, 17, 0),
       );
@@ -158,15 +165,15 @@ void main() {
         title: 'To delete',
         scannedAt: DateTime(2025, 1, 1),
       );
-      final inserted = await database.insert(entry);
+      final inserted = await database.insert(entry, profileId);
       final id = inserted.id!;
 
-      await database.delete(id);
+      await database.delete(id, profileId);
 
-      final found = await database.getById(id);
+      final found = await database.getById(id, profileId);
       expect(found, isNull);
 
-      final remaining = await database.getAll();
+      final remaining = await database.getAll(profileId);
       expect(remaining, isEmpty);
     });
 
@@ -176,14 +183,14 @@ void main() {
         title: 'By id',
         scannedAt: DateTime(2025, 1, 1),
       );
-      final inserted = await database.insert(entry);
+      final inserted = await database.insert(entry, profileId);
       final id = inserted.id!;
 
-      final found = await database.getById(id);
+      final found = await database.getById(id, profileId);
       expect(found, isNotNull);
       expect(found!.title, 'By id');
 
-      final missing = await database.getById(99999);
+      final missing = await database.getById(99999, profileId);
       expect(missing, isNull);
     });
 
@@ -194,6 +201,7 @@ void main() {
           title: 'A',
           scannedAt: DateTime(2025, 1, 1),
         ),
+        profileId,
       );
       await database.insert(
         makeEntry(
@@ -201,11 +209,12 @@ void main() {
           title: 'B',
           scannedAt: DateTime(2025, 1, 2),
         ),
+        profileId,
       );
 
-      await database.deleteAll();
+      await database.deleteAll(profileId);
 
-      expect(await database.getAll(), isEmpty);
+      expect(await database.getAll(profileId), isEmpty);
     });
 
     test('getFiltered filters by a single risk level', () async {
@@ -222,10 +231,13 @@ void main() {
         riskLevel: 'DANGER',
       );
 
-      await database.insert(safe);
-      await database.insert(danger);
+      await database.insert(safe, profileId);
+      await database.insert(danger, profileId);
 
-      final filtered = await database.getFiltered(riskLevels: ['DANGER']);
+      final filtered = await database.getFiltered(
+        profileId: profileId,
+        riskLevels: ['DANGER'],
+      );
 
       expect(filtered.length, 1);
       expect(filtered.single.title, 'Danger');
@@ -256,12 +268,14 @@ void main() {
         riskLevel: 'DANGER',
       );
 
-      await database.insert(noRisk);
-      await database.insert(emptyRisk);
-      await database.insert(safe);
-      await database.insert(danger);
+      await database.insert(noRisk, profileId);
+      await database.insert(emptyRisk, profileId);
+      await database.insert(safe, profileId);
+      await database.insert(danger, profileId);
 
       final filtered = await database.getFiltered(
+        profileId: profileId,
+
         riskLevels: ['', 'SAFE'],
       );
 
@@ -291,11 +305,14 @@ void main() {
         scannedAt: DateTime(2025, 1, 1, 10, 0),
       );
 
-      await database.insert(peanut);
-      await database.insert(milk);
-      await database.insert(none);
+      await database.insert(peanut, profileId);
+      await database.insert(milk, profileId);
+      await database.insert(none, profileId);
 
-      final filtered = await database.getFiltered(allergen: 'milk');
+      final filtered = await database.getFiltered(
+        profileId: profileId,
+        allergen: 'milk',
+      );
 
       expect(filtered.length, 1);
       expect(filtered.single.title, 'Milk');

@@ -18,6 +18,8 @@ void main() {
     mockDio = MockDio();
     mockStorage = MockFlutterSecureStorage();
     repository = AuthRepository(mockDio, mockStorage);
+
+    when(() => mockStorage.readAll()).thenAnswer((_) async => {});
   });
 
   group('register', () {
@@ -317,6 +319,44 @@ void main() {
       verify(() => mockStorage.delete(key: 'user_id')).called(1);
       verify(() => mockStorage.delete(key: 'user_email')).called(1);
       verify(() => mockStorage.delete(key: 'user_display_name')).called(1);
+    });
+
+    test('logout wipes profile-scoped local data for every profile', () async {
+      when(
+        () => mockStorage.read(key: 'refresh_token'),
+      ).thenAnswer((_) async => 'some-refresh-token');
+      when(
+        () =>
+            mockDio.post<Map<String, dynamic>>(any(), data: any(named: 'data')),
+      ).thenAnswer(
+        (_) async => Response<Map<String, dynamic>>(
+          requestOptions: RequestOptions(path: '/auth/logout'),
+          statusCode: 200,
+          data: <String, dynamic>{},
+        ),
+      );
+      when(() => mockStorage.readAll()).thenAnswer(
+        (_) async => {
+          'user_allergies_7': '["arachide"]',
+          'user_allergies_12': '["lait"]',
+          'user_diets_7': '["vegan"]',
+          'trusted_items_7': '[]',
+          'active_profile_id': '12',
+          'preferred_output_language': 'fr',
+        },
+      );
+      when(
+        () => mockStorage.delete(key: any(named: 'key')),
+      ).thenAnswer((_) async {});
+
+      await repository.logout();
+
+      verify(() => mockStorage.delete(key: 'user_allergies_7')).called(1);
+      verify(() => mockStorage.delete(key: 'user_allergies_12')).called(1);
+      verify(() => mockStorage.delete(key: 'user_diets_7')).called(1);
+      verify(() => mockStorage.delete(key: 'trusted_items_7')).called(1);
+      verify(() => mockStorage.delete(key: 'active_profile_id')).called(1);
+      verifyNever(() => mockStorage.delete(key: 'preferred_output_language'));
     });
   });
 
