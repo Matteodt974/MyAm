@@ -11,10 +11,13 @@ class DietLocalStore {
 
   final FlutterSecureStorage _storage;
 
-  static const String _key = 'user_diets';
+  static const String _legacyKey = 'user_diets';
 
-  Future<List<String>> load() async {
-    final raw = await _storage.read(key: _key);
+  Future<List<String>> load(int profileId, {required bool isParent}) async {
+    var raw = await _storage.read(key: _key(profileId));
+    if ((raw == null || raw.isEmpty) && isParent) {
+      raw = await _storage.read(key: _legacyKey);
+    }
 
     if (raw == null || raw.isEmpty) return <String>[];
 
@@ -26,9 +29,11 @@ class DietLocalStore {
     return <String>[];
   }
 
-  Future<void> save(List<String> diets) async {
-    await _storage.write(key: _key, value: jsonEncode(diets));
+  Future<void> save(int profileId, List<String> diets) async {
+    await _storage.write(key: _key(profileId), value: jsonEncode(diets));
   }
+
+  String _key(int profileId) => 'user_diets_$profileId';
 }
 
 final dietLocalStoreProvider = Provider<DietLocalStore>((ref) {

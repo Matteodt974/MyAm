@@ -8,9 +8,9 @@ import 'consent_controller.dart';
 /// Shows the privacy consent dialog for the digestive journal feature.
 ///
 /// Returns:
-/// - `true` — user accepted
-/// - `false` — user refused via button
-/// - `null` — user pressed the system back button (Android only)
+/// - `true`: user accepted
+/// - `false`: user refused via button
+/// - `null`: user pressed the system back button (Android only)
 ///
 /// The dialog cannot be dismissed by tapping outside
 /// ([barrierDismissible] is false).

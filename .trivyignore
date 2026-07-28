@@ -1,0 +1,7 @@
+# CVE-2026-40973: Spring Boot ApplicationTemp directory hijacking
+# Risk accepted: AV:L (local attacker), AC:H (high complexity),
+# PR:L (low privileges). MyAm runs in an isolated Docker container
+# with non-root user (appuser, uid 1001) and does not enable
+# server.servlet.session.persistent (default false). Exploitation
+# requires the attacker to already have access to the container/host.
+CVE-2026-40973

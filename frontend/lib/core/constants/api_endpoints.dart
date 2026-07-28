@@ -43,4 +43,9 @@ class ApiEndpoints {
   static const String digestiveJournal = '/v1/digestive-journal';
 
   static const String analysisIntolerance = '/v1/analysis/intolerance';
+  static String childProfiles(int guardianId) =>
+      '/v1/parents/$guardianId/children';
+
+  static String childProfile(int guardianId, int childId) =>
+      '/v1/parents/$guardianId/children/$childId';
 }

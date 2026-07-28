@@ -36,7 +36,7 @@ class DishRepository {
         options: Options(
           sendTimeout: const Duration(seconds: 60),
           receiveTimeout: const Duration(seconds: 60),
-       ),
+        ),
       );
 
       return DishResult.fromJson(response.data!);

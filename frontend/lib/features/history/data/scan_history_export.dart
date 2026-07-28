@@ -32,10 +32,7 @@ class ScanHistoryExport {
     final file = File(filePath);
     // Write with a UTF-8 BOM so spreadsheet applications (notably Excel on
     // Windows) correctly interpret French accented characters.
-    await file.writeAsBytes(
-      [0xEF, 0xBB, 0xBF, ...csv.codeUnits],
-      flush: true,
-    );
+    await file.writeAsBytes([0xEF, 0xBB, 0xBF, ...csv.codeUnits], flush: true);
 
     await Share.shareXFiles([XFile(filePath)]);
   }

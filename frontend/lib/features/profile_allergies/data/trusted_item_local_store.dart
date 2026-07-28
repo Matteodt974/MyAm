@@ -11,10 +11,16 @@ class TrustedItemLocalStore {
 
   final FlutterSecureStorage _storage;
 
-  static const String _key = 'trusted_items';
+  static const String _legacyKey = 'trusted_items';
 
-  Future<List<TrustedItem>> load() async {
-    final raw = await _storage.read(key: _key);
+  Future<List<TrustedItem>> load(
+    int profileId, {
+    required bool isParent,
+  }) async {
+    var raw = await _storage.read(key: _key(profileId));
+    if ((raw == null || raw.isEmpty) && isParent) {
+      raw = await _storage.read(key: _legacyKey);
+    }
 
     if (raw == null || raw.isEmpty) return <TrustedItem>[];
 
@@ -29,12 +35,14 @@ class TrustedItemLocalStore {
     return <TrustedItem>[];
   }
 
-  Future<void> save(List<TrustedItem> items) async {
+  Future<void> save(int profileId, List<TrustedItem> items) async {
     await _storage.write(
-      key: _key,
+      key: _key(profileId),
       value: jsonEncode(items.map((item) => item.toJson()).toList()),
     );
   }
+
+  String _key(int profileId) => 'trusted_items_$profileId';
 }
 
 class TrustedItem {
@@ -54,12 +62,12 @@ class TrustedItem {
   final String? nutriscore;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'ean': ean,
-        'name': name,
-        'brands': brands,
-        'nutriscore': nutriscore,
-      };
+    'id': id,
+    'ean': ean,
+    'name': name,
+    'brands': brands,
+    'nutriscore': nutriscore,
+  };
 
   factory TrustedItem.fromJson(Map<String, dynamic> json) {
     final ean = json['ean']?.toString() ?? '';

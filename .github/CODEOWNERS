@@ -1,0 +1,8 @@
+# Revue obligatoire sur les PR.
+* @George-Fam
+
+# Revue obligatoire sur les workflows.
+/.github/workflows/ @George-Fam @rr-djk
+
+# Revue obligatoire sur le Dockerfile.
+/backend/Dockerfile @George-Fam

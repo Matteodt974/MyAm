@@ -205,7 +205,7 @@ void main() {
       final acceptButton = find.text('Accepter et continuer');
 
       // Double-tap quickly. The second tap may miss because the dialog is
-      // dismissed after the first tap — this is expected and must not crash.
+      // dismissed after the first tap, this is expected and must not crash.
       await tester.tap(acceptButton);
       await tester.tap(acceptButton, warnIfMissed: false);
       await tester.pumpAndSettle();
