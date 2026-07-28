@@ -7,8 +7,6 @@ public record AppProperties(
     String appName,
     String environment,
     String databaseUrl,
-    String ocrUrl,
-    String translateUrl,
     String offBaseUrl,
     String obfBaseUrl,
     String offUserAgent,

@@ -34,14 +34,6 @@ public class JwtService {
     return email != null && email.equals(userDetails.getUsername()) && !isTokenExpired(token);
   }
 
-  public Long extractUserId(String token) {
-    try {
-      return Long.parseLong(extractSubject(token));
-    } catch (NumberFormatException e) {
-      return null;
-    }
-  }
-
   public String extractEmail(String token) {
     return extractClaim(token, claims -> claims.get("email", String.class));
   }

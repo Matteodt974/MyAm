@@ -5,49 +5,27 @@ class ChildProfile {
     required this.id,
     required this.displayName,
     required this.isChild,
-    this.allergies = const {},
-    this.diets = const {},
   });
 
   factory ChildProfile.parent(int id) {
     return ChildProfile(id: id, displayName: 'Moi', isChild: false);
   }
 
+  /// Les allergies et regimes de l'enfant ne transitent pas par ce modele :
+  /// ils sont lus et ecrits via l'endpoint de preferences de profil (UC-13B).
   factory ChildProfile.fromJson(Map<String, dynamic> json) {
     return ChildProfile(
       id: json['id'] as int,
       displayName: json['displayName'] as String,
       isChild: true,
-      allergies: _stringSet(json['allergies']),
-      diets: _stringSet(json['diets']),
     );
   }
 
   final int id;
   final String displayName;
   final bool isChild;
-  final Set<String> allergies;
-  final Set<String> diets;
 
   static const String _sharePrefix = 'MYAM_PROFILE_V1:';
-
-  static Set<String> _stringSet(dynamic value) {
-    if (value is! List) return const {};
-    return value.map((item) => item.toString()).toSet();
-  }
-
-  static String _encodeSharePayload({
-    required String displayName,
-    required List<String> allergies,
-    required List<String> diets,
-  }) {
-    final json = jsonEncode({
-      'displayName': displayName,
-      'allergies': [...allergies]..sort(),
-      'diets': [...diets]..sort(),
-    });
-    return _sharePrefix + base64Url.encode(utf8.encode(json));
-  }
 
   static ChildProfileShareSnapshot? tryParseSharePayload(String value) {
     if (!value.startsWith(_sharePrefix)) return null;
@@ -85,12 +63,4 @@ class ChildProfileShareSnapshot {
   final String displayName;
   final List<String> allergies;
   final List<String> diets;
-
-  String toPayload() {
-    return ChildProfile._encodeSharePayload(
-      displayName: displayName,
-      allergies: allergies,
-      diets: diets,
-    );
-  }
 }

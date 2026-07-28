@@ -3,31 +3,29 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:myam/features/child_profiles/data/child_profile.dart';
 
+/// Le payload est produit par l'emetteur du QR, pas par l'application : on le
+/// fabrique ici a la main pour figer le format attendu par le lecteur.
+String sharePayload(Map<String, dynamic> json) {
+  return 'MYAM_PROFILE_V1:${base64Url.encode(utf8.encode(jsonEncode(json)))}';
+}
+
 void main() {
   test('fromJson maps a managed child profile', () {
-    final profile = ChildProfile.fromJson({
-      'id': 12,
-      'displayName': 'Léa',
-      'allergies': ['arachide', 'lait'],
-      'diets': ['VEGETARIAN'],
-    });
+    final profile = ChildProfile.fromJson({'id': 12, 'displayName': 'Léa'});
 
     expect(profile.id, 12);
     expect(profile.displayName, 'Léa');
     expect(profile.isChild, isTrue);
-    expect(profile.allergies, {'arachide', 'lait'});
-    expect(profile.diets, {'VEGETARIAN'});
   });
 
-  test('share payload round-trips allergies and diets', () {
-    final snapshot = ChildProfileShareSnapshot(
-      displayName: 'Léa',
-      allergies: ['lait', 'arachide'],
-      diets: ['VEGAN', 'KOSHER'],
+  test('share payload carries allergies and diets', () {
+    final parsed = ChildProfile.tryParseSharePayload(
+      sharePayload({
+        'displayName': 'Léa',
+        'allergies': ['arachide', 'lait'],
+        'diets': ['KOSHER', 'VEGAN'],
+      }),
     );
-
-    final payload = snapshot.toPayload();
-    final parsed = ChildProfile.tryParseSharePayload(payload);
 
     expect(parsed, isNotNull);
     expect(parsed!.displayName, 'Léa');
@@ -35,21 +33,16 @@ void main() {
     expect(parsed.diets, ['KOSHER', 'VEGAN']);
   });
 
-  test('share payload uses the expected prefix and canonical JSON order', () {
-    final payload = ChildProfileShareSnapshot(
-      displayName: 'Noah',
-      allergies: ['z', 'a'],
-      diets: ['b', 'a'],
-    ).toPayload();
+  test('share payload without a name falls back to a default', () {
+    final parsed = ChildProfile.tryParseSharePayload(
+      sharePayload({
+        'allergies': ['lait'],
+      }),
+    );
 
-    expect(payload, startsWith('MYAM_PROFILE_V1:'));
-
-    final encoded = payload.substring('MYAM_PROFILE_V1:'.length);
-    final decoded = jsonDecode(utf8.decode(base64Url.decode(encoded)));
-
-    expect(decoded['displayName'], 'Noah');
-    expect(decoded['allergies'], ['a', 'z']);
-    expect(decoded['diets'], ['a', 'b']);
+    expect(parsed, isNotNull);
+    expect(parsed!.displayName, 'Profil enfant');
+    expect(parsed.diets, isEmpty);
   });
 
   test('malformed share payload is ignored', () {

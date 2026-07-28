@@ -201,8 +201,6 @@ class DishAnalysisServiceTest {
                 "",
                 "",
                 "",
-                "",
-                "",
                 "test-key",
                 "gemini-test",
                 "DEMO_KEY",
