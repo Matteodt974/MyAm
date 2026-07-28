@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../../shared/widgets/animated_bottom_nav.dart';
 
 import '../../child_profiles/presentation/child_profile_selector.dart';
+import '../../child_profiles/data/child_profile.dart';
 import '../../profile_allergies/presentation/profile_screen.dart';
 
 import '../../scan_barcode/presentation/product_result_sheet.dart';
@@ -154,7 +155,12 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           );
         }
       } else {
-        await _showRawSheet(value);
+        final sharedProfile = ChildProfile.tryParseSharePayload(value);
+        if (sharedProfile != null) {
+          await _showSharedProfileSheet(sharedProfile);
+        } else {
+          await _showRawSheet(value);
+        }
       }
     } finally {
       if (mounted) {
@@ -191,6 +197,70 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _showSharedProfileSheet(ChildProfileShareSnapshot profile) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.child_care),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        profile.displayName,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Allergies',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _buildChipWrap(
+                  profile.allergies,
+                  emptyLabel: 'Aucune allergie enregistrée.',
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Régimes',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _buildChipWrap(
+                  profile.diets,
+                  emptyLabel: 'Aucun régime enregistré.',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChipWrap(List<String> items, {required String emptyLabel}) {
+    if (items.isEmpty) {
+      return Text(emptyLabel);
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [for (final item in items) Chip(label: Text(item))],
     );
   }
 

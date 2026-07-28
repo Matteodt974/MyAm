@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../data/child_profile.dart';
+import '../../profile_allergies/data/allergy_local_store.dart';
+import '../../profile_allergies/data/diet_local_store.dart';
 import 'child_profile_controller.dart';
 
 class ChildProfileManagementSection extends ConsumerWidget {
@@ -51,6 +54,12 @@ class ChildProfileManagementSection extends ConsumerWidget {
                       ? Wrap(
                           children: [
                             IconButton(
+                              tooltip: 'Afficher le code QR',
+                              icon: const Icon(Icons.qr_code_2),
+                              onPressed: () =>
+                                  _showQrCode(context, ref, profile),
+                            ),
+                            IconButton(
                               tooltip: 'Modifier le nom',
                               icon: const Icon(Icons.edit_outlined),
                               onPressed: () =>
@@ -81,6 +90,57 @@ class ChildProfileManagementSection extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _showQrCode(
+    BuildContext context,
+    WidgetRef ref,
+    ChildProfile profile,
+  ) async {
+    final allergies = await ref
+        .read(allergyLocalStoreProvider)
+        .load(profile.id, isParent: false);
+    final diets = await ref
+        .read(dietLocalStoreProvider)
+        .load(profile.id, isParent: false);
+
+    final payload = ChildProfileShareSnapshot(
+      displayName: profile.displayName,
+      allergies: allergies,
+      diets: diets,
+    ).toPayload();
+
+    if (!context.mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('QR de ${profile.displayName}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 240,
+                height: 240,
+                child: QrImageView(data: payload, version: QrVersions.auto),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Un autre utilisateur MyAM peut scanner ce code pour voir les allergies et régimes du profil.',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
     );
   }
 
