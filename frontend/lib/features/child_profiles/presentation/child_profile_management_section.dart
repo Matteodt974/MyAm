@@ -56,7 +56,8 @@ class ChildProfileManagementSection extends ConsumerWidget {
                             IconButton(
                               tooltip: 'Afficher le code QR',
                               icon: const Icon(Icons.qr_code_2),
-                              onPressed: () => _showQrCode(context, ref, profile),
+                              onPressed: () =>
+                                  _showQrCode(context, ref, profile),
                             ),
                             IconButton(
                               tooltip: 'Modifier le nom',
@@ -97,20 +98,20 @@ class ChildProfileManagementSection extends ConsumerWidget {
     WidgetRef ref,
     ChildProfile profile,
   ) async {
-    final allergies = await ref.read(allergyLocalStoreProvider).load(
-      profile.id,
-      isParent: false,
-    );
-    final diets = await ref.read(dietLocalStoreProvider).load(
-      profile.id,
-      isParent: false,
-    );
+    final allergies = await ref
+        .read(allergyLocalStoreProvider)
+        .load(profile.id, isParent: false);
+    final diets = await ref
+        .read(dietLocalStoreProvider)
+        .load(profile.id, isParent: false);
 
     final payload = ChildProfileShareSnapshot(
       displayName: profile.displayName,
       allergies: allergies,
       diets: diets,
     ).toPayload();
+
+    if (!context.mounted) return;
 
     await showDialog<void>(
       context: context,
@@ -123,10 +124,7 @@ class ChildProfileManagementSection extends ConsumerWidget {
               SizedBox(
                 width: 240,
                 height: 240,
-                child: QrImageView(
-                  data: payload,
-                  version: QrVersions.auto,
-                ),
+                child: QrImageView(data: payload, version: QrVersions.auto),
               ),
               const SizedBox(height: 16),
               Text(
