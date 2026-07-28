@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../child_profiles/presentation/child_profile_controller.dart';
 import '../../history/data/scan_history_entry.dart';
 import '../../history/data/scan_history_repository.dart';
 import '../data/intolerance_analysis_repository.dart';
@@ -27,12 +28,22 @@ class AnalysisController extends AsyncNotifier<IntoleranceReport?> {
   }
 
   Future<List<FoodItemPayload>> _recentFoodItems() async {
+    final profileId = _activeProfileId();
+    if (profileId == null) return const <FoodItemPayload>[];
+
     final since = DateTime.now().subtract(foodJournalWindow);
     final entries = await ref
         .read(scanHistoryRepositoryProvider)
-        .load(filter: HistoryFilter(from: since));
+        .load(profileId, filter: HistoryFilter(from: since));
 
     return entries.map(_toFoodItem).toList();
+  }
+
+  int? _activeProfileId() {
+    final profileState = ref.read(childProfileControllerProvider).value;
+    final parentId = ref.read(guardianIdProvider);
+    if (parentId == null) return null;
+    return profileState?.activeProfileId ?? parentId;
   }
 
   static FoodItemPayload _toFoodItem(ScanHistoryEntry entry) {

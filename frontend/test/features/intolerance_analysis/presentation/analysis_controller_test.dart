@@ -2,6 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:myam/core/errors/api_exception.dart';
+import 'package:myam/features/child_profiles/data/active_profile_store.dart';
+import 'package:myam/features/child_profiles/data/child_profile_repository.dart';
+import 'package:myam/features/child_profiles/presentation/child_profile_controller.dart';
 import 'package:myam/features/history/data/scan_history_entry.dart';
 import 'package:myam/features/history/data/scan_history_repository.dart';
 import 'package:myam/features/intolerance_analysis/data/intolerance_analysis_repository.dart';
@@ -13,9 +16,18 @@ class MockScanHistoryRepository extends Mock implements ScanHistoryRepository {}
 class MockIntoleranceAnalysisRepository extends Mock
     implements IntoleranceAnalysisRepository {}
 
+class MockChildProfileRepository extends Mock
+    implements ChildProfileRepository {}
+
+class MockActiveProfileStore extends Mock implements ActiveProfileStore {}
+
 void main() {
   late MockScanHistoryRepository mockHistory;
   late MockIntoleranceAnalysisRepository mockAnalysis;
+  late MockChildProfileRepository mockChildProfileRepository;
+  late MockActiveProfileStore mockActiveProfileStore;
+
+  const profileId = 1;
 
   setUpAll(() {
     registerFallbackValue(const HistoryFilter());
@@ -25,6 +37,14 @@ void main() {
   setUp(() {
     mockHistory = MockScanHistoryRepository();
     mockAnalysis = MockIntoleranceAnalysisRepository();
+    mockChildProfileRepository = MockChildProfileRepository();
+    mockActiveProfileStore = MockActiveProfileStore();
+
+    when(
+      () => mockChildProfileRepository.list(profileId),
+    ).thenAnswer((_) async => []);
+    when(() => mockActiveProfileStore.load()).thenAnswer((_) async => null);
+    when(() => mockActiveProfileStore.save(any())).thenAnswer((_) async {});
   });
 
   ProviderContainer createContainer() {
@@ -32,6 +52,11 @@ void main() {
       overrides: [
         scanHistoryRepositoryProvider.overrideWithValue(mockHistory),
         intoleranceAnalysisRepositoryProvider.overrideWithValue(mockAnalysis),
+        guardianIdProvider.overrideWithValue(profileId),
+        childProfileRepositoryProvider.overrideWithValue(
+          mockChildProfileRepository,
+        ),
+        activeProfileStoreProvider.overrideWithValue(mockActiveProfileStore),
       ],
     );
   }
@@ -65,13 +90,17 @@ void main() {
         addTearDown(container.dispose);
 
         expect(await container.read(analysisControllerProvider.future), isNull);
-        verifyNever(() => mockHistory.load(filter: any(named: 'filter')));
+        verifyNever(
+          () => mockHistory.load(any(), filter: any(named: 'filter')),
+        );
       },
     );
 
     test('runAnalysis envoie le journal alimentaire des 72 h', () async {
       final scannedAt = DateTime.now().subtract(const Duration(hours: 2));
-      when(() => mockHistory.load(filter: any(named: 'filter'))).thenAnswer(
+      when(
+        () => mockHistory.load(any(), filter: any(named: 'filter')),
+      ).thenAnswer(
         (_) async => [
           historyEntry(
             title: 'Lait 2%',
@@ -102,7 +131,10 @@ void main() {
       // La fenetre demandee a l'historique couvre bien 72 h.
       final filter =
           verify(
-                () => mockHistory.load(filter: captureAny(named: 'filter')),
+                () => mockHistory.load(
+                  any(),
+                  filter: captureAny(named: 'filter'),
+                ),
               ).captured.single
               as HistoryFilter;
       final expectedFrom = DateTime.now().subtract(foodJournalWindow);
@@ -122,7 +154,7 @@ void main() {
         medicalDisclaimer: 'Ces suggestions ne remplacent pas un avis médical.',
       );
       when(
-        () => mockHistory.load(filter: any(named: 'filter')),
+        () => mockHistory.load(any(), filter: any(named: 'filter')),
       ).thenAnswer((_) async => []);
       when(
         () => mockAnalysis.analyze(any()),
@@ -141,7 +173,7 @@ void main() {
 
     test('une erreur API place le contrôleur en AsyncError', () async {
       when(
-        () => mockHistory.load(filter: any(named: 'filter')),
+        () => mockHistory.load(any(), filter: any(named: 'filter')),
       ).thenAnswer((_) async => []);
       when(
         () => mockAnalysis.analyze(any()),
@@ -158,7 +190,7 @@ void main() {
 
     test('reset efface le rapport affiché', () async {
       when(
-        () => mockHistory.load(filter: any(named: 'filter')),
+        () => mockHistory.load(any(), filter: any(named: 'filter')),
       ).thenAnswer((_) async => []);
       when(() => mockAnalysis.analyze(any())).thenAnswer((_) async => okReport);
 
