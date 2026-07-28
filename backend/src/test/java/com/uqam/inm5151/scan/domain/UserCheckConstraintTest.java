@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
+import java.util.TimeZone;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -14,6 +15,13 @@ import org.springframework.test.context.DynamicPropertySource;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class UserCheckConstraintTest {
+  static {
+    // pgjdbc envoie TimeZone.getDefault() dans le paquet de demarrage de la connexion. Sur une
+    // machine dont l'OS utilise un alias tz (ex. "Canada/Eastern"), Postgres le rejette si son
+    // tzdata reduite ne le connait pas : on fixe donc explicitement un fuseau standard IANA.
+    TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+  }
+
   @Autowired private EntityManager entityManager;
 
   @DynamicPropertySource
