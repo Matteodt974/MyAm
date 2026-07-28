@@ -80,10 +80,14 @@ public class IntoleranceAnalysisService {
     }
 
     // Defense en profondeur : le frontend filtre deja sur 72 h, on re-filtre cote serveur.
+    // Les deux bornes sont verifiees : un aliment date dans le futur n'a pas plus de sens
+    // qu'un aliment trop ancien.
     Instant foodWindowStart = now.minus(FOOD_WINDOW);
     List<FoodItem> recentFood =
         request.foodItems().stream()
-            .filter(item -> !item.consumedAt().isBefore(foodWindowStart))
+            .filter(
+                item ->
+                    !item.consumedAt().isBefore(foodWindowStart) && !item.consumedAt().isAfter(now))
             .toList();
 
     return ruleEngine.analyze(episodes, recentFood);

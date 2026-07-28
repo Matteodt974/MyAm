@@ -124,4 +124,28 @@ class IntoleranceAnalysisServiceTest {
     assertThat(response.status())
         .isEqualTo(IntoleranceAnalysisResponse.STATUS_INSUFFICIENT_FOOD_DATA);
   }
+
+  @Test
+  void analyze_futureDatedFoodItems_filteredOutServerSide() {
+    givenUser();
+    byte[] encrypted = "enc-4".getBytes(StandardCharsets.UTF_8);
+    when(journalRepository.findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(eq(7L), any()))
+        .thenReturn(
+            List.of(new DigestiveJournalEntry(7L, NOW.minusSeconds(3600), encrypted, null)));
+    when(encryption.decrypt(encrypted)).thenReturn("4");
+
+    IntoleranceAnalysisResponse response =
+        service()
+            .analyze(
+                EMAIL,
+                new IntoleranceAnalysisRequest(
+                    List.of(
+                        food("Lait", NOW.minusSeconds(2 * 3600)),
+                        food("Pain du futur", NOW.plusSeconds(3600)),
+                        food("Pomme du futur", NOW.plusSeconds(7200)))),
+                NOW);
+
+    assertThat(response.status())
+        .isEqualTo(IntoleranceAnalysisResponse.STATUS_INSUFFICIENT_FOOD_DATA);
+  }
 }
