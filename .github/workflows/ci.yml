@@ -146,11 +146,19 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Cache Semgrep venv
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: /tmp/semgrep-venv
+          key: semgrep-venv-${{ runner.os }}
+
       - name: Install Semgrep
         run: |
-          python3 -m venv /tmp/semgrep-venv
-          /tmp/semgrep-venv/bin/pip install --upgrade pip
-          /tmp/semgrep-venv/bin/pip install semgrep
+          if [ ! -x /tmp/semgrep-venv/bin/semgrep ]; then
+            python3 -m venv /tmp/semgrep-venv
+            /tmp/semgrep-venv/bin/pip install --upgrade pip
+            /tmp/semgrep-venv/bin/pip install semgrep
+          fi
 
       - name: Run Semgrep
         run: /tmp/semgrep-venv/bin/semgrep --config=auto --severity ERROR --severity WARNING --sarif --output=semgrep.sarif backend/src/ || true
