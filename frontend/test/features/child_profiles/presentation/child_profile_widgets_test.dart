@@ -57,12 +57,10 @@ void main() {
 
   Future<FakeChildProfileController> pumpWidget(
     WidgetTester tester,
-    Widget childWidget,
-    {
+    Widget childWidget, {
     AllergyLocalStore? allergyLocalStore,
     DietLocalStore? dietLocalStore,
-  }
-  ) async {
+  }) async {
     final controller = FakeChildProfileController(initialState);
     await tester.pumpWidget(
       ProviderScope(

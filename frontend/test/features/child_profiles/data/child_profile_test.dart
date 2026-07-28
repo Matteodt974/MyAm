@@ -54,9 +54,6 @@ void main() {
 
   test('malformed share payload is ignored', () {
     expect(ChildProfile.tryParseSharePayload('not-a-payload'), isNull);
-    expect(
-      ChildProfile.tryParseSharePayload('MYAM_PROFILE_V1:@@@'),
-      isNull,
-    );
+    expect(ChildProfile.tryParseSharePayload('MYAM_PROFILE_V1:@@@'), isNull);
   });
 }

@@ -36,16 +36,17 @@ class ChildProfile {
     return value.map((item) => item.toString()).toSet();
   }
 
-  String toSharePayload() {
-    return _sharePrefix + base64Url.encode(utf8.encode(_shareJson()));
-  }
-
-  String _shareJson() {
-    return jsonEncode({
+  static String _encodeSharePayload({
+    required String displayName,
+    required List<String> allergies,
+    required List<String> diets,
+  }) {
+    final json = jsonEncode({
       'displayName': displayName,
-      'allergies': allergies.toList()..sort(),
-      'diets': diets.toList()..sort(),
+      'allergies': [...allergies]..sort(),
+      'diets': [...diets]..sort(),
     });
+    return _sharePrefix + base64Url.encode(utf8.encode(json));
   }
 
   static ChildProfileShareSnapshot? tryParseSharePayload(String value) {
@@ -86,11 +87,10 @@ class ChildProfileShareSnapshot {
   final List<String> diets;
 
   String toPayload() {
-    return ChildProfile._sharePrefix +
-        base64Url.encode(utf8.encode(jsonEncode({
-          'displayName': displayName,
-          'allergies': [...allergies]..sort(),
-          'diets': [...diets]..sort(),
-        })));
+    return ChildProfile._encodeSharePayload(
+      displayName: displayName,
+      allergies: allergies,
+      diets: diets,
+    );
   }
 }
