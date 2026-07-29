@@ -34,6 +34,32 @@ void main() {
     expect(tapped, 0);
   });
 
+  testWidgets('AnimatedBottomNav does not overflow on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(1.4)),
+        child: MaterialApp(
+          home: Scaffold(
+            bottomNavigationBar: AnimatedBottomNav(
+              currentIndex: 1,
+              onTap: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Historique'), findsOneWidget);
+  });
+
   test('DishResult parse la reponse UC7', () {
     final result = DishResult.fromJson({
       'filename': 'plat.jpg',
