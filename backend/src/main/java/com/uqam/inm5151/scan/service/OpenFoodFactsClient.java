@@ -2,6 +2,7 @@ package com.uqam.inm5151.scan.service;
 
 import com.uqam.inm5151.scan.config.AppProperties;
 import com.uqam.inm5151.scan.dto.BarcodeResponse;
+import com.uqam.inm5151.scan.dto.Nutriments;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class OpenFoodFactsClient {
 
   private static final String FIELDS =
-      "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags,ingredients_analysis_tags,label_tags";
+      "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags,ingredients_analysis_tags,label_tags,nutriments";
 
   private final RestClient client;
   private final String userAgent;
@@ -114,7 +115,39 @@ public class OpenFoodFactsClient {
         dietCompatible,
         risk,
         matched,
-        undetermined);
+        undetermined,
+        toNutriments(p.get("nutriments")));
+  }
+
+  /**
+   * Extrait les valeurs pour 100 g de l'objet {@code nutriments} d'Open Food Facts. Les cles {@code
+   * *_100g} sont celles normalisees par OFF, toutes les fiches ne les renseignent pas.
+   */
+  private static Nutriments toNutriments(Object raw) {
+    if (!(raw instanceof Map<?, ?> map)) {
+      return new Nutriments(null, null, null, null, null, null);
+    }
+    return new Nutriments(
+        toDouble(map.get("energy-kcal_100g")),
+        toDouble(map.get("fat_100g")),
+        toDouble(map.get("carbohydrates_100g")),
+        toDouble(map.get("proteins_100g")),
+        toDouble(map.get("salt_100g")),
+        toDouble(map.get("fiber_100g")));
+  }
+
+  private static Double toDouble(Object o) {
+    if (o instanceof Number n) {
+      return n.doubleValue();
+    }
+    if (o instanceof String s && !s.isBlank()) {
+      try {
+        return Double.valueOf(s.trim());
+      } catch (NumberFormatException ignored) {
+        return null;
+      }
+    }
+    return null;
   }
 
   private static Integer toInt(Object o) {

@@ -19,4 +19,5 @@ public record BarcodeResponse(
     @JsonProperty("diet_compatible") boolean dietCompatible,
     @JsonProperty("risk_level") String riskLevel,
     @JsonProperty("matched_allergens") List<String> matchedAllergens,
-    @JsonProperty("undetermined_allergens") List<String> undeterminedAllergens) {}
+    @JsonProperty("undetermined_allergens") List<String> undeterminedAllergens,
+    Nutriments nutriments) {}

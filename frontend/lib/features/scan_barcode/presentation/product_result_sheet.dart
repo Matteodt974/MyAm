@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/nutriscore_badge.dart';
+import 'nutrition_table.dart';
+import '../../../shared/widgets/diet_banner.dart';
 import '../../../shared/widgets/risk_level_style.dart';
 
 import '../../profile_allergies/data/trusted_item_local_store.dart';
@@ -130,9 +132,10 @@ class ProductResultSheet extends ConsumerWidget {
               const SizedBox(height: 12),
             ],
             if (selectedDiets.isNotEmpty) ...[
-              _DietBanner(
+              DietBanner(
+                subject: 'Ce produit',
                 isCompatible: product.dietCompatible,
-                warningDietLabel: _dietLabel(product.dietWarningDiet),
+                warningDietLabel: dietLabel(product.dietWarningDiet),
               ),
               const SizedBox(height: 12),
             ],
@@ -141,6 +144,18 @@ class ProductResultSheet extends ConsumerWidget {
               value: product.novaGroup?.toString() ?? '—',
             ),
             const SizedBox(height: 12),
+            if (product.nutriments != null) ...[
+              NutritionTable(nutriments: product.nutriments!),
+              const SizedBox(height: 12),
+            ] else ...[
+              Text(
+                'Données nutritionnelles non disponibles pour ce produit.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             _TagsBlock(
               title: 'Allergènes',
               tags: product.allergensTags,
@@ -202,81 +217,6 @@ class _TrustedBadge extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-class _DietBanner extends StatelessWidget {
-  const _DietBanner({required this.isCompatible, this.warningDietLabel});
-
-  final bool isCompatible;
-
-  final String? warningDietLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bg = isCompatible
-        ? theme.colorScheme.secondaryContainer
-        : theme.colorScheme.errorContainer;
-    final fg = isCompatible
-        ? theme.colorScheme.onSecondaryContainer
-        : theme.colorScheme.onErrorContainer;
-    final text = isCompatible
-        ? 'Ce produit respecte vos régimes sélectionnés.'
-        : warningDietLabel == null
-        ? 'Ce produit ne respecte pas vos régimes sélectionnés.'
-        : 'Ce produit ne respecte pas votre régime ${warningDietLabel!.toLowerCase()}.';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isCompatible ? Icons.verified_rounded : Icons.no_food_rounded,
-            color: fg,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: fg,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-String? _dietLabel(String? value) {
-  if (value == null) return null;
-  switch (value) {
-    case 'VEGAN':
-      return 'vegan';
-    case 'VEGETARIAN':
-      return 'végétarien';
-    case 'PESCETARIAN':
-      return 'pescétarien';
-    case 'HALAL':
-      return 'halal';
-    case 'KOSHER':
-      return 'kasher';
-    case 'GLUTEN_FREE':
-      return 'sans gluten';
-    case 'LACTOSE_FREE':
-      return 'sans lactose';
-    case 'OMNIVORE':
-      return 'omnivore';
-    default:
-      return value.toLowerCase();
   }
 }
 
