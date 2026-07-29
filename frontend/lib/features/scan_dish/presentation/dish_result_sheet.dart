@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../profile_allergies/data/trusted_item_local_store.dart';
+import '../../../shared/widgets/diet_banner.dart';
 import '../../profile_allergies/presentation/allergy_controller.dart';
 import '../../profile_allergies/presentation/diet_controller.dart';
 import '../../profile_allergies/presentation/trusted_item_controller.dart';
@@ -33,7 +34,7 @@ class DishResultSheet extends ConsumerWidget {
         ((result.confidence ?? 0) > 0 && (result.confidence ?? 0) < 0.70);
 
     final dietState = result.dietStatus;
-    final dietWarningLabel = _dietLabel(result.dietWarningDiet);
+    final dietWarningLabel = dietLabel(result.dietWarningDiet);
     final safeToTrust =
         !unrecognized && flagged.isEmpty && dietState != 'incompatible';
 
@@ -105,12 +106,11 @@ class DishResultSheet extends ConsumerWidget {
                   ),
                 ),
               ],
-              if (lowConfidence) ...[
+              if (lowConfidence && !unrecognized) ...[
                 const SizedBox(height: 12),
-                _Notice(
-                  icon: Icons.warning_amber_rounded,
-                  text:
-                      'La photo ne permet pas une identification fiable. Reprenez une photo si nécessaire.',
+                _ConfidenceBanner(
+                  confidence: result.confidence ?? 0,
+                  enrichedByFoodData: result.foodDataMatches.isNotEmpty,
                 ),
               ],
               if (isTrusted) ...[
@@ -207,13 +207,14 @@ class DishResultSheet extends ConsumerWidget {
               if (diets.isNotEmpty) ...[
                 const SizedBox(height: 16),
                 if (dietState == 'unknown')
-                  _DietUncertainBanner(
+                  DietUncertainBanner(
                     text: lowConfidence || unrecognized
                         ? 'Analyse photo insuffisante pour conclure sur vos régimes.'
                         : 'Le plat a été identifié, mais le verdict de régime reste incertain.',
                   )
                 else
-                  _DietBanner(
+                  DietBanner(
+                    subject: 'Ce plat',
                     isCompatible: dietState == 'compatible',
                     warningDietLabel: dietWarningLabel,
                   ),
@@ -288,28 +289,43 @@ class _TrustedBadge extends StatelessWidget {
   }
 }
 
-class _DietBanner extends StatelessWidget {
-  const _DietBanner({required this.isCompatible, this.warningDietLabel});
+/// UC-08 : avertissement gradue quand l'identification visuelle est incertaine.
+///
+/// Les paliers viennent du cahier des charges : jaune entre 50 et 70 %, orange
+/// entre 30 et 50 %, rouge en dessous de 30 %.
+class _ConfidenceBanner extends StatelessWidget {
+  const _ConfidenceBanner({
+    required this.confidence,
+    required this.enrichedByFoodData,
+  });
 
-  final bool isCompatible;
+  final double confidence;
 
-  final String? warningDietLabel;
+  final bool enrichedByFoodData;
+
+  static const Color _yellow = Color(0xFFFFF3CD);
+  static const Color _onYellow = Color(0xFF6B5300);
+  static const Color _orange = Color(0xFFFFE0B2);
+  static const Color _onOrange = Color(0xFF7A3E00);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bg = isCompatible
-        ? theme.colorScheme.secondaryContainer
-        : theme.colorScheme.errorContainer;
-    final fg = isCompatible
-        ? theme.colorScheme.onSecondaryContainer
-        : theme.colorScheme.onErrorContainer;
-    final warningText = warningDietLabel == null
-        ? 'Ce plat ne respecte pas vos régimes sélectionnés.'
-        : 'Ce plat ne respecte pas votre régime ${warningDietLabel!.toLowerCase()}.';
-    final text = isCompatible
-        ? 'Ce plat respecte vos régimes sélectionnés.'
-        : warningText;
+    final percent = (confidence * 100).round();
+
+    final (Color bg, Color fg, String severity) = switch (percent) {
+      >= 50 => (_yellow, _onYellow, 'Identification peu fiable'),
+      >= 30 => (_orange, _onOrange, 'Identification très incertaine'),
+      _ => (
+        theme.colorScheme.errorContainer,
+        theme.colorScheme.onErrorContainer,
+        'Identification non fiable',
+      ),
+    };
+
+    final source = enrichedByFoodData
+        ? 'analyse visuelle (IA), enrichie par FoodData Central'
+        : 'analyse visuelle (IA)';
 
     return Container(
       width: double.infinity,
@@ -318,19 +334,39 @@ class _DietBanner extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            isCompatible ? Icons.verified_rounded : Icons.no_food_rounded,
-            color: fg,
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: fg),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '$severity : $percent % de confiance',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: fg,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: fg,
-                fontWeight: FontWeight.w600,
+          const SizedBox(height: 6),
+          Text(
+            'Source : $source. Vérifiez les ingrédients avant de vous fier '
+            'à ce résultat.',
+            style: theme.textTheme.bodySmall?.copyWith(color: fg),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => _showRestaurantPrompt(context),
+              icon: Icon(Icons.restaurant_menu_rounded, size: 18, color: fg),
+              label: Text(
+                'Demander confirmation au restaurant',
+                style: TextStyle(color: fg, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -338,88 +374,25 @@ class _DietBanner extends StatelessWidget {
       ),
     );
   }
-}
 
-class _DietUncertainBanner extends StatelessWidget {
-  const _DietUncertainBanner({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.tertiaryContainer,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.info_outline,
-            color: theme.colorScheme.onTertiaryContainer,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onTertiaryContainer,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+  void _showRestaurantPrompt(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirmer auprès du restaurant'),
+        content: const Text(
+          "L'analyse visuelle ne peut pas détecter les ingrédients cachés "
+          "(sauces, marinades) ni les contaminations croisées en cuisine.\n\n"
+          "Demandez au personnel la liste complète des ingrédients du plat "
+          "et signalez vos allergies avant de commander.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Compris'),
           ),
         ],
       ),
-    );
-  }
-}
-
-String? _dietLabel(String? value) {
-  if (value == null) return null;
-  switch (value) {
-    case 'VEGAN':
-      return 'vegan';
-    case 'VEGETARIAN':
-      return 'végétarien';
-    case 'PESCETARIAN':
-      return 'pescétarien';
-    case 'HALAL':
-      return 'halal';
-    case 'KOSHER':
-      return 'kasher';
-    case 'GLUTEN_FREE':
-      return 'sans gluten';
-    case 'LACTOSE_FREE':
-      return 'sans lactose';
-    case 'OMNIVORE':
-      return 'omnivore';
-    default:
-      return value.toLowerCase();
-  }
-}
-
-class _Notice extends StatelessWidget {
-  const _Notice({required this.icon, required this.text});
-
-  final IconData icon;
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
-        const SizedBox(width: 8),
-        Expanded(child: Text(text, style: theme.textTheme.bodySmall)),
-      ],
     );
   }
 }
