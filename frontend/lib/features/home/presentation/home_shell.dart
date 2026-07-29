@@ -8,6 +8,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../../shared/widgets/animated_bottom_nav.dart';
 
+import '../../child_profiles/presentation/child_profile_selector.dart';
+import '../../child_profiles/data/child_profile.dart';
+import '../../child_profiles/data/profile_share_repository.dart';
 import '../../profile_allergies/presentation/profile_screen.dart';
 
 import '../../scan_barcode/presentation/product_result_sheet.dart';
@@ -36,6 +39,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   bool _permissionPermanentlyDenied = false;
 
+  static const _pictureTabIndex = 0;
+
   static const _scanTabIndex = 1;
 
   static const _labelTabIndex = 2;
@@ -54,6 +59,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   int _selectedIndex = _scanTabIndex;
 
   bool _isProcessing = false;
+
+  bool get _isAnalysisTab =>
+      _selectedIndex == _pictureTabIndex ||
+      _selectedIndex == _scanTabIndex ||
+      _selectedIndex == _labelTabIndex;
 
   @override
   void initState() {
@@ -145,8 +155,17 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             builder: (_) => ProductResultSheet(product: product),
           );
         }
+      } else if (value.startsWith(kShareTokenPrefix)) {
+        // UC-28 : code revocable, le profil est recupere aupres du backend.
+        await _redeemSharedProfile(value.substring(kShareTokenPrefix.length));
       } else {
-        await _showRawSheet(value);
+        // Ancien format de partage, conserve pour les codes deja distribues.
+        final sharedProfile = ChildProfile.tryParseSharePayload(value);
+        if (sharedProfile != null) {
+          await _showSharedProfileSheet(sharedProfile);
+        } else {
+          await _showRawSheet(value);
+        }
       }
     } finally {
       if (mounted) {
@@ -154,6 +173,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
         setState(() => _isProcessing = false);
       }
+    }
+  }
+
+  /// Echange un jeton de code QR contre le profil enfant partage (UC-28).
+  Future<void> _redeemSharedProfile(String token) async {
+    try {
+      final snapshot = await ref
+          .read(profileShareRepositoryProvider)
+          .redeem(token);
+
+      if (!mounted) return;
+      await _showSharedProfileSheet(snapshot);
+    } catch (error) {
+      if (!mounted) return;
+      // 4b du UC : code expire ou revoque.
+      _showSnack('$error');
     }
   }
 
@@ -183,6 +218,67 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _showSharedProfileSheet(ChildProfileShareSnapshot profile) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.child_care),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        profile.displayName,
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Allergies',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _buildChipWrap(
+                  profile.allergies,
+                  emptyLabel: 'Aucune allergie enregistrée.',
+                ),
+                const SizedBox(height: 16),
+                Text('Régimes', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 8),
+                _buildChipWrap(
+                  profile.diets,
+                  emptyLabel: 'Aucun régime enregistré.',
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChipWrap(List<String> items, {required String emptyLabel}) {
+    if (items.isEmpty) {
+      return Text(emptyLabel);
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [for (final item in items) Chip(label: Text(item))],
     );
   }
 
@@ -221,6 +317,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               ),
             ),
           Positioned.fill(child: _buildOverlay()),
+          if (_isAnalysisTab)
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(child: ChildProfileSelector()),
+            ),
           if (isLoading)
             const Positioned.fill(
               child: ColoredBox(
@@ -244,7 +347,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
   Widget _buildOverlay() {
     switch (_selectedIndex) {
-      case 0:
+      case _pictureTabIndex:
         return const PictureTab();
 
       case _labelTabIndex:
@@ -356,7 +459,7 @@ class _ScanReticle extends StatelessWidget {
             child: Align(
               alignment: Alignment.topCenter,
               child: Padding(
-                padding: const EdgeInsets.only(top: 24),
+                padding: const EdgeInsets.only(top: 88),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,

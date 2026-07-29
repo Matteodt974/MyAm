@@ -67,7 +67,7 @@ update_record() {
 		"${cf_api}/zones/${CF_ZONE_ID}/dns_records/${record_id}")
 
 	if echo "$update_result" | grep -q '"success":true'; then
-		log "SUCCESS: Updated $record_name → $current_ip"
+		log "SUCCESS: Updated $record_name -> $current_ip"
 	else
 		log "ERROR: Cloudflare update failed for $record_name: $update_result"
 		return 1
@@ -83,7 +83,7 @@ log "Current public IP: $CURRENT_IP"
 if [[ -f "$STATE_FILE" ]]; then
 	LAST_IP=$(cat "$STATE_FILE")
 	if [[ "$CURRENT_IP" == "$LAST_IP" ]]; then
-		log "IP unchanged ($CURRENT_IP) — skipping update"
+		log "IP unchanged ($CURRENT_IP) - skipping update"
 		exit 0
 	fi
 fi

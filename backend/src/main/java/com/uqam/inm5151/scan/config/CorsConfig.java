@@ -9,10 +9,9 @@ public class CorsConfig implements WebMvcConfigurer {
 
   @Override
   public void addCorsMappings(CorsRegistry registry) {
-    // TODO: restreindre les origines avant le deploiement en prod
     registry
         .addMapping("/**")
-        .allowedOriginPatterns("*")
+        .allowedOriginPatterns("http://localhost:*", "http://10.0.2.2:*")
         .allowedMethods("*")
         .allowedHeaders("*")
         .allowCredentials(true);

@@ -104,16 +104,18 @@ public class DishAnalysisService {
     }
     List<String> ingredientNames =
         ingredients.stream().map(DishResponse.ProbableIngredient::name).toList();
+    List<String> dietIngredients =
+        analysis.ingredientsEn().isEmpty() ? ingredientNames : analysis.ingredientsEn();
     boolean dietCompatible =
         hasUserDiets
             && dietMatch.isUserDietsCompatible(
-                userDiets, List.of(dishName, fdcQueryName), ingredientNames);
+                userDiets, List.of(dishName, fdcQueryName), dietIngredients);
     Diet warningDiet =
         dietCompatible
             ? null
             : hasUserDiets
                 ? dietMatch.firstIncompatibleDiet(
-                    userDiets, List.of(dishName, fdcQueryName), ingredientNames)
+                    userDiets, List.of(dishName, fdcQueryName), dietIngredients)
                 : null;
     String status = confidence < LOW_CONFIDENCE_THRESHOLD ? "low_confidence" : "identified";
     String message =

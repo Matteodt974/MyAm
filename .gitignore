@@ -141,7 +141,7 @@ build/
 .python-version
 .ipynb_checkpoints/
 
-# Alembic — keep migrations, ignore local sqlite
+# Alembic - keep migrations, ignore local sqlite
 *.sqlite
 *.sqlite3
 *.db

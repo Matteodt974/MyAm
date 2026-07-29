@@ -34,6 +34,32 @@ void main() {
     expect(tapped, 0);
   });
 
+  testWidgets('AnimatedBottomNav does not overflow on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MediaQuery(
+        data: const MediaQueryData(textScaler: TextScaler.linear(1.4)),
+        child: MaterialApp(
+          home: Scaffold(
+            bottomNavigationBar: AnimatedBottomNav(
+              currentIndex: 1,
+              onTap: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Historique'), findsOneWidget);
+  });
+
   test('DishResult parse la reponse UC7', () {
     final result = DishResult.fromJson({
       'filename': 'plat.jpg',
@@ -104,7 +130,61 @@ void main() {
 
     expect(find.text('Identification incertaine'), findsOneWidget);
     expect(find.text('Confiance : 42 %'), findsOneWidget);
-    expect(find.textContaining('identification fiable'), findsOneWidget);
+    // UC-08 : palier orange (30-50 %), avec pourcentage et source.
+    expect(
+      find.text('Identification très incertaine : 42 % de confiance'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('analyse visuelle (IA)'), findsOneWidget);
+    expect(find.text('Demander confirmation au restaurant'), findsOneWidget);
+  });
+
+  testWidgets('DishResultSheet gradue l\'avertissement selon la confiance', (
+    tester,
+  ) async {
+    // Palier jaune : 50-70 %.
+    await _pumpSheet(
+      tester,
+      const DishResult(
+        status: 'low_confidence',
+        dishName: 'Ragout',
+        confidence: 0.62,
+      ),
+    );
+    expect(
+      find.text('Identification peu fiable : 62 % de confiance'),
+      findsOneWidget,
+    );
+
+    // Palier rouge : moins de 30 %.
+    await _pumpSheet(
+      tester,
+      const DishResult(
+        status: 'low_confidence',
+        dishName: 'Ragout',
+        confidence: 0.12,
+      ),
+    );
+    expect(
+      find.text('Identification non fiable : 12 % de confiance'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('DishResultSheet masque l\'avertissement en haute confiance', (
+    tester,
+  ) async {
+    await _pumpSheet(
+      tester,
+      const DishResult(
+        status: 'identified',
+        dishName: 'Salade grecque',
+        confidence: 0.91,
+      ),
+    );
+
+    expect(find.textContaining('de confiance'), findsNothing);
+    expect(find.text('Demander confirmation au restaurant'), findsNothing);
   });
 
   testWidgets('DishResultSheet affiche un état non reconnu', (tester) async {

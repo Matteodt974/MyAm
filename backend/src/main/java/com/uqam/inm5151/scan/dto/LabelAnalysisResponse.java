@@ -11,4 +11,7 @@ public record LabelAnalysisResponse(
     @JsonProperty("translated_text") String translatedText,
     List<LabelIngredient> ingredients,
     @JsonProperty("risk_level") String riskLevel,
-    @JsonProperty("matched_allergens") List<String> matchedAllergens) {}
+    @JsonProperty("matched_allergens") List<String> matchedAllergens,
+    @JsonProperty("diet_compatible") boolean dietCompatible,
+    @JsonProperty("diet_status") String dietStatus,
+    @JsonProperty("diet_warning_diet") String dietWarningDiet) {}

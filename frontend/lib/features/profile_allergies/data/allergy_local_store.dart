@@ -11,10 +11,13 @@ class AllergyLocalStore {
 
   final FlutterSecureStorage _storage;
 
-  static const String _key = 'user_allergies';
+  static const String _legacyKey = 'user_allergies';
 
-  Future<List<String>> load() async {
-    final raw = await _storage.read(key: _key);
+  Future<List<String>> load(int profileId, {required bool isParent}) async {
+    var raw = await _storage.read(key: _key(profileId));
+    if ((raw == null || raw.isEmpty) && isParent) {
+      raw = await _storage.read(key: _legacyKey);
+    }
 
     if (raw == null || raw.isEmpty) return <String>[];
 
@@ -26,9 +29,11 @@ class AllergyLocalStore {
     return <String>[];
   }
 
-  Future<void> save(List<String> allergies) async {
-    await _storage.write(key: _key, value: jsonEncode(allergies));
+  Future<void> save(int profileId, List<String> allergies) async {
+    await _storage.write(key: _key(profileId), value: jsonEncode(allergies));
   }
+
+  String _key(int profileId) => 'user_allergies_$profileId';
 }
 
 final allergyLocalStoreProvider = Provider<AllergyLocalStore>((ref) {

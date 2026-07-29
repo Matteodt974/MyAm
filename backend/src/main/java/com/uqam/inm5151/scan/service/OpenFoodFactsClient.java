@@ -2,10 +2,14 @@ package com.uqam.inm5151.scan.service;
 
 import com.uqam.inm5151.scan.config.AppProperties;
 import com.uqam.inm5151.scan.dto.BarcodeResponse;
+import com.uqam.inm5151.scan.dto.Nutriments;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -25,12 +29,26 @@ import org.springframework.web.server.ResponseStatusException;
  *   <li>reponse HTTP != 200 -> 502 "Reponse OFF invalide"
  *   <li>corps avec status != 1 -> 404 "Produit introuvable"
  * </ul>
+ *
+ * <p>Les erreurs transitoires (timeout reseau, 429, 502, 503, 504) sont reessayees jusqu'a {@link
+ * #MAX_ATTEMPTS} fois avec un backoff exponentiel avant de remonter le 502. Les autres reponses
+ * d'erreur (400, 404, ...) sont definitives et remontent immediatement.
  */
 @Service
 public class OpenFoodFactsClient {
 
+  private static final Logger log = LoggerFactory.getLogger(OpenFoodFactsClient.class);
+
   private static final String FIELDS =
-      "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags,ingredients_analysis_tags,label_tags";
+      "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags,ingredients_analysis_tags,label_tags,nutriments";
+
+  /** Tentative initiale + 2 reessais. */
+  private static final int MAX_ATTEMPTS = 3;
+
+  private static final Duration INITIAL_BACKOFF = Duration.ofMillis(300);
+
+  /** Codes ou OFF nous demande (ou nous laisse esperer) de revenir plus tard. */
+  private static final Set<Integer> RETRYABLE_STATUS = Set.of(429, 502, 503, 504);
 
   private final RestClient client;
   private final String userAgent;
@@ -52,25 +70,7 @@ public class OpenFoodFactsClient {
   public BarcodeResponse fetchBarcode(
       String ean, List<String> userAllergies, String language, List<Diet> userDiets) {
     String lc = language == null || language.isBlank() ? "en" : language;
-    ResponseEntity<Map> resp;
-    try {
-      resp =
-          client
-              .get()
-              .uri(
-                  uri ->
-                      uri.path("/api/v2/product/{ean}.json")
-                          .queryParam("fields", FIELDS)
-                          .queryParam("lc", lc)
-                          .build(ean))
-              .header("User-Agent", userAgent)
-              .retrieve()
-              .toEntity(Map.class);
-    } catch (ResourceAccessException e) {
-      throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Open Food Facts injoignable");
-    } catch (RestClientResponseException e) {
-      throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Réponse OFF invalide");
-    }
+    ResponseEntity<Map> resp = getProduct(ean, lc);
 
     if (resp.getStatusCode().value() != 200) {
       throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Réponse OFF invalide");
@@ -114,7 +114,101 @@ public class OpenFoodFactsClient {
         dietCompatible,
         risk,
         matched,
-        undetermined);
+        undetermined,
+        toNutriments(p.get("nutriments")));
+  }
+
+  /**
+   * Appelle OFF en reessayant les erreurs transitoires. Le dernier echec est traduit en 502 avec le
+   * meme message que lorsqu'aucun reessai n'etait fait.
+   */
+  @SuppressWarnings("rawtypes")
+  private ResponseEntity<Map> getProduct(String ean, String lc) {
+    Duration backoff = INITIAL_BACKOFF;
+
+    for (int attempt = 1; ; attempt++) {
+      try {
+        return client
+            .get()
+            .uri(
+                uri ->
+                    uri.path("/api/v2/product/{ean}.json")
+                        .queryParam("fields", FIELDS)
+                        .queryParam("lc", lc)
+                        .build(ean))
+            .header("User-Agent", userAgent)
+            .retrieve()
+            .toEntity(Map.class);
+      } catch (ResourceAccessException | RestClientResponseException e) {
+        if (attempt >= MAX_ATTEMPTS || !isTransient(e)) {
+          throw asBadGateway(e);
+        }
+        log.warn(
+            "Appel OFF en echec (tentative {}/{}), nouvel essai dans {} ms : {}",
+            attempt,
+            MAX_ATTEMPTS,
+            backoff.toMillis(),
+            e.getMessage());
+        sleep(backoff);
+        backoff = backoff.multipliedBy(2);
+      }
+    }
+  }
+
+  /** Timeout / coupure reseau, ou code HTTP que OFF renvoie sous charge. */
+  private static boolean isTransient(RuntimeException e) {
+    if (e instanceof RestClientResponseException http) {
+      return RETRYABLE_STATUS.contains(http.getStatusCode().value());
+    }
+    return true;
+  }
+
+  private static ResponseStatusException asBadGateway(RuntimeException e) {
+    String reason =
+        e instanceof RestClientResponseException
+            ? "Réponse OFF invalide"
+            : "Open Food Facts injoignable";
+    return new ResponseStatusException(HttpStatus.BAD_GATEWAY, reason);
+  }
+
+  private static void sleep(Duration backoff) {
+    try {
+      Thread.sleep(backoff.toMillis());
+    } catch (InterruptedException interrupted) {
+      Thread.currentThread().interrupt();
+      throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Open Food Facts injoignable");
+    }
+  }
+
+  /**
+   * Extrait les valeurs pour 100 g de l'objet {@code nutriments} d'Open Food Facts. Les cles {@code
+   * *_100g} sont celles normalisees par OFF, toutes les fiches ne les renseignent pas.
+   */
+  private static Nutriments toNutriments(Object raw) {
+    if (!(raw instanceof Map<?, ?> map)) {
+      return new Nutriments(null, null, null, null, null, null);
+    }
+    return new Nutriments(
+        toDouble(map.get("energy-kcal_100g")),
+        toDouble(map.get("fat_100g")),
+        toDouble(map.get("carbohydrates_100g")),
+        toDouble(map.get("proteins_100g")),
+        toDouble(map.get("salt_100g")),
+        toDouble(map.get("fiber_100g")));
+  }
+
+  private static Double toDouble(Object o) {
+    if (o instanceof Number n) {
+      return n.doubleValue();
+    }
+    if (o instanceof String s && !s.isBlank()) {
+      try {
+        return Double.valueOf(s.trim());
+      } catch (NumberFormatException ignored) {
+        return null;
+      }
+    }
+    return null;
   }
 
   private static Integer toInt(Object o) {

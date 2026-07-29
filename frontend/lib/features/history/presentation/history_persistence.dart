@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../child_profiles/presentation/child_profile_controller.dart';
 import '../data/scan_history_entry.dart';
 import '../data/scan_history_repository.dart';
 import 'history_controller.dart';
@@ -20,8 +21,13 @@ extension ScanHistoryPersistence on Ref {
   Future<void> _persistScanToHistory(
     FutureOr<ScanHistoryEntry> Function() buildEntry,
   ) async {
+    final profileState = read(childProfileControllerProvider).value;
+    final parentId = read(guardianIdProvider);
+    if (parentId == null) return;
+    final profileId = profileState?.activeProfileId ?? parentId;
+
     final entry = await buildEntry();
-    await read(scanHistoryRepositoryProvider).save(entry);
+    await read(scanHistoryRepositoryProvider).save(entry, profileId);
     if (mounted) invalidate(historyControllerProvider);
   }
 }

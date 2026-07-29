@@ -1,3 +1,5 @@
+import 'nutriments.dart';
+
 class ProductResult {
   const ProductResult({
     required this.ean,
@@ -15,6 +17,7 @@ class ProductResult {
     this.riskLevel,
     this.matchedAllergens = const <String>[],
     this.undeterminedAllergens = const <String>[],
+    this.nutriments,
   });
 
   final String ean;
@@ -47,6 +50,8 @@ class ProductResult {
 
   final List<String> undeterminedAllergens;
 
+  final Nutriments? nutriments;
+
   factory ProductResult.fromJson(Map<String, dynamic> json) {
     return ProductResult(
       ean: json['ean'] as String,
@@ -64,6 +69,7 @@ class ProductResult {
       riskLevel: json['risk_level']?.toString(),
       matchedAllergens: _toStringList(json['matched_allergens']),
       undeterminedAllergens: _toStringList(json['undetermined_allergens']),
+      nutriments: Nutriments.fromJson(json['nutriments']),
     );
   }
 
@@ -84,6 +90,7 @@ class ProductResult {
       'risk_level': riskLevel,
       'matched_allergens': matchedAllergens,
       'undetermined_allergens': undeterminedAllergens,
+      'nutriments': nutriments?.toJson(),
     };
   }
 

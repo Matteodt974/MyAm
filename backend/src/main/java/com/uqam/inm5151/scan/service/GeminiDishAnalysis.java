@@ -7,7 +7,17 @@ public record GeminiDishAnalysis(
     String enName,
     Double confidence,
     List<DishCandidate> candidates,
-    List<ProbableIngredient> ingredients) {
+    List<ProbableIngredient> ingredients,
+    List<String> ingredientsEn) {
+  public GeminiDishAnalysis(
+      String dishName,
+      String enName,
+      Double confidence,
+      List<DishCandidate> candidates,
+      List<ProbableIngredient> ingredients) {
+    this(dishName, enName, confidence, candidates, ingredients, List.of());
+  }
+
   public record DishCandidate(String name, Double confidence) {}
 
   public record ProbableIngredient(String name, Double confidence) {}

@@ -147,7 +147,7 @@ public class DietMatchService {
       List<String> tokens = TagMatcher.tokenize(value);
       for (int i = 0; i < tokens.size(); i++) {
         for (String blocker : blockers) {
-          if (tokens.get(i).equals(blocker) && !isNegated(tokens, i)) {
+          if (TagMatcher.canonical(tokens.get(i)).equals(blocker) && !isNegated(tokens, i)) {
             return false;
           }
         }

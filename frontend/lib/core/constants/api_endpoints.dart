@@ -4,7 +4,7 @@ class ApiEndpoints {
   static const String _backendHost = String.fromEnvironment('BACKEND_HOST');
   static const String _backendPort = String.fromEnvironment(
     'BACKEND_PORT',
-    defaultValue: '8080',
+    defaultValue: '8545',
   );
   static const String _backendScheme = String.fromEnvironment(
     'BACKEND_SCHEME',
@@ -17,7 +17,7 @@ class ApiEndpoints {
     if (_backendHost.isNotEmpty) {
       return _normalize('$_backendScheme://$_backendHost:$_backendPort');
     }
-    return 'http://10.0.2.2:8080';
+    return 'http://10.0.2.2:8545';
   }
 
   static String _normalize(String value) {
@@ -29,9 +29,26 @@ class ApiEndpoints {
 
   static const String health = '/health';
 
+  static const String authRegister = '/auth/register';
+  static const String authLogin = '/auth/login';
+  static const String authRefresh = '/auth/refresh';
+  static const String authLogout = '/auth/logout';
+
   static const String scanBarcode = '/v1/scan/barcode';
 
   static const String scanDish = '/v1/scan/dish';
 
   static const String scanLabel = '/v1/label/translate-and-structure';
+
+  static const String digestiveJournal = '/v1/digestive-journal';
+
+  static const String analysisIntolerance = '/v1/analysis/intolerance';
+  static String childProfiles(int guardianId) =>
+      '/v1/parents/$guardianId/children';
+
+  static String childProfile(int guardianId, int childId) =>
+      '/v1/parents/$guardianId/children/$childId';
+
+  static String profilePreferences(int profileId) =>
+      '/v1/profiles/$profileId/preferences';
 }

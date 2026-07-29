@@ -8,7 +8,6 @@ import com.uqam.inm5151.scan.service.DishAnalysisService;
 import com.uqam.inm5151.scan.service.OpenFoodFactsClient;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,7 +40,7 @@ public class ScanController {
   @PostMapping("/barcode")
   public BarcodeResponse scanBarcode(@RequestBody BarcodeRequest req) {
     return openFoodFacts.fetchBarcode(
-        req.ean(), req.allergies(), req.language(), parseDiets(req.diets()));
+        req.ean(), req.allergies(), req.language(), Diet.parseAll(req.diets()));
   }
 
   /**
@@ -60,7 +59,7 @@ public class ScanController {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le fichier doit être une image");
     }
 
-    return dishAnalysis.analyze(image, language, parseDiets(splitDiets(diets)));
+    return dishAnalysis.analyze(image, language, Diet.parseAll(splitDiets(diets)));
   }
 
   private static List<String> splitDiets(String diets) {
@@ -68,12 +67,5 @@ public class ScanController {
       return List.of();
     }
     return Arrays.stream(diets.split(",")).map(String::trim).filter(s -> !s.isBlank()).toList();
-  }
-
-  private static List<Diet> parseDiets(List<String> diets) {
-    if (diets == null || diets.isEmpty()) {
-      return List.of();
-    }
-    return diets.stream().map(Diet::tryParse).flatMap(Optional::stream).toList();
   }
 }

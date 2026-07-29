@@ -85,7 +85,7 @@ class _HistoryFilterSheetContentState
               trailing: TextButton(
                 onPressed: () => _pickDate(isFrom: true),
                 child: Text(
-                  _from != null ? DateFormat.yMd('fr_CA').format(_from!) : '—',
+                  _from != null ? DateFormat.yMd('fr_CA').format(_from!) : '-',
                 ),
               ),
             ),
@@ -95,7 +95,7 @@ class _HistoryFilterSheetContentState
               trailing: TextButton(
                 onPressed: () => _pickDate(isFrom: false),
                 child: Text(
-                  _to != null ? DateFormat.yMd('fr_CA').format(_to!) : '—',
+                  _to != null ? DateFormat.yMd('fr_CA').format(_to!) : '-',
                 ),
               ),
             ),

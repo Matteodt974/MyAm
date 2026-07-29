@@ -7,12 +7,19 @@ public record AppProperties(
     String appName,
     String environment,
     String databaseUrl,
-    String ocrUrl,
-    String translateUrl,
     String offBaseUrl,
     String obfBaseUrl,
     String offUserAgent,
     String geminiApiKey,
     String geminiModel,
     String fdcApiKey,
-    String fdcBaseUrl) {}
+    String fdcBaseUrl,
+    String encryptionMasterKey) {
+
+  public AppProperties {
+    if (encryptionMasterKey == null || encryptionMasterKey.isBlank()) {
+      throw new IllegalStateException(
+          "scan.encryption-master-key doit être configuré (variable ENCRYPTION_MASTER_KEY)");
+    }
+  }
+}

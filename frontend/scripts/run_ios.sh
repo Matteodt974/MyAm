@@ -42,7 +42,7 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 BACKEND_SCHEME="${BACKEND_SCHEME:-http}"
-BACKEND_PORT="${BACKEND_PORT:-8080}"
+BACKEND_PORT="${BACKEND_PORT:-8545}"
 if [[ -n "${API_BASE_URL:-}" ]]; then
     API_URL="$API_BASE_URL"
 elif [[ -n "${BACKEND_URL:-}" ]]; then
@@ -50,7 +50,7 @@ elif [[ -n "${BACKEND_URL:-}" ]]; then
 elif [[ -n "${BACKEND_HOST:-}" ]]; then
     API_URL="${BACKEND_SCHEME}://${BACKEND_HOST}:${BACKEND_PORT}"
 else
-    API_URL="http://${LAN_IP}:8080"
+    API_URL="http://${LAN_IP}:${BACKEND_PORT}"
 fi
 
 MODE="--release"
@@ -75,7 +75,7 @@ while [[ $i -le $# ]]; do
     i=$((i + 1))
 done
 
-echo "Backend → $API_URL"
+echo "Backend -> $API_URL"
 
 DEVICE_ARGS=()
 [[ -n "$DEVICE_ID" ]] && DEVICE_ARGS=("-d" "$DEVICE_ID")
@@ -85,5 +85,5 @@ cd "$REPO_ROOT"
     $MODE \
     --dart-define=API_BASE_URL="$API_URL" \
     --dart-define=BACKEND_URL="$API_URL" \
-    "${DEVICE_ARGS[@]}" \
-    "${EXTRA_ARGS[@]}"
+    ${DEVICE_ARGS[@]+"${DEVICE_ARGS[@]}"} \
+    ${EXTRA_ARGS[@]+"${EXTRA_ARGS[@]}"}

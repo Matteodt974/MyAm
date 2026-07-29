@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/languages.dart';
+import '../../../core/providers/auth_state_provider.dart';
+import '../../child_profiles/presentation/child_profile_controller.dart';
+import '../../child_profiles/presentation/child_profile_management_section.dart';
 import 'allergy_controller.dart';
+import 'allergy_severity_chip.dart';
+import 'allergy_severity_controller.dart';
 import 'diet_controller.dart';
 import 'language_controller.dart';
 import 'trusted_item_controller.dart';
@@ -41,12 +47,108 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _controller.clear();
   }
 
+  Future<void> _logout() async {
+    await ref.read(authStateProvider.notifier).logout();
+    if (mounted) {
+      context.go('/login');
+    }
+  }
+
+  Widget _buildAccountSection(
+    AsyncValue<AuthState> authState,
+    ThemeData theme,
+  ) {
+    final user = authState.maybeWhen(
+      data: (state) => state is AuthStateAuthenticated ? state.user : null,
+      orElse: () => null,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Compte',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (user != null)
+          Text(user.displayName, style: theme.textTheme.titleSmall)
+        else
+          Text('Connecté', style: theme.textTheme.titleSmall),
+        const SizedBox(height: 8),
+        Text(
+          user?.email ?? '',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton(onPressed: _logout, child: const Text('Se déconnecter')),
+      ],
+    );
+  }
+
+  /// Acces au journal digestif (UC-23) et a l'analyse des tendances (UC-26).
+  Widget _buildDigestiveHealthSection(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Santé digestive',
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Données de santé : leur enregistrement est soumis à votre '
+          'consentement explicite.',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.outline,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          margin: EdgeInsets.zero,
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.event_note),
+                title: const Text('Journal digestif'),
+                subtitle: const Text('Noter un épisode (échelle de Bristol)'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/digestive-journal'),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.insights),
+                title: const Text('Analyse des tendances'),
+                subtitle: const Text(
+                  'Croiser le journal avec vos scans des 72 dernières heures',
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/analysis'),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final allergiesAsync = ref.watch(allergyControllerProvider);
     final dietsAsync = ref.watch(dietControllerProvider);
     final languageAsync = ref.watch(languageControllerProvider);
     final trustedItemsAsync = ref.watch(trustedItemControllerProvider);
+    final activeProfile = ref
+        .watch(childProfileControllerProvider)
+        .value
+        ?.activeProfile;
+    final authState = ref.watch(authStateProvider);
 
     final theme = Theme.of(context);
 
@@ -56,7 +158,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         child: ListView(
           children: [
             Text('Profil', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 4),
+            const SizedBox(height: 16),
+            _buildAccountSection(authState, theme),
+            const SizedBox(height: 24),
+            _buildDigestiveHealthSection(theme),
+            const ChildProfileManagementSection(),
+            const SizedBox(height: 24),
             Text(
               'Langue de sortie',
               style: theme.textTheme.titleMedium?.copyWith(
@@ -91,17 +198,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ],
                 onChanged: (code) {
                   if (code == null) return;
-                  ref.read(languageControllerProvider.notifier).setLanguage(code);
+                  ref
+                      .read(languageControllerProvider.notifier)
+                      .setLanguage(code);
                 },
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              'Mes allergies',
+              activeProfile?.isChild == true
+                  ? 'Allergies de ${activeProfile!.displayName}'
+                  : 'Mes allergies',
               style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.primary,
               ),
             ),
+            if (activeProfile?.isChild == true) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Les nouvelles allergies seront Sévères par défaut (UC-13).',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.outline,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             Row(
               children: [
@@ -132,17 +252,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     style: theme.textTheme.bodyMedium,
                   );
                 }
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final allergy in allergies)
-                      Chip(
-                        label: Text(allergy),
-                        onDeleted: () => ref
-                            .read(allergyControllerProvider.notifier)
-                            .remove(allergy),
+                    Text(
+                      'Touchez un allergène pour ajuster sa sévérité.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final allergy in allergies)
+                          AllergySeverityChip(
+                            allergy: allergy,
+                            onDeleted: () async {
+                              await ref
+                                  .read(allergyControllerProvider.notifier)
+                                  .remove(allergy);
+                              await ref
+                                  .read(
+                                    allergySeverityControllerProvider.notifier,
+                                  )
+                                  .forget(allergy);
+                            },
+                          ),
+                      ],
+                    ),
                   ],
                 );
               },

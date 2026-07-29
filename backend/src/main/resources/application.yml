@@ -1,8 +1,6 @@
 # Configuration de l'API. Toutes les valeurs surchageables par variable d'environnement
-# (memes cles que le backend FastAPI). Voir .env.example.
 server:
-  # Render injecte PORT ; en local on retombe sur 8080 (le FastAPI occupe deja 8000).
-  port: ${PORT:8080}
+  port: ${PORT:8545}
   # Pour X-Forwarded-Proto (nginx/Cloudflare TLS termination).
   forward-headers-strategy: framework
 
@@ -16,30 +14,34 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 12MB
+  datasource:
+    url: ${DATABASE_URL:}
+    username: ${DATABASE_USER:scan}
+    password: ${DATABASE_PASSWORD:scan}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
 
-# Swagger UI auto-genere expose sur /docs, comme le /docs de FastAPI.
 springdoc:
   swagger-ui:
     path: /docs
 
-# Mappe sur la classe AppProperties (@ConfigurationProperties(prefix = "scan")).
+jwt:
+  secret: ${JWT_SECRET:}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:900000} # 15 minutes
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 jours
+
 scan:
   app-name: INM5151 Scan API
   environment: ${ENVIRONMENT:development}
-  # Optionnel tant que la BD n'est pas branchee.
   database-url: ${DATABASE_URL:}
-  # Services internes (noms de service docker-compose).
-  ocr-url: ${OCR_URL:http://ocr:8001}
-  translate-url: ${TRANSLATE_URL:http://libretranslate:5000}
   # APIs externes open data.
   off-base-url: ${OFF_BASE_URL:https://world.openfoodfacts.org}
   obf-base-url: ${OBF_BASE_URL:https://world.openbeautyfacts.org}
-  # Open Food Facts EXIGE un User-Agent identifiable (sinon throttling/ban de l'IP).
-  # Valeur quotee : elle contient ": " qui casserait sinon le parsing YAML.
   off-user-agent: '${OFF_USER_AGENT:INM5151-ScanApp/0.1 (contact: ton-email@uqam.ca)}'
-  # UC7 - analyse d'image Gemini. La cle reste cote serveur.
   gemini-api-key: ${GEMINI_API_KEY:}
   gemini-model: ${GEMINI_MODEL:gemini-3.5-flash}
-  # FoodData Central enrichit les resultats probables ; DEMO_KEY suffit au dev.
   fdc-api-key: ${FDC_API_KEY:DEMO_KEY}
   fdc-base-url: ${FDC_BASE_URL:https://api.nal.usda.gov}
+  encryption-master-key: ${ENCRYPTION_MASTER_KEY:}
