@@ -7,6 +7,8 @@ import '../../../core/providers/auth_state_provider.dart';
 import '../../child_profiles/presentation/child_profile_controller.dart';
 import '../../child_profiles/presentation/child_profile_management_section.dart';
 import 'allergy_controller.dart';
+import 'allergy_severity_chip.dart';
+import 'allergy_severity_controller.dart';
 import 'diet_controller.dart';
 import 'language_controller.dart';
 import 'trusted_item_controller.dart';
@@ -250,17 +252,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     style: theme.textTheme.bodyMedium,
                   );
                 }
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    for (final allergy in allergies)
-                      Chip(
-                        label: Text(allergy),
-                        onDeleted: () => ref
-                            .read(allergyControllerProvider.notifier)
-                            .remove(allergy),
+                    Text(
+                      'Touchez un allergène pour ajuster sa sévérité.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final allergy in allergies)
+                          AllergySeverityChip(
+                            allergy: allergy,
+                            onDeleted: () async {
+                              await ref
+                                  .read(allergyControllerProvider.notifier)
+                                  .remove(allergy);
+                              await ref
+                                  .read(
+                                    allergySeverityControllerProvider.notifier,
+                                  )
+                                  .forget(allergy);
+                            },
+                          ),
+                      ],
+                    ),
                   ],
                 );
               },
