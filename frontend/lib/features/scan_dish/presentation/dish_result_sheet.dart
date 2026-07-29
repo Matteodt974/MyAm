@@ -221,7 +221,7 @@ class DishResultSheet extends ConsumerWidget {
               ],
               const SizedBox(height: 8),
               Text(
-                'Fichier : ${result.filename ?? '—'} '
+                'Fichier : ${result.filename ?? '-'} '
                 '(${(result.sizeBytes / 1024).toStringAsFixed(0)} Ko)',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.outline,

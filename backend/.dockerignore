@@ -4,7 +4,7 @@
 # Artefacts de build Maven (recompilés dans le stage build)
 target/
 
-# Secrets — ne JAMAIS embarquer dans l'image
+# Secrets - ne JAMAIS embarquer dans l'image
 .env
 .env.*
 !.env.example

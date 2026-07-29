@@ -65,7 +65,7 @@ class HistoryListTile extends StatelessWidget {
       case 'SAFE':
         return (colors.background, colors.foreground, 'Sûr', null);
       default:
-        return (colors.background, colors.foreground, '—', null);
+        return (colors.background, colors.foreground, '-', null);
     }
   }
 }

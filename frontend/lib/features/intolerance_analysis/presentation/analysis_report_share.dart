@@ -14,7 +14,7 @@ String buildIntoleranceReportText(
 }) {
   final dateFormat = DateFormat.yMd('fr_CA').add_Hm();
   final buffer = StringBuffer()
-    ..writeln('Analyse des tendances digestives — MyAm')
+    ..writeln('Analyse des tendances digestives - MyAm')
     ..writeln('Généré le ${dateFormat.format(generatedAt)}')
     ..writeln();
 
@@ -58,7 +58,7 @@ String buildIntoleranceReportText(
     for (final irritant in report.possibleIrritants) {
       final allergens = irritant.allergens.isEmpty
           ? ''
-          : ' — allergènes : ${irritant.allergens.join(', ')}';
+          : ' - allergènes : ${irritant.allergens.join(', ')}';
       buffer.writeln(
         '  • ${irritant.foodName} '
         '(${irritant.episodesPreceded} épisode(s) précédé(s))$allergens',
@@ -83,5 +83,5 @@ Future<void> shareIntoleranceReport(
     generatedAt: generatedAt ?? DateTime.now(),
   );
 
-  return Share.share(text, subject: 'Analyse des tendances digestives — MyAm');
+  return Share.share(text, subject: 'Analyse des tendances digestives - MyAm');
 }

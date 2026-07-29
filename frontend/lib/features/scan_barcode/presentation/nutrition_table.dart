@@ -163,7 +163,7 @@ class _NutrientTile extends StatelessWidget {
             const SizedBox(width: 8),
           ],
           Text(
-            value == null ? '—' : '${_format(value)} ${row.unit}',
+            value == null ? '-' : '${_format(value)} ${row.unit}',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: value == null ? theme.colorScheme.outline : color,
               fontWeight: high || good ? FontWeight.w700 : FontWeight.w500,

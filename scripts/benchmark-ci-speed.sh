@@ -124,7 +124,7 @@ trivy_gain_pct=$(pct "$trivy_gain" "$trivy_cold_avg")
 
 # ── Rapport ────────────────────────────────────────────
 cat > "$REPORT_FILE" <<EOF
-# Benchmark CI local — $(date '+%d/%m/%Y %H:%M')
+# Benchmark CI local - $(date '+%d/%m/%Y %H:%M')
 
 ## Résumé
 

@@ -141,7 +141,7 @@ class ProductResultSheet extends ConsumerWidget {
             ],
             _InfoRow(
               label: 'Groupe NOVA',
-              value: product.novaGroup?.toString() ?? '—',
+              value: product.novaGroup?.toString() ?? '-',
             ),
             const SizedBox(height: 12),
             if (product.nutriments != null) ...[

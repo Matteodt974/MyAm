@@ -95,14 +95,14 @@ done
 if [[ -n "$ADB" && -n "$DEVICE_ADDR" ]]; then
     if [[ "$DEVICE_ADDR" != *:* ]]; then
         echo "Error: -d requires IP:PORT for wireless ADB (e.g. 192.168.1.42:38765)." >&2
-        echo "Find the port under Developer options → Wireless debugging." >&2
+        echo "Find the port under Developer options -> Wireless debugging." >&2
         exit 1
     fi
     echo "Connecting to $DEVICE_ADDR via ADB..."
     "$ADB" connect "$DEVICE_ADDR" || true
 fi
 
-echo "Backend → $API_URL"
+echo "Backend -> $API_URL"
 
 DEVICE_ARGS=()
 [[ -n "$DEVICE_ADDR" ]] && DEVICE_ARGS=("-d" "$DEVICE_ADDR")

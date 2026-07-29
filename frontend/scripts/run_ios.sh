@@ -75,7 +75,7 @@ while [[ $i -le $# ]]; do
     i=$((i + 1))
 done
 
-echo "Backend → $API_URL"
+echo "Backend -> $API_URL"
 
 DEVICE_ARGS=()
 [[ -n "$DEVICE_ID" ]] && DEVICE_ARGS=("-d" "$DEVICE_ID")
