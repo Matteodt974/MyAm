@@ -48,4 +48,7 @@ class ApiEndpoints {
 
   static String childProfile(int guardianId, int childId) =>
       '/v1/parents/$guardianId/children/$childId';
+
+  static String profilePreferences(int profileId) =>
+      '/v1/profiles/$profileId/preferences';
 }

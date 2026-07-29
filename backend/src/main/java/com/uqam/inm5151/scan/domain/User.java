@@ -80,4 +80,16 @@ public class User {
     this.createdAt = Instant.now();
     this.updatedAt = Instant.now();
   }
+
+  /**
+   * Remplace integralement les preferences du profil. Les collections existantes sont mutees plutot
+   * que reaffectees pour que Hibernate suive les suppressions dans les tables de jointure.
+   */
+  public void replacePreferences(Set<String> allergies, Set<String> diets) {
+    this.allergies.clear();
+    this.allergies.addAll(allergies);
+    this.diets.clear();
+    this.diets.addAll(diets);
+    this.updatedAt = Instant.now();
+  }
 }

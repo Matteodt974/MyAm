@@ -6,6 +6,8 @@ import 'package:myam/features/child_profiles/data/child_profile.dart';
 import 'package:myam/features/child_profiles/data/child_profile_repository.dart';
 import 'package:myam/features/child_profiles/presentation/child_profile_controller.dart';
 import 'package:myam/features/profile_allergies/data/allergy_local_store.dart';
+import 'package:myam/features/profile_allergies/data/diet_local_store.dart';
+import 'package:myam/features/profile_allergies/data/profile_preferences_repository.dart';
 import 'package:myam/features/profile_allergies/presentation/allergy_controller.dart';
 
 class MockChildProfileRepository extends Mock
@@ -15,6 +17,35 @@ class MockActiveProfileStore extends Mock implements ActiveProfileStore {}
 
 class MockAllergyLocalStore extends Mock implements AllergyLocalStore {}
 
+class MockDietLocalStore extends Mock implements DietLocalStore {}
+
+/// Un profil absent de [_preferences] simule un serveur injoignable : le
+/// controleur doit alors retomber sur le stockage local.
+class _StubPreferencesRepository implements ProfilePreferencesRepository {
+  _StubPreferencesRepository(Map<int, ProfilePreferences> preferences)
+    : _preferences = Map.of(preferences);
+
+  final Map<int, ProfilePreferences> _preferences;
+
+  @override
+  Future<ProfilePreferences> fetch(int profileId) async {
+    final preferences = _preferences[profileId];
+    if (preferences == null) throw Exception('hors ligne');
+    return preferences;
+  }
+
+  @override
+  Future<ProfilePreferences> replace(
+    int profileId, {
+    required List<String> allergies,
+    required List<String> diets,
+  }) async {
+    final updated = ProfilePreferences(allergies: allergies, diets: diets);
+    _preferences[profileId] = updated;
+    return updated;
+  }
+}
+
 void main() {
   const guardianId = 7;
   const lea = ChildProfile(id: 12, displayName: 'Léa', isChild: true);
@@ -22,9 +53,11 @@ void main() {
 
   late MockChildProfileRepository repository;
   late MockActiveProfileStore activeProfileStore;
+  late MockDietLocalStore dietLocalStore;
 
   ProviderContainer createContainer({
     MockAllergyLocalStore? allergyLocalStore,
+    Map<int, ProfilePreferences> remotePreferences = const {},
   }) {
     return ProviderContainer(
       overrides: [
@@ -33,6 +66,12 @@ void main() {
         activeProfileStoreProvider.overrideWithValue(activeProfileStore),
         if (allergyLocalStore != null)
           allergyLocalStoreProvider.overrideWithValue(allergyLocalStore),
+        // La synchronisation lit toujours les deux listes du profil.
+        dietLocalStoreProvider.overrideWithValue(dietLocalStore),
+        // Sans cette surcharge, l'hydratation du profil taperait le vrai reseau.
+        profilePreferencesRepositoryProvider.overrideWithValue(
+          _StubPreferencesRepository(remotePreferences),
+        ),
       ],
     );
   }
@@ -40,6 +79,12 @@ void main() {
   setUp(() {
     repository = MockChildProfileRepository();
     activeProfileStore = MockActiveProfileStore();
+    dietLocalStore = MockDietLocalStore();
+
+    when(
+      () => dietLocalStore.load(any(), isParent: any(named: 'isParent')),
+    ).thenAnswer((_) async => <String>[]);
+    when(() => dietLocalStore.save(any(), any())).thenAnswer((_) async {});
 
     when(() => repository.list(guardianId)).thenAnswer((_) async => [lea]);
     when(() => activeProfileStore.load()).thenAnswer((_) async => null);
@@ -163,5 +208,61 @@ void main() {
         .select(guardianId);
 
     expect(await container.read(allergyControllerProvider.future), ['lait']);
+  });
+
+  test('server preferences win over the local cache and refresh it', () async {
+    final allergyLocalStore = MockAllergyLocalStore();
+    when(
+      () => allergyLocalStore.load(guardianId, isParent: true),
+    ).thenAnswer((_) async => ['valeur périmée']);
+    when(() => allergyLocalStore.save(any(), any())).thenAnswer((_) async {});
+
+    final container = createContainer(
+      allergyLocalStore: allergyLocalStore,
+      remotePreferences: const {
+        guardianId: ProfilePreferences(allergies: ['lait'], diets: ['VEGAN']),
+      },
+    );
+    addTearDown(container.dispose);
+
+    await container.read(childProfileControllerProvider.future);
+
+    expect(await container.read(allergyControllerProvider.future), ['lait']);
+    verify(() => allergyLocalStore.save(guardianId, ['lait'])).called(1);
+  });
+
+  test('an edit survives a profile round trip', () async {
+    final allergyLocalStore = MockAllergyLocalStore();
+    when(
+      () => allergyLocalStore.load(guardianId, isParent: true),
+    ).thenAnswer((_) async => ['lait']);
+    when(
+      () => allergyLocalStore.load(lea.id, isParent: false),
+    ).thenAnswer((_) async => ['arachide']);
+    when(() => allergyLocalStore.save(any(), any())).thenAnswer((_) async {});
+
+    final container = createContainer(
+      allergyLocalStore: allergyLocalStore,
+      remotePreferences: const {
+        guardianId: ProfilePreferences(allergies: ['lait'], diets: []),
+      },
+    );
+    addTearDown(container.dispose);
+
+    await container.read(childProfileControllerProvider.future);
+    await container.read(allergyControllerProvider.future);
+
+    await container.read(allergyControllerProvider.notifier).add('œuf');
+
+    final profiles = container.read(childProfileControllerProvider.notifier);
+    await profiles.select(lea.id);
+    await container.read(allergyControllerProvider.future);
+    await profiles.select(guardianId);
+
+    // Le serveur a bien recu l'ajout : la reconstruction ne doit pas le perdre.
+    expect(await container.read(allergyControllerProvider.future), [
+      'lait',
+      'œuf',
+    ]);
   });
 }
