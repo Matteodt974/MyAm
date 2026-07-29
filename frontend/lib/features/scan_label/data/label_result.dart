@@ -14,6 +14,9 @@ abstract class LabelResult with _$LabelResult {
     @JsonKey(name: 'matched_allergens')
     @Default(<String>[])
     List<String> matchedAllergens,
+    @JsonKey(name: 'diet_compatible') @Default(false) bool dietCompatible,
+    @JsonKey(name: 'diet_status') @Default('unknown') String dietStatus,
+    @JsonKey(name: 'diet_warning_diet') String? dietWarningDiet,
   }) = _LabelResult;
 
   factory LabelResult.fromJson(Map<String, dynamic> json) =>

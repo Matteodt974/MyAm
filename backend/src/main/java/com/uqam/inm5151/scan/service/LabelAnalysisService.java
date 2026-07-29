@@ -12,17 +12,21 @@ public class LabelAnalysisService {
   private final GeminiLabelClient gemini;
   private final IngredientParser parser;
   private final AllergenCrossMatchService allergenCrossMatch;
+  private final DietMatchService dietMatch;
 
   public LabelAnalysisService(
       GeminiLabelClient gemini,
       IngredientParser parser,
-      AllergenCrossMatchService allergenCrossMatch) {
+      AllergenCrossMatchService allergenCrossMatch,
+      DietMatchService dietMatch) {
     this.gemini = gemini;
     this.parser = parser;
     this.allergenCrossMatch = allergenCrossMatch;
+    this.dietMatch = dietMatch;
   }
 
-  public LabelAnalysisResponse analyze(String text, String language, List<String> allergies) {
+  public LabelAnalysisResponse analyze(
+      String text, String language, List<String> allergies, List<Diet> userDiets) {
     if (text == null || text.isBlank()) {
       throw new IllegalArgumentException("Le texte est requis");
     }
@@ -39,12 +43,26 @@ public class LabelAnalysisService {
         allergenCrossMatch.findMatchesInIngredients(ingredientNames, safeAllergies);
     String riskLevel = matched.isEmpty() ? "SAFE" : "DANGER";
 
+    // UC-14 sur le flux etiquette : une etiquette n'expose pas de tags Open Food Facts,
+    // la compatibilite est donc deduite uniquement des ingredients extraits.
+    boolean hasUserDiets = userDiets != null && !userDiets.isEmpty();
+    boolean dietCompatible =
+        hasUserDiets && dietMatch.isUserDietsCompatible(userDiets, List.of(), ingredientNames);
+    Diet warningDiet =
+        !hasUserDiets || dietCompatible
+            ? null
+            : dietMatch.firstIncompatibleDiet(userDiets, List.of(), ingredientNames);
+    String dietStatus = !hasUserDiets ? "unknown" : dietCompatible ? "compatible" : "incompatible";
+
     return new LabelAnalysisResponse(
         result.language(),
         !result.matchesTarget(),
         result.translatedText(),
         ingredients,
         riskLevel,
-        matched);
+        matched,
+        dietCompatible,
+        dietStatus,
+        warningDiet == null ? null : warningDiet.name());
   }
 }

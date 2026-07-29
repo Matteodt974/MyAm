@@ -2,6 +2,7 @@ package com.uqam.inm5151.scan.api;
 
 import com.uqam.inm5151.scan.dto.LabelAnalysisResponse;
 import com.uqam.inm5151.scan.dto.LabelTextRequest;
+import com.uqam.inm5151.scan.service.Diet;
 import com.uqam.inm5151.scan.service.GeminiDishAnalysisException;
 import com.uqam.inm5151.scan.service.LabelAnalysisService;
 import com.uqam.inm5151.scan.service.UnsupportedLanguageException;
@@ -33,7 +34,8 @@ public class LabelController {
   @PostMapping("/translate-and-structure")
   public LabelAnalysisResponse analyzeLabel(@RequestBody @Valid LabelTextRequest request) {
     try {
-      return labelAnalysis.analyze(request.text(), request.language(), request.allergies());
+      return labelAnalysis.analyze(
+          request.text(), request.language(), request.allergies(), Diet.parseAll(request.diets()));
     } catch (IllegalArgumentException e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
     } catch (UnsupportedLanguageException | GeminiDishAnalysisException e) {

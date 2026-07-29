@@ -19,11 +19,17 @@ class LabelRepository {
     String text,
     String language,
     List<String> allergies,
+    List<String> diets,
   ) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.scanLabel,
-        data: {'text': text, 'language': language, 'allergies': allergies},
+        data: {
+          'text': text,
+          'language': language,
+          'allergies': allergies,
+          'diets': diets,
+        },
         options: Options(receiveTimeout: const Duration(seconds: 60)),
       );
 

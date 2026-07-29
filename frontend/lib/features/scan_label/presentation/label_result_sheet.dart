@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/languages.dart';
+import '../../../shared/widgets/diet_banner.dart';
+import '../../profile_allergies/presentation/diet_controller.dart';
 import '../data/label_result.dart';
 
 /// Resultat d'analyse d'etiquette affiche en bottom sheet.
@@ -14,6 +16,7 @@ class LabelResultSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final flagged = result.matchedAllergens.toSet();
+    final diets = ref.watch(dietControllerProvider).value ?? const <String>[];
 
     return DraggableScrollableSheet(
       expand: false,
@@ -79,6 +82,21 @@ class LabelResultSheet extends ConsumerWidget {
               else ...[
                 if (flagged.isNotEmpty) ...[
                   _AllergyBanner(flagged: flagged),
+                  const SizedBox(height: 12),
+                ],
+                if (diets.isNotEmpty) ...[
+                  if (result.dietStatus == 'unknown')
+                    const DietUncertainBanner(
+                      text:
+                          'Ingrédients insuffisants pour conclure sur vos '
+                          'régimes.',
+                    )
+                  else
+                    DietBanner(
+                      subject: 'Ce produit',
+                      isCompatible: result.dietStatus == 'compatible',
+                      warningDietLabel: dietLabel(result.dietWarningDiet),
+                    ),
                   const SizedBox(height: 12),
                 ],
                 Wrap(

@@ -1,5 +1,6 @@
 package com.uqam.inm5151.scan.service;
 
+import java.util.List;
 import java.util.Optional;
 
 public enum Diet {
@@ -21,5 +22,13 @@ public enum Diet {
     } catch (IllegalArgumentException e) {
       return Optional.empty();
     }
+  }
+
+  /** Parse une liste de libelles bruts en ignorant les valeurs inconnues ou vides. */
+  public static List<Diet> parseAll(List<String> values) {
+    if (values == null || values.isEmpty()) {
+      return List.of();
+    }
+    return values.stream().map(Diet::tryParse).flatMap(Optional::stream).toList();
   }
 }
