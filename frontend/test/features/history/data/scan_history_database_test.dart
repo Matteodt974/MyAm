@@ -50,6 +50,64 @@ void main() {
   }
 
   group('ScanHistoryDatabase', () {
+    test(
+      'profile migration is idempotent when column already exists',
+      () async {
+        final migrationDb = await databaseFactory.openDatabase(
+          inMemoryDatabasePath,
+          options: OpenDatabaseOptions(
+            version: 1,
+            onCreate: (db, _) async {
+              await db.execute('''
+              CREATE TABLE scan_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                profile_id INTEGER
+              )
+            ''');
+            },
+          ),
+        );
+        addTearDown(migrationDb.close);
+
+        await ScanHistoryDatabase.addProfileIdColumnIfMissing(migrationDb);
+
+        final columns = await migrationDb.rawQuery(
+          'PRAGMA table_info(scan_history)',
+        );
+        expect(
+          columns.where((column) => column['name'] == 'profile_id'),
+          hasLength(1),
+        );
+      },
+    );
+
+    test('profile migration adds the column to a genuine v1 table', () async {
+      final migrationDb = await databaseFactory.openDatabase(
+        inMemoryDatabasePath,
+        options: OpenDatabaseOptions(
+          version: 1,
+          onCreate: (db, _) async {
+            await db.execute('''
+              CREATE TABLE scan_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT
+              )
+            ''');
+          },
+        ),
+      );
+      addTearDown(migrationDb.close);
+
+      await ScanHistoryDatabase.addProfileIdColumnIfMissing(migrationDb);
+
+      final columns = await migrationDb.rawQuery(
+        'PRAGMA table_info(scan_history)',
+      );
+      expect(
+        columns.where((column) => column['name'] == 'profile_id'),
+        hasLength(1),
+      );
+    });
+
     test('insert returns the entry with an assigned id', () async {
       final entry = makeEntry(
         type: ScanType.barcode,

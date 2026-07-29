@@ -50,12 +50,12 @@ class HistoryScreen extends ConsumerWidget {
     ColorScheme colorScheme,
     TextTheme textTheme,
   ) {
-    if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     if (state.hasError) {
       return Center(child: Text('Erreur: ${state.error}'));
+    }
+
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
     }
 
     final entries = state.value ?? [];

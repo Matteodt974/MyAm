@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -56,6 +57,22 @@ class ScanHistoryDatabase {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
+      await addProfileIdColumnIfMissing(db);
+    }
+  }
+
+  /// Adds the v2 profile scope column when upgrading a genuine v1 database.
+  ///
+  /// Some development builds created [profile_id] while still recording
+  /// schema version 1. Checking the actual table makes the migration safe for
+  /// those databases and preserves their existing history.
+  @visibleForTesting
+  static Future<void> addProfileIdColumnIfMissing(Database db) async {
+    final columns = await db.rawQuery('PRAGMA table_info(scan_history)');
+    final hasProfileId = columns.any(
+      (column) => column['name'] == 'profile_id',
+    );
+    if (!hasProfileId) {
       await db.execute(
         'ALTER TABLE scan_history ADD COLUMN profile_id INTEGER',
       );
