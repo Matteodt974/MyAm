@@ -35,14 +35,14 @@ class DigestiveJournalControllerTest {
   @Test
   @WithMockUser(username = "user@test.com")
   void create_validRequest_returnsCreated() throws Exception {
-    when(journal.create(eq("user@test.com"), any()))
+    when(journal.create(eq("user@test.com"), eq(7L), any()))
         .thenReturn(new DigestiveEntryResponse(1L, OCCURRED_AT, 6, "crampes", OCCURRED_AT));
 
     mvc.perform(
             post("/v1/digestive-journal")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"bristolType\":6,\"occurredAt\":\"2026-07-26T08:00:00Z\","
+                    "{\"profileId\":7,\"bristolType\":6,\"occurredAt\":\"2026-07-26T08:00:00Z\","
                         + "\"notes\":\"crampes\"}"))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.id").value(1))
@@ -56,7 +56,8 @@ class DigestiveJournalControllerTest {
     mvc.perform(
             post("/v1/digestive-journal")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"bristolType\":9,\"occurredAt\":\"2026-07-26T08:00:00Z\"}"))
+                .content(
+                    "{\"profileId\":7,\"bristolType\":9,\"occurredAt\":\"2026-07-26T08:00:00Z\"}"))
         .andExpect(status().isBadRequest());
   }
 
@@ -66,7 +67,8 @@ class DigestiveJournalControllerTest {
     mvc.perform(
             post("/v1/digestive-journal")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"bristolType\":4,\"occurredAt\":\"2999-01-01T00:00:00Z\"}"))
+                .content(
+                    "{\"profileId\":7,\"bristolType\":4,\"occurredAt\":\"2999-01-01T00:00:00Z\"}"))
         .andExpect(status().isBadRequest());
   }
 
@@ -75,23 +77,25 @@ class DigestiveJournalControllerTest {
     mvc.perform(
             post("/v1/digestive-journal")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"bristolType\":4,\"occurredAt\":\"2026-07-26T08:00:00Z\"}"))
+                .content(
+                    "{\"profileId\":7,\"bristolType\":4,\"occurredAt\":\"2026-07-26T08:00:00Z\"}"))
         .andExpect(status().isUnauthorized());
   }
 
   @Test
   @WithMockUser(username = "user@test.com")
   void list_returnsEntries() throws Exception {
-    when(journal.list(eq("user@test.com"), isNull()))
+    when(journal.list(eq("user@test.com"), eq(7L), isNull()))
         .thenReturn(List.of(new DigestiveEntryResponse(1L, OCCURRED_AT, 2, null, OCCURRED_AT)));
 
-    mvc.perform(get("/v1/digestive-journal"))
+    mvc.perform(get("/v1/digestive-journal").queryParam("profileId", "7"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$[0].bristolType").value(2));
   }
 
   @Test
   void list_withoutAuthentication_returnsUnauthorized() throws Exception {
-    mvc.perform(get("/v1/digestive-journal")).andExpect(status().isUnauthorized());
+    mvc.perform(get("/v1/digestive-journal").queryParam("profileId", "7"))
+        .andExpect(status().isUnauthorized());
   }
 }

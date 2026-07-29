@@ -5,6 +5,7 @@ import 'package:myam/core/errors/api_exception.dart';
 import 'package:myam/features/digestive_journal/data/digestive_entry.dart';
 import 'package:myam/features/digestive_journal/data/digestive_journal_repository.dart';
 import 'package:myam/features/digestive_journal/presentation/digestive_journal_controller.dart';
+import 'package:myam/features/child_profiles/presentation/child_profile_controller.dart';
 
 class MockDigestiveJournalRepository extends Mock
     implements DigestiveJournalRepository {}
@@ -19,6 +20,7 @@ void main() {
   ProviderContainer createContainer() {
     return ProviderContainer(
       overrides: [
+        activeProfileIdProvider.overrideWithValue(7),
         digestiveJournalRepositoryProvider.overrideWithValue(mockRepository),
       ],
     );
@@ -35,7 +37,9 @@ void main() {
   group('DigestiveJournalController', () {
     test('build charge les entrées depuis le repository', () async {
       final entries = [entry(id: 1), entry(id: 2, bristolType: 6)];
-      when(() => mockRepository.list()).thenAnswer((_) async => entries);
+      when(
+        () => mockRepository.list(profileId: 7),
+      ).thenAnswer((_) async => entries);
 
       final container = createContainer();
       addTearDown(container.dispose);
@@ -45,13 +49,16 @@ void main() {
       );
 
       expect(state, entries);
-      verify(() => mockRepository.list()).called(1);
+      verify(() => mockRepository.list(profileId: 7)).called(1);
     });
 
     test('addEntry crée l’entrée puis recharge la liste', () async {
-      when(() => mockRepository.list()).thenAnswer((_) async => [entry()]);
+      when(
+        () => mockRepository.list(profileId: 7),
+      ).thenAnswer((_) async => [entry()]);
       when(
         () => mockRepository.create(
+          profileId: 7,
           bristolType: any(named: 'bristolType'),
           occurredAt: any(named: 'occurredAt'),
           notes: any(named: 'notes'),
@@ -72,19 +79,21 @@ void main() {
 
       verify(
         () => mockRepository.create(
+          profileId: 7,
           bristolType: 6,
           occurredAt: DateTime.utc(2026, 7, 26, 9),
           notes: 'crampes',
         ),
       ).called(1);
       // 1 chargement initial + 1 rechargement apres creation.
-      verify(() => mockRepository.list()).called(2);
+      verify(() => mockRepository.list(profileId: 7)).called(2);
     });
 
     test('addEntry propage l’erreur à l’appelant', () async {
-      when(() => mockRepository.list()).thenAnswer((_) async => []);
+      when(() => mockRepository.list(profileId: 7)).thenAnswer((_) async => []);
       when(
         () => mockRepository.create(
+          profileId: 7,
           bristolType: any(named: 'bristolType'),
           occurredAt: any(named: 'occurredAt'),
           notes: any(named: 'notes'),

@@ -55,7 +55,7 @@ class DigestiveJournalServiceTest {
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     DigestiveEntryResponse response =
-        service().create(EMAIL, new DigestiveEntryRequest(6, OCCURRED_AT, "crampes"));
+        service().create(EMAIL, 7L, new DigestiveEntryRequest(7L, 6, OCCURRED_AT, "crampes"));
 
     assertThat(response.bristolType()).isEqualTo(6);
     assertThat(response.notes()).isEqualTo("crampes");
@@ -72,7 +72,7 @@ class DigestiveJournalServiceTest {
     when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
     DigestiveEntryResponse response =
-        service().create(EMAIL, new DigestiveEntryRequest(4, OCCURRED_AT, "   "));
+        service().create(EMAIL, 7L, new DigestiveEntryRequest(7L, 4, OCCURRED_AT, "   "));
 
     assertThat(response.notes()).isNull();
   }
@@ -82,7 +82,7 @@ class DigestiveJournalServiceTest {
     when(users.findByEmail(EMAIL)).thenReturn(Optional.empty());
 
     assertThatThrownBy(
-            () -> service().create(EMAIL, new DigestiveEntryRequest(4, OCCURRED_AT, null)))
+            () -> service().create(EMAIL, 7L, new DigestiveEntryRequest(7L, 4, OCCURRED_AT, null)))
         .isInstanceOf(ResponseStatusException.class)
         .extracting(e -> ((ResponseStatusException) e).getStatusCode())
         .isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -92,10 +92,10 @@ class DigestiveJournalServiceTest {
   void list_decryptsEntriesFromRepository() {
     when(users.findByEmail(EMAIL)).thenReturn(Optional.of(userWithId(7L)));
     DigestiveJournalEntry entry = new DigestiveJournalEntry(7L, OCCURRED_AT, bytes("enc-2"), null);
-    when(repository.findTop1000ByUserIdOrderByOccurredAtDesc(7L)).thenReturn(List.of(entry));
+    when(repository.findForProfile(7L, 7L)).thenReturn(List.of(entry));
     when(encryption.decrypt(bytes("enc-2"))).thenReturn("2");
 
-    List<DigestiveEntryResponse> entries = service().list(EMAIL, null);
+    List<DigestiveEntryResponse> entries = service().list(EMAIL, 7L, null);
 
     assertThat(entries).hasSize(1);
     assertThat(entries.getFirst().bristolType()).isEqualTo(2);
@@ -106,11 +106,39 @@ class DigestiveJournalServiceTest {
   void list_withSince_usesTimeFilteredQuery() {
     when(users.findByEmail(EMAIL)).thenReturn(Optional.of(userWithId(7L)));
     Instant since = OCCURRED_AT.minusSeconds(3600);
-    when(repository.findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(7L, since))
-        .thenReturn(List.of());
+    when(repository.findForProfileSince(7L, 7L, since)).thenReturn(List.of());
 
-    assertThat(service().list(EMAIL, since)).isEmpty();
-    verify(repository).findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(7L, since);
+    assertThat(service().list(EMAIL, 7L, since)).isEmpty();
+    verify(repository).findForProfileSince(7L, 7L, since);
+  }
+
+  @Test
+  void list_childProfile_usesOwnerAndSelectedProfileIds() {
+    User owner = userWithId(7L);
+    User child = new User("Camille", AccountType.MANAGED);
+    ReflectionTestUtils.setField(child, "id", 8L);
+    child.setGuardianUserId(7L);
+    when(users.findByEmail(EMAIL)).thenReturn(Optional.of(owner));
+    when(users.findById(8L)).thenReturn(Optional.of(child));
+    when(repository.findForProfile(7L, 8L)).thenReturn(List.of());
+
+    assertThat(service().list(EMAIL, 8L, null)).isEmpty();
+
+    verify(repository).findForProfile(7L, 8L);
+  }
+
+  @Test
+  void list_profileOwnedByAnotherGuardian_throwsForbidden() {
+    User child = new User("Autre enfant", AccountType.MANAGED);
+    ReflectionTestUtils.setField(child, "id", 8L);
+    child.setGuardianUserId(99L);
+    when(users.findByEmail(EMAIL)).thenReturn(Optional.of(userWithId(7L)));
+    when(users.findById(8L)).thenReturn(Optional.of(child));
+
+    assertThatThrownBy(() -> service().list(EMAIL, 8L, null))
+        .isInstanceOf(ResponseStatusException.class)
+        .extracting(e -> ((ResponseStatusException) e).getStatusCode())
+        .isEqualTo(HttpStatus.FORBIDDEN);
   }
 
   private static byte[] bytes(String value) {

@@ -14,6 +14,7 @@ import java.util.List;
  * le frontend l'envoie dans le corps de la requete plutot que de le synchroniser en base.
  */
 public record IntoleranceAnalysisRequest(
+    @NotNull(message = "Le profil est requis") Long profileId,
     @NotNull(message = "Le journal alimentaire est requis")
         @Size(max = 500, message = "Le journal alimentaire ne peut pas dépasser 500 aliments")
         List<@Valid FoodItem> foodItems) {

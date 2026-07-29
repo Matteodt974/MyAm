@@ -15,11 +15,17 @@ class IntoleranceAnalysisRepository {
   ///
   /// Les episodes du journal digestif sont charges cote serveur a partir du
   /// compte authentifie.
-  Future<IntoleranceReport> analyze(List<FoodItemPayload> foodItems) async {
+  Future<IntoleranceReport> analyze(
+    int profileId,
+    List<FoodItemPayload> foodItems,
+  ) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.analysisIntolerance,
-        data: {'foodItems': foodItems.map((item) => item.toJson()).toList()},
+        data: {
+          'profileId': profileId,
+          'foodItems': foodItems.map((item) => item.toJson()).toList(),
+        },
       );
 
       return IntoleranceReport.fromJson(response.data!);

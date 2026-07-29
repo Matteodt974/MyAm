@@ -14,7 +14,10 @@ const Duration foodJournalWindow = Duration(hours: 72);
 /// L'etat vaut `null` tant que l'utilisateur n'a pas lance l'analyse.
 class AnalysisController extends AsyncNotifier<IntoleranceReport?> {
   @override
-  Future<IntoleranceReport?> build() async => null;
+  Future<IntoleranceReport?> build() async {
+    ref.watch(activeProfileIdProvider);
+    return null;
+  }
 
   /// Assemble le journal alimentaire des 72 dernieres heures depuis
   /// l'historique de scans local, puis demande l'analyse au backend.
@@ -23,12 +26,16 @@ class AnalysisController extends AsyncNotifier<IntoleranceReport?> {
 
     state = await AsyncValue.guard<IntoleranceReport?>(() async {
       final foodItems = await _recentFoodItems();
-      return ref.read(intoleranceAnalysisRepositoryProvider).analyze(foodItems);
+      final profileId = ref.read(activeProfileIdProvider);
+      if (profileId == null) return null;
+      return ref
+          .read(intoleranceAnalysisRepositoryProvider)
+          .analyze(profileId, foodItems);
     });
   }
 
   Future<List<FoodItemPayload>> _recentFoodItems() async {
-    final profileId = _activeProfileId();
+    final profileId = ref.read(activeProfileIdProvider);
     if (profileId == null) return const <FoodItemPayload>[];
 
     final since = DateTime.now().subtract(foodJournalWindow);
@@ -37,13 +44,6 @@ class AnalysisController extends AsyncNotifier<IntoleranceReport?> {
         .load(profileId, filter: HistoryFilter(from: since));
 
     return entries.map(_toFoodItem).toList();
-  }
-
-  int? _activeProfileId() {
-    final profileState = ref.read(childProfileControllerProvider).value;
-    final parentId = ref.read(guardianIdProvider);
-    if (parentId == null) return null;
-    return profileState?.activeProfileId ?? parentId;
   }
 
   static FoodItemPayload _toFoodItem(ScanHistoryEntry entry) {

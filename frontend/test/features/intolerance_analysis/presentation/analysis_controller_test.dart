@@ -109,7 +109,9 @@ void main() {
           ),
         ],
       );
-      when(() => mockAnalysis.analyze(any())).thenAnswer((_) async => okReport);
+      when(
+        () => mockAnalysis.analyze(profileId, any()),
+      ).thenAnswer((_) async => okReport);
 
       final container = createContainer();
       addTearDown(container.dispose);
@@ -120,7 +122,9 @@ void main() {
       expect(container.read(analysisControllerProvider).value, okReport);
 
       final sentItems =
-          verify(() => mockAnalysis.analyze(captureAny())).captured.single
+          verify(
+                () => mockAnalysis.analyze(profileId, captureAny()),
+              ).captured.single
               as List<FoodItemPayload>;
       expect(sentItems, hasLength(1));
       expect(sentItems.single.name, 'Lait 2%');
@@ -157,7 +161,7 @@ void main() {
         () => mockHistory.load(any(), filter: any(named: 'filter')),
       ).thenAnswer((_) async => []);
       when(
-        () => mockAnalysis.analyze(any()),
+        () => mockAnalysis.analyze(profileId, any()),
       ).thenAnswer((_) async => insufficient);
 
       final container = createContainer();
@@ -176,7 +180,7 @@ void main() {
         () => mockHistory.load(any(), filter: any(named: 'filter')),
       ).thenAnswer((_) async => []);
       when(
-        () => mockAnalysis.analyze(any()),
+        () => mockAnalysis.analyze(profileId, any()),
       ).thenThrow(const ApiException('Service indisponible.'));
 
       final container = createContainer();
@@ -192,7 +196,9 @@ void main() {
       when(
         () => mockHistory.load(any(), filter: any(named: 'filter')),
       ).thenAnswer((_) async => []);
-      when(() => mockAnalysis.analyze(any())).thenAnswer((_) async => okReport);
+      when(
+        () => mockAnalysis.analyze(profileId, any()),
+      ).thenAnswer((_) async => okReport);
 
       final container = createContainer();
       addTearDown(container.dispose);

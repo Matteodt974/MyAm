@@ -46,7 +46,7 @@ class IntoleranceAnalysisControllerTest {
             post("/v1/analysis/intolerance")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"foodItems\":[{\"name\":\"Lait\",\"consumedAt\":\"2026-07-27T06:00:00Z\","
+                    "{\"profileId\":7,\"foodItems\":[{\"name\":\"Lait\",\"consumedAt\":\"2026-07-27T06:00:00Z\","
                         + "\"allergens\":[\"lait\"],\"scanType\":\"barcode\"}]}"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("OK"))
@@ -69,7 +69,7 @@ class IntoleranceAnalysisControllerTest {
             post("/v1/analysis/intolerance")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    "{\"foodItems\":[{\"name\":\"\",\"consumedAt\":\"2026-07-27T06:00:00Z\"}]}"))
+                    "{\"profileId\":7,\"foodItems\":[{\"name\":\"\",\"consumedAt\":\"2026-07-27T06:00:00Z\"}]}"))
         .andExpect(status().isBadRequest());
   }
 
@@ -78,7 +78,7 @@ class IntoleranceAnalysisControllerTest {
     mvc.perform(
             post("/v1/analysis/intolerance")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"foodItems\":[]}"))
+                .content("{\"profileId\":7,\"foodItems\":[]}"))
         .andExpect(status().isUnauthorized());
   }
 }

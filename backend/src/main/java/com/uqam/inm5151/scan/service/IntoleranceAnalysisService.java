@@ -11,6 +11,7 @@ import com.uqam.inm5151.scan.service.IntoleranceRuleEngine.DigestiveEpisode;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -54,17 +55,11 @@ public class IntoleranceAnalysisService {
 
   IntoleranceAnalysisResponse analyze(
       String email, IntoleranceAnalysisRequest request, Instant now) {
-    Long userId =
-        users
-            .findByEmail(email)
-            .map(User::getId)
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur non trouvé"));
+    User owner = requireAccessibleProfile(email, request.profileId());
 
     List<DigestiveEpisode> episodes =
         journalRepository
-            .findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(userId, now.minus(EPISODE_WINDOW))
+            .findForProfileSince(owner.getId(), request.profileId(), now.minus(EPISODE_WINDOW))
             .stream()
             .map(this::decrypt)
             .toList();
@@ -91,6 +86,27 @@ public class IntoleranceAnalysisService {
             .toList();
 
     return ruleEngine.analyze(episodes, recentFood);
+  }
+
+  private User requireAccessibleProfile(String email, Long profileId) {
+    User owner =
+        users
+            .findByEmail(email)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur non trouvé"));
+    if (owner.getId().equals(profileId)) {
+      return owner;
+    }
+    User profile =
+        users
+            .findById(profileId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil introuvable"));
+    if (!Objects.equals(profile.getGuardianUserId(), owner.getId())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Profil non accessible");
+    }
+    return owner;
   }
 
   private DigestiveEpisode decrypt(DigestiveJournalEntry entry) {

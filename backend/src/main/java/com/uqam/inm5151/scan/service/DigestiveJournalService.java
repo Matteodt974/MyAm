@@ -8,6 +8,7 @@ import com.uqam.inm5151.scan.repository.DigestiveJournalEntryRepository;
 import com.uqam.inm5151.scan.repository.UserRepository;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,8 +35,9 @@ public class DigestiveJournalService {
     this.users = users;
   }
 
-  public DigestiveEntryResponse create(String email, DigestiveEntryRequest request) {
-    Long userId = resolveUserId(email);
+  public DigestiveEntryResponse create(
+      String email, Long profileId, DigestiveEntryRequest request) {
+    User owner = requireAccessibleProfile(email, profileId);
     byte[] bristolEncrypted = encryption.encrypt(String.valueOf(request.bristolType()));
     String notes =
         request.notes() == null || request.notes().isBlank() ? null : request.notes().trim();
@@ -44,25 +46,38 @@ public class DigestiveJournalService {
     DigestiveJournalEntry saved =
         repository.save(
             new DigestiveJournalEntry(
-                userId, request.occurredAt(), bristolEncrypted, notesEncrypted));
+                owner.getId(), profileId, request.occurredAt(), bristolEncrypted, notesEncrypted));
     return toResponse(saved);
   }
 
-  public List<DigestiveEntryResponse> list(String email, Instant since) {
-    Long userId = resolveUserId(email);
+  public List<DigestiveEntryResponse> list(String email, Long profileId, Instant since) {
+    User owner = requireAccessibleProfile(email, profileId);
     List<DigestiveJournalEntry> entries =
         since == null
-            ? repository.findTop1000ByUserIdOrderByOccurredAtDesc(userId)
-            : repository.findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(userId, since);
+            ? repository.findForProfile(owner.getId(), profileId)
+            : repository.findForProfileSince(owner.getId(), profileId, since);
     return entries.stream().map(this::toResponse).toList();
   }
 
-  private Long resolveUserId(String email) {
-    return users
-        .findByEmail(email)
-        .map(User::getId)
-        .orElseThrow(
-            () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur non trouvé"));
+  private User requireAccessibleProfile(String email, Long profileId) {
+    User owner =
+        users
+            .findByEmail(email)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Utilisateur non trouvé"));
+    if (owner.getId().equals(profileId)) {
+      return owner;
+    }
+    User profile =
+        users
+            .findById(profileId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Profil introuvable"));
+    if (!Objects.equals(profile.getGuardianUserId(), owner.getId())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Profil non accessible");
+    }
+    return owner;
   }
 
   private DigestiveEntryResponse toResponse(DigestiveJournalEntry entry) {

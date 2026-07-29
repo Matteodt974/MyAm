@@ -15,6 +15,7 @@ class DigestiveJournalRepository {
   ///
   /// Les dates partent toujours en UTC : le backend les stocke en [Instant].
   Future<DigestiveEntry> create({
+    required int profileId,
     required int bristolType,
     required DateTime occurredAt,
     String? notes,
@@ -25,6 +26,7 @@ class DigestiveJournalRepository {
       final response = await _dio.post<Map<String, dynamic>>(
         ApiEndpoints.digestiveJournal,
         data: {
+          'profileId': profileId,
           'bristolType': bristolType,
           'occurredAt': occurredAt.toUtc().toIso8601String(),
           if (trimmedNotes != null && trimmedNotes.isNotEmpty)
@@ -39,11 +41,15 @@ class DigestiveJournalRepository {
   }
 
   /// Liste les entrees, de la plus recente a la plus ancienne.
-  Future<List<DigestiveEntry>> list({DateTime? since}) async {
+  Future<List<DigestiveEntry>> list({
+    required int profileId,
+    DateTime? since,
+  }) async {
     try {
       final response = await _dio.get<List<dynamic>>(
         ApiEndpoints.digestiveJournal,
         queryParameters: {
+          'profileId': profileId,
           if (since != null) 'since': since.toUtc().toIso8601String(),
         },
       );

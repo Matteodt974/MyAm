@@ -56,7 +56,7 @@ class IntoleranceAnalysisServiceTest {
     when(users.findByEmail(EMAIL)).thenReturn(Optional.empty());
 
     assertThatThrownBy(
-            () -> service().analyze(EMAIL, new IntoleranceAnalysisRequest(List.of()), NOW))
+            () -> service().analyze(EMAIL, new IntoleranceAnalysisRequest(7L, List.of()), NOW))
         .isInstanceOf(ResponseStatusException.class)
         .extracting(e -> ((ResponseStatusException) e).getStatusCode())
         .isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -65,11 +65,10 @@ class IntoleranceAnalysisServiceTest {
   @Test
   void analyze_noJournalEntries_returnsNoJournalEntriesStatus() {
     givenUser();
-    when(journalRepository.findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(eq(7L), any()))
-        .thenReturn(List.of());
+    when(journalRepository.findForProfileSince(eq(7L), eq(7L), any())).thenReturn(List.of());
 
     IntoleranceAnalysisResponse response =
-        service().analyze(EMAIL, new IntoleranceAnalysisRequest(List.of()), NOW);
+        service().analyze(EMAIL, new IntoleranceAnalysisRequest(7L, List.of()), NOW);
 
     assertThat(response.status()).isEqualTo(IntoleranceAnalysisResponse.STATUS_NO_JOURNAL_ENTRIES);
     assertThat(response.message()).contains("journal digestif");
@@ -79,7 +78,7 @@ class IntoleranceAnalysisServiceTest {
   void analyze_decryptsEpisodesAndDelegatesToEngine() {
     givenUser();
     byte[] encrypted = "enc-6".getBytes(StandardCharsets.UTF_8);
-    when(journalRepository.findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(eq(7L), any()))
+    when(journalRepository.findForProfileSince(eq(7L), eq(7L), any()))
         .thenReturn(
             List.of(new DigestiveJournalEntry(7L, NOW.minusSeconds(3600), encrypted, null)));
     when(encryption.decrypt(encrypted)).thenReturn("6");
@@ -89,6 +88,7 @@ class IntoleranceAnalysisServiceTest {
             .analyze(
                 EMAIL,
                 new IntoleranceAnalysisRequest(
+                    7L,
                     List.of(
                         food("Lait", NOW.minusSeconds(2 * 3600)),
                         food("Pain", NOW.minusSeconds(3 * 3600)),
@@ -104,7 +104,7 @@ class IntoleranceAnalysisServiceTest {
   void analyze_foodItemsOlderThan72Hours_filteredOutServerSide() {
     givenUser();
     byte[] encrypted = "enc-4".getBytes(StandardCharsets.UTF_8);
-    when(journalRepository.findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(eq(7L), any()))
+    when(journalRepository.findForProfileSince(eq(7L), eq(7L), any()))
         .thenReturn(
             List.of(new DigestiveJournalEntry(7L, NOW.minusSeconds(3600), encrypted, null)));
     when(encryption.decrypt(encrypted)).thenReturn("4");
@@ -115,6 +115,7 @@ class IntoleranceAnalysisServiceTest {
             .analyze(
                 EMAIL,
                 new IntoleranceAnalysisRequest(
+                    7L,
                     List.of(
                         food("Lait", NOW.minusSeconds(2 * 3600)),
                         food("Vieux pain", NOW.minusSeconds(80 * 3600)),
@@ -129,7 +130,7 @@ class IntoleranceAnalysisServiceTest {
   void analyze_futureDatedFoodItems_filteredOutServerSide() {
     givenUser();
     byte[] encrypted = "enc-4".getBytes(StandardCharsets.UTF_8);
-    when(journalRepository.findByUserIdAndOccurredAtAfterOrderByOccurredAtDesc(eq(7L), any()))
+    when(journalRepository.findForProfileSince(eq(7L), eq(7L), any()))
         .thenReturn(
             List.of(new DigestiveJournalEntry(7L, NOW.minusSeconds(3600), encrypted, null)));
     when(encryption.decrypt(encrypted)).thenReturn("4");
@@ -139,6 +140,7 @@ class IntoleranceAnalysisServiceTest {
             .analyze(
                 EMAIL,
                 new IntoleranceAnalysisRequest(
+                    7L,
                     List.of(
                         food("Lait", NOW.minusSeconds(2 * 3600)),
                         food("Pain du futur", NOW.plusSeconds(3600)),

@@ -35,6 +35,7 @@ void main() {
       );
 
       final entry = await repository.create(
+        profileId: 7,
         bristolType: 6,
         occurredAt: DateTime.utc(2026, 7, 26, 8),
         notes: 'crampes',
@@ -53,6 +54,7 @@ void main() {
               ).captured.single
               as Map<String, dynamic>;
       expect(captured['bristolType'], 6);
+      expect(captured['profileId'], 7);
       expect(captured['occurredAt'], '2026-07-26T08:00:00.000Z');
       expect(captured['notes'], 'crampes');
     });
@@ -75,6 +77,7 @@ void main() {
       );
 
       await repository.create(
+        profileId: 7,
         bristolType: 4,
         occurredAt: DateTime.utc(2026, 7, 26, 8),
         notes: '   ',
@@ -103,7 +106,11 @@ void main() {
       );
 
       await expectLater(
-        repository.create(bristolType: 4, occurredAt: DateTime.utc(2026)),
+        repository.create(
+          profileId: 7,
+          bristolType: 4,
+          occurredAt: DateTime.utc(2026),
+        ),
         throwsA(isA<ApiException>()),
       );
     });
@@ -131,7 +138,7 @@ void main() {
         ),
       );
 
-      final entries = await repository.list();
+      final entries = await repository.list(profileId: 7);
 
       expect(entries, hasLength(1));
       expect(entries.first.bristolType, 2);
@@ -151,7 +158,7 @@ void main() {
         ),
       );
 
-      expect(await repository.list(), isEmpty);
+      expect(await repository.list(profileId: 7), isEmpty);
     });
   });
 }

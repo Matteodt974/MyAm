@@ -38,15 +38,17 @@ public class DigestiveJournalController {
   @PostMapping
   public ResponseEntity<DigestiveEntryResponse> create(
       Authentication authentication, @RequestBody @Valid DigestiveEntryRequest request) {
-    DigestiveEntryResponse created = journal.create(authentication.getName(), request);
+    DigestiveEntryResponse created =
+        journal.create(authentication.getName(), request.profileId(), request);
     return ResponseEntity.status(HttpStatus.CREATED).body(created);
   }
 
   @GetMapping
   public List<DigestiveEntryResponse> list(
       Authentication authentication,
+      @RequestParam Long profileId,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
           Instant since) {
-    return journal.list(authentication.getName(), since);
+    return journal.list(authentication.getName(), profileId, since);
   }
 }

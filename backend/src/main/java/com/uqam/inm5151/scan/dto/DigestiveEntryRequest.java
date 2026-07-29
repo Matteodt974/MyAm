@@ -9,6 +9,7 @@ import java.time.Instant;
 
 /** UC-23 : creation d'une entree du journal digestif (echelle de Bristol). */
 public record DigestiveEntryRequest(
+    @NotNull(message = "Le profil est requis") Long profileId,
     @NotNull(message = "Le type Bristol est requis")
         @Min(value = 1, message = "Le type Bristol doit être entre 1 et 7")
         @Max(value = 7, message = "Le type Bristol doit être entre 1 et 7")

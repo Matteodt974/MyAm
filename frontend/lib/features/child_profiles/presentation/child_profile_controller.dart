@@ -118,3 +118,10 @@ final childProfileControllerProvider =
     AsyncNotifierProvider<ChildProfileController, ChildProfileState>(
       ChildProfileController.new,
     );
+
+/// Identifiant du profil actuellement sélectionné, parent compris.
+final activeProfileIdProvider = Provider<int?>((ref) {
+  final guardianId = ref.watch(guardianIdProvider);
+  final profiles = ref.watch(childProfileControllerProvider).value;
+  return profiles?.activeProfileId ?? guardianId;
+});
