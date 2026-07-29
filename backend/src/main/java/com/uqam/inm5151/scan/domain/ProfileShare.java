@@ -30,8 +30,19 @@ public class ProfileShare {
   @Column(name = "created_by_user_id", nullable = false)
   private Long createdByUserId;
 
+  /**
+   * SHA-256 du jeton remis au parent. Le jeton brut n'existe que dans le code QR : une fuite de la
+   * base ne permet donc pas d'importer les profils partages.
+   */
   @Column(name = "share_token", nullable = false, unique = true)
   private String shareToken;
+
+  /**
+   * Instantane du profil enfant (nom, allergies, regimes) chiffre au repos. Ces donnees sont de
+   * nature medicale (Loi 25), au meme titre que le journal digestif.
+   */
+  @Column(name = "payload_encrypted")
+  private byte[] payloadEncrypted;
 
   private String label;
 
@@ -45,15 +56,28 @@ public class ProfileShare {
   @Column(name = "created_at", nullable = false)
   private Instant createdAt;
 
-  public ProfileShare(Long ownerUserId, Long createdByUserId, String shareToken, String label) {
+  public ProfileShare(
+      Long ownerUserId,
+      Long createdByUserId,
+      String shareToken,
+      String label,
+      byte[] payloadEncrypted,
+      Instant expiresAt) {
     this.ownerUserId = ownerUserId;
     this.createdByUserId = createdByUserId;
     this.shareToken = shareToken;
     this.label = label;
+    this.payloadEncrypted = payloadEncrypted;
+    this.expiresAt = expiresAt;
     this.createdAt = Instant.now();
   }
 
   public void revoke() {
     this.revokedAt = Instant.now();
+  }
+
+  /** Un partage est utilisable tant qu'il n'est ni revoque ni expire. */
+  public boolean isActive(Instant now) {
+    return revokedAt == null && (expiresAt == null || expiresAt.isAfter(now));
   }
 }

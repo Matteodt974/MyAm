@@ -6,12 +6,16 @@ import 'package:myam/features/child_profiles/presentation/child_profile_controll
 import 'package:myam/features/child_profiles/presentation/child_profile_management_section.dart';
 import 'package:myam/features/child_profiles/presentation/child_profile_selector.dart';
 import 'package:myam/features/profile_allergies/data/allergy_local_store.dart';
+import 'package:myam/features/child_profiles/data/profile_share_repository.dart';
 import 'package:myam/features/profile_allergies/data/diet_local_store.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockAllergyLocalStore extends Mock implements AllergyLocalStore {}
 
 class MockDietLocalStore extends Mock implements DietLocalStore {}
+
+class MockProfileShareRepository extends Mock
+    implements ProfileShareRepository {}
 
 class FakeChildProfileController extends ChildProfileController {
   FakeChildProfileController(this.initialState);
@@ -60,6 +64,7 @@ void main() {
     Widget childWidget, {
     AllergyLocalStore? allergyLocalStore,
     DietLocalStore? dietLocalStore,
+    ProfileShareRepository? profileShareRepository,
   }) async {
     final controller = FakeChildProfileController(initialState);
     await tester.pumpWidget(
@@ -70,6 +75,10 @@ void main() {
             allergyLocalStoreProvider.overrideWithValue(allergyLocalStore),
           if (dietLocalStore != null)
             dietLocalStoreProvider.overrideWithValue(dietLocalStore),
+          if (profileShareRepository != null)
+            profileShareRepositoryProvider.overrideWithValue(
+              profileShareRepository,
+            ),
         ],
         child: MaterialApp(home: Scaffold(body: childWidget)),
       ),
@@ -160,21 +169,90 @@ void main() {
       () => dietLocalStore.load(child.id, isParent: false),
     ).thenAnswer((_) async => ['VEGAN']);
 
+    final shareRepository = MockProfileShareRepository();
+    when(
+      () => shareRepository.create(
+        childId: any(named: 'childId'),
+        displayName: any(named: 'displayName'),
+        allergies: any(named: 'allergies'),
+        diets: any(named: 'diets'),
+        validityDays: any(named: 'validityDays'),
+      ),
+    ).thenAnswer(
+      (_) async => ProfileShare(
+        token: 'jeton-test',
+        expiresAt: DateTime.utc(2026, 8, 4),
+      ),
+    );
+
     await pumpWidget(
       tester,
       const ChildProfileManagementSection(),
       allergyLocalStore: allergyLocalStore,
       dietLocalStore: dietLocalStore,
+      profileShareRepository: shareRepository,
     );
 
     await tester.tap(find.byTooltip('Afficher le code QR'));
     await tester.pumpAndSettle();
 
+    // UC-28 : le parent choisit d'abord la duree de validite.
+    expect(find.text('Durée de validité du code'), findsOneWidget);
+    await tester.tap(find.text('7 jours'));
+    await tester.pumpAndSettle();
+
     expect(find.byType(Dialog), findsOneWidget);
-    expect(find.byType(ChildProfileManagementSection), findsOneWidget);
-    expect(find.byType(SizedBox), findsWidgets);
+    expect(find.textContaining('Valide jusqu\'au'), findsOneWidget);
 
     verify(() => allergyLocalStore.load(child.id, isParent: false)).called(1);
     verify(() => dietLocalStore.load(child.id, isParent: false)).called(1);
+    // Le profil enregistre est bien celui transmis au backend.
+    verify(
+      () => shareRepository.create(
+        childId: child.id,
+        displayName: 'Léa',
+        allergies: ['arachide', 'lait'],
+        diets: ['VEGAN'],
+        validityDays: 7,
+      ),
+    ).called(1);
+  });
+
+  testWidgets('management section reports a failed share', (tester) async {
+    final allergyLocalStore = MockAllergyLocalStore();
+    final dietLocalStore = MockDietLocalStore();
+    when(
+      () => allergyLocalStore.load(child.id, isParent: false),
+    ).thenAnswer((_) async => <String>[]);
+    when(
+      () => dietLocalStore.load(child.id, isParent: false),
+    ).thenAnswer((_) async => <String>[]);
+
+    final shareRepository = MockProfileShareRepository();
+    when(
+      () => shareRepository.create(
+        childId: any(named: 'childId'),
+        displayName: any(named: 'displayName'),
+        allergies: any(named: 'allergies'),
+        diets: any(named: 'diets'),
+        validityDays: any(named: 'validityDays'),
+      ),
+    ).thenThrow(Exception('hors ligne'));
+
+    await pumpWidget(
+      tester,
+      const ChildProfileManagementSection(),
+      allergyLocalStore: allergyLocalStore,
+      dietLocalStore: dietLocalStore,
+      profileShareRepository: shareRepository,
+    );
+
+    await tester.tap(find.byTooltip('Afficher le code QR'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1 jour'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(Dialog), findsNothing);
+    expect(find.textContaining('Partage impossible'), findsOneWidget);
   });
 }

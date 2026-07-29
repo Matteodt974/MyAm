@@ -10,6 +10,7 @@ import '../../../shared/widgets/animated_bottom_nav.dart';
 
 import '../../child_profiles/presentation/child_profile_selector.dart';
 import '../../child_profiles/data/child_profile.dart';
+import '../../child_profiles/data/profile_share_repository.dart';
 import '../../profile_allergies/presentation/profile_screen.dart';
 
 import '../../scan_barcode/presentation/product_result_sheet.dart';
@@ -154,7 +155,11 @@ class _HomeShellState extends ConsumerState<HomeShell> {
             builder: (_) => ProductResultSheet(product: product),
           );
         }
+      } else if (value.startsWith(kShareTokenPrefix)) {
+        // UC-28 : code revocable, le profil est recupere aupres du backend.
+        await _redeemSharedProfile(value.substring(kShareTokenPrefix.length));
       } else {
+        // Ancien format de partage, conserve pour les codes deja distribues.
         final sharedProfile = ChildProfile.tryParseSharePayload(value);
         if (sharedProfile != null) {
           await _showSharedProfileSheet(sharedProfile);
@@ -168,6 +173,22 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
         setState(() => _isProcessing = false);
       }
+    }
+  }
+
+  /// Echange un jeton de code QR contre le profil enfant partage (UC-28).
+  Future<void> _redeemSharedProfile(String token) async {
+    try {
+      final snapshot = await ref
+          .read(profileShareRepositoryProvider)
+          .redeem(token);
+
+      if (!mounted) return;
+      await _showSharedProfileSheet(snapshot);
+    } catch (error) {
+      if (!mounted) return;
+      // 4b du UC : code expire ou revoque.
+      _showSnack('$error');
     }
   }
 
@@ -235,10 +256,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
                   emptyLabel: 'Aucune allergie enregistrée.',
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Régimes',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
+                Text('Régimes', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 _buildChipWrap(
                   profile.diets,
