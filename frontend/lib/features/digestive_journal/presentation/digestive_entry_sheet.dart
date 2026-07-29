@@ -102,95 +102,112 @@ class _DigestiveEntrySheetState extends ConsumerState<_DigestiveEntrySheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final mediaQuery = MediaQuery.of(context);
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Nouvelle entrée', style: theme.textTheme.titleLarge),
-            const SizedBox(height: 4),
-            Text(
-              'Sélectionnez le type qui correspond le mieux à votre transit.',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.outline,
-              ),
-            ),
-            const SizedBox(height: 16),
-            for (final type in bristolTypes)
-              _BristolOption(
-                type: type,
-                selected: _selectedType == type.value,
-                onTap: () => setState(() => _selectedType = type.value),
-              ),
-            const SizedBox(height: 16),
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.schedule),
-              title: const Text('Date et heure'),
-              subtitle: Text(
-                DateFormat.yMd('fr_CA').add_Hm().format(_occurredAt),
-              ),
-              trailing: TextButton(
-                onPressed: _saving ? null : _pickDateTime,
-                child: const Text('Modifier'),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _notesController,
-              maxLines: 3,
-              maxLength: 1000,
-              enabled: !_saving,
-              decoration: const InputDecoration(
-                labelText: 'Notes (optionnel)',
-                hintText: 'Ex. crampes, ballonnements…',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                _error!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.error,
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: mediaQuery.size.height * 0.9),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Nouvelle entrée',
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Sélectionnez le type qui correspond le mieux à votre transit.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.outline,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      for (final type in bristolTypes)
+                        _BristolOption(
+                          type: type,
+                          selected: _selectedType == type.value,
+                          onTap: () =>
+                              setState(() => _selectedType = type.value),
+                        ),
+                      const SizedBox(height: 16),
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.schedule),
+                        title: const Text('Date et heure'),
+                        subtitle: Text(
+                          DateFormat.yMd('fr_CA').add_Hm().format(_occurredAt),
+                        ),
+                        trailing: TextButton(
+                          onPressed: _saving ? null : _pickDateTime,
+                          child: const Text('Modifier'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _notesController,
+                        maxLines: 3,
+                        maxLength: 1000,
+                        enabled: !_saving,
+                        decoration: const InputDecoration(
+                          labelText: 'Notes (optionnel)',
+                          hintText: 'Ex. crampes, ballonnements…',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      if (_error != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _error!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.error,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _saving
+                          ? null
+                          : () => Navigator.of(context).pop(false),
+                      child: const Text('Annuler'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _selectedType == null || _saving
+                          ? null
+                          : _save,
+                      child: _saving
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Enregistrer'),
+                    ),
+                  ),
+                ],
               ),
             ],
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _saving
-                        ? null
-                        : () => Navigator.of(context).pop(false),
-                    child: const Text('Annuler'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: _selectedType == null || _saving ? null : _save,
-                    child: _saving
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Enregistrer'),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
