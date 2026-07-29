@@ -38,6 +38,8 @@ public class LabelAnalysisService {
             : parser.parse(result.translatedText());
 
     List<String> ingredientNames = ingredients.stream().map(LabelIngredient::name).toList();
+    List<String> dietIngredients =
+        result.ingredientsEn().isEmpty() ? ingredientNames : result.ingredientsEn();
     List<String> safeAllergies = allergies == null ? List.of() : allergies;
     List<String> matched =
         allergenCrossMatch.findMatchesInIngredients(ingredientNames, safeAllergies);
@@ -47,11 +49,11 @@ public class LabelAnalysisService {
     // la compatibilite est donc deduite uniquement des ingredients extraits.
     boolean hasUserDiets = userDiets != null && !userDiets.isEmpty();
     boolean dietCompatible =
-        hasUserDiets && dietMatch.isUserDietsCompatible(userDiets, List.of(), ingredientNames);
+        hasUserDiets && dietMatch.isUserDietsCompatible(userDiets, List.of(), dietIngredients);
     Diet warningDiet =
         !hasUserDiets || dietCompatible
             ? null
-            : dietMatch.firstIncompatibleDiet(userDiets, List.of(), ingredientNames);
+            : dietMatch.firstIncompatibleDiet(userDiets, List.of(), dietIngredients);
     String dietStatus = !hasUserDiets ? "unknown" : dietCompatible ? "compatible" : "incompatible";
 
     return new LabelAnalysisResponse(

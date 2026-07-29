@@ -30,6 +30,24 @@ class DietMatchServiceTest {
   }
 
   @Test
+  void veganFlagsFrenchMilkCheeseAndGelatin() {
+    assertThat(service.isDietCompatible(Diet.VEGAN, List.of(), List.of("lait"))).isFalse();
+    assertThat(service.isDietCompatible(Diet.VEGAN, List.of(), List.of("fromage"))).isFalse();
+    assertThat(service.isDietCompatible(Diet.VEGAN, List.of(), List.of("gélatine"))).isFalse();
+  }
+
+  @Test
+  void vegetarianFlagsFrenchChicken() {
+    assertThat(service.isDietCompatible(Diet.VEGETARIAN, List.of(), List.of("poulet"))).isFalse();
+  }
+
+  @Test
+  void lactoseFreeTreatsFrenchNegationAsCompatible() {
+    assertThat(service.isDietCompatible(Diet.LACTOSE_FREE, List.of(), List.of("sans lait")))
+        .isTrue();
+  }
+
+  @Test
   void veganTreatsEggFreeTagAsCompatible() {
     assertThat(service.isDietCompatible(Diet.VEGAN, List.of("egg free"), List.of())).isTrue();
   }

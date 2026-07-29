@@ -31,7 +31,8 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
         "en_name": string|null,
         "confidence": number,
         "candidates": [{"name": string, "confidence": number}],
-        "ingredients": [{"name": string, "confidence": number}]
+        "ingredients": [{"name": string, "confidence": number}],
+        "ingredients_en": [string]
       }
       dish_name doit etre le nom le plus precis visible ou fortement probable: plat, boisson,
       produit, supplement, ou categorie alimentaire. La confiance doit etre entre 0 et 1.
@@ -57,7 +58,8 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
         "en_name": string|null,
         "confidence": number,
         "candidates": [{"name": string, "confidence": number}],
-        "ingredients": [{"name": string, "confidence": number}]
+        "ingredients": [{"name": string, "confidence": number}],
+        "ingredients_en": [string]
       }
       en_name doit etre le nom en anglais tel qu'il apparaitrait dans une base de donnees
       alimentaire anglophone (ex: USDA FoodData Central).
@@ -219,7 +221,8 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
         + "). All user-facing JSON fields must be written in that target language: dish_name,"
         + " candidates[].name, and ingredients[].name. Do not answer those fields in French unless"
         + " the target language is fr. en_name must always remain English because it is used only as"
-        + " a search key for USDA FoodData Central.";
+        + " a search key for USDA FoodData Central. ingredients_en must always contain canonical"
+        + " English names for the same ingredients.";
   }
 
   private static String languageName(String language) {
@@ -287,7 +290,8 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
           textOrNull(field(root, "en_name", "enName")),
           doubleOrNull(field(root, "confidence")),
           candidates(root.get("candidates")),
-          ingredients(root.get("ingredients")));
+          ingredients(root.get("ingredients")),
+          stringList(field(root, "ingredients_en", "ingredientsEn")));
     } catch (Exception e) {
       throw new GeminiDishAnalysisException("JSON Gemini invalide", e);
     }
@@ -318,6 +322,20 @@ public class GeminiDishAnalysisClient extends AbstractGeminiClient {
       if (name != null) {
         values.add(
             new GeminiDishAnalysis.ProbableIngredient(name, doubleOrNull(item.get("confidence"))));
+      }
+    }
+    return values;
+  }
+
+  private static List<String> stringList(JsonNode node) {
+    if (node == null || !node.isArray()) {
+      return List.of();
+    }
+    List<String> values = new ArrayList<>();
+    for (JsonNode item : node) {
+      String value = textOrNull(item);
+      if (value != null) {
+        values.add(value);
       }
     }
     return values;

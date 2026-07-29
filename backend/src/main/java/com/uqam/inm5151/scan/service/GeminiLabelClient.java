@@ -41,7 +41,7 @@ public class GeminiLabelClient extends AbstractGeminiClient {
                and parenthetical notes from each one.
 
             Return ONLY a JSON object with this exact shape:
-            {"language":"<iso-639-1 code of the ORIGINAL text>","translated_text":"<cleaned ingredient list in the target language, comma separated>","ingredients":["ingredient one","ingredient two"],"is_target_language":true|false}
+            {"language":"<iso-639-1 code of the ORIGINAL text>","translated_text":"<cleaned ingredient list in the target language, comma separated>","ingredients":["ingredient one","ingredient two"],"ingredients_en":["canonical English ingredient one","canonical English ingredient two"],"is_target_language":true|false}
             Text: \"\"\"%s\"\"\"
             """;
 
@@ -88,6 +88,7 @@ public class GeminiLabelClient extends AbstractGeminiClient {
       String language = textOrNull(field(root, "language"));
       String translatedText = textOrNull(field(root, "translated_text"));
       List<String> ingredients = stringList(field(root, "ingredients"));
+      List<String> ingredientsEn = stringList(field(root, "ingredients_en", "ingredientsEn"));
       boolean matchesTarget = booleanOrFalse(field(root, "is_target_language"));
 
       if (language == null || language.isBlank()) {
@@ -101,7 +102,8 @@ public class GeminiLabelClient extends AbstractGeminiClient {
         throw new GeminiDishAnalysisException("Gemini n'a pas fourni de traduction");
       }
 
-      return new TranslationResult(language.toLowerCase(), extracted, ingredients, matchesTarget);
+      return new TranslationResult(
+          language.toLowerCase(), extracted, ingredients, ingredientsEn, matchesTarget);
     } catch (UnsupportedLanguageException e) {
       throw e;
     } catch (Exception e) {
@@ -137,5 +139,14 @@ public class GeminiLabelClient extends AbstractGeminiClient {
   }
 
   public record TranslationResult(
-      String language, String translatedText, List<String> ingredients, boolean matchesTarget) {}
+      String language,
+      String translatedText,
+      List<String> ingredients,
+      List<String> ingredientsEn,
+      boolean matchesTarget) {
+    public TranslationResult(
+        String language, String translatedText, List<String> ingredients, boolean matchesTarget) {
+      this(language, translatedText, ingredients, List.of(), matchesTarget);
+    }
+  }
 }

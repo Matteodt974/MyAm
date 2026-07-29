@@ -145,6 +145,20 @@ class LabelAnalysisServiceTest {
   }
 
   @Test
+  void analyze_usesCanonicalEnglishIngredientsForDietMatching() {
+    String text = "sucre, lait";
+    when(gemini.detectAndTranslate(text, "fr"))
+        .thenReturn(
+            new TranslationResult(
+                "fr", text, List.of("sucre", "produit laitier"), List.of("sugar", "milk"), true));
+
+    LabelAnalysisResponse response = service().analyze(text, "fr", List.of(), List.of(Diet.VEGAN));
+
+    assertThat(response.dietStatus()).isEqualTo("incompatible");
+    assertThat(response.dietWarningDiet()).isEqualTo("VEGAN");
+  }
+
+  @Test
   void analyze_ingredientsRespectingUserDiet_returnsCompatible() {
     String text = "sucre, huile de palme";
     when(gemini.detectAndTranslate(text, "en"))

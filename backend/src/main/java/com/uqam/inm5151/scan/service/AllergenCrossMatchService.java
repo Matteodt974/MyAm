@@ -2,51 +2,10 @@ package com.uqam.inm5151.scan.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AllergenCrossMatchService {
-
-  // Dictionnaire : synonymes français/latin -> forme canonique anglaise utilisée par Open Food
-  // Facts
-  private static final Map<String, String> SYNONYMS =
-      Map.ofEntries(
-          Map.entry("lait", "milk"),
-          Map.entry("lactose", "milk"),
-          Map.entry("caseine", "milk"),
-          Map.entry("caséine", "milk"),
-          Map.entry("beurre", "milk"),
-          Map.entry("creme", "milk"),
-          Map.entry("crème", "milk"),
-          Map.entry("gluten", "gluten"),
-          Map.entry("ble", "wheat"),
-          Map.entry("blé", "wheat"),
-          Map.entry("froment", "wheat"),
-          Map.entry("seigle", "rye"),
-          Map.entry("orge", "barley"),
-          Map.entry("avoine", "oats"),
-          Map.entry("noix", "nuts"),
-          Map.entry("noisette", "nuts"),
-          Map.entry("amande", "nuts"),
-          Map.entry("cacahuete", "peanuts"),
-          Map.entry("cacahuète", "peanuts"),
-          Map.entry("arachide", "peanuts"),
-          Map.entry("soja", "soybeans"),
-          Map.entry("soya", "soybeans"),
-          Map.entry("oeuf", "eggs"),
-          Map.entry("œuf", "eggs"),
-          Map.entry("poisson", "fish"),
-          Map.entry("crustace", "crustaceans"),
-          Map.entry("crustacé", "crustaceans"),
-          Map.entry("mollusque", "molluscs"),
-          Map.entry("celeri", "celery"),
-          Map.entry("céleri", "celery"),
-          Map.entry("moutarde", "mustard"),
-          Map.entry("sesame", "sesame"),
-          Map.entry("sésame", "sesame"),
-          Map.entry("lupin", "lupin"),
-          Map.entry("sulfite", "sulphur-dioxide-and-sulphites"));
 
   // Trouve les allergènes du produit qui correspondent au profil utilisateur
   // (présence explicite)
@@ -70,8 +29,7 @@ public class AllergenCrossMatchService {
     List<String> undetermined = new ArrayList<>();
     for (String tag : allergensTags) {
       String normalizedTag = normalizeTag(tag);
-      boolean knownInDictionary =
-          SYNONYMS.containsValue(normalizedTag) || SYNONYMS.containsKey(normalizedTag);
+      boolean knownInDictionary = TagMatcher.isKnownTerm(normalizedTag);
       boolean matchesUserAllergy = !match(List.of(tag), userAllergies).isEmpty();
 
       if (!knownInDictionary && !matchesUserAllergy) {
@@ -91,7 +49,7 @@ public class AllergenCrossMatchService {
         String normalizedAllergy = normalizeAllergy(allergy);
         boolean matched = false;
         for (String word : lower.split("\\s+")) {
-          String mapped = SYNONYMS.getOrDefault(word, word);
+          String mapped = TagMatcher.canonical(word);
           if (mapped.equals(normalizedAllergy)) {
             matched = true;
             break;
@@ -142,7 +100,6 @@ public class AllergenCrossMatchService {
 
   // Normalise une allergie utilisateur : "lait" -> "milk" via le dictionnaire
   private String normalizeAllergy(String allergy) {
-    String lower = allergy.toLowerCase().trim();
-    return SYNONYMS.getOrDefault(lower, lower);
+    return TagMatcher.canonical(allergy);
   }
 }
