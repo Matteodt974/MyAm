@@ -13,7 +13,7 @@
 
     <groupId>com.uqam.inm5151</groupId>
     <artifactId>scan</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
     <name>INM5151 Scan API (Spring Boot)</name>
     <description>Backend Spring Boot du scanner alimentaire et cosmetique</description>
 
