@@ -299,11 +299,29 @@ jobs:
           host: ${{ secrets.SITE}}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: DEPLOY_PATH
+          envs: DEPLOY_PATH,JWT_SECRET,ENCRYPTION_MASTER_KEY
           script: |
+            set -euo pipefail
             cd $DEPLOY_PATH
             git pull origin main
             cd backend
+
+            # Upsert managed secrets into .env without touching hand-set values
+            # (DATABASE_URL, OFF_USER_AGENT, GEMINI_*, FDC_API_KEY stay as-is).
+            touch .env
+            chmod 600 .env
+            for pair in "JWT_SECRET=$JWT_SECRET" "ENCRYPTION_MASTER_KEY=$ENCRYPTION_MASTER_KEY"; do
+              key=${pair%%=*}
+              if grep -qE "^$key=" .env; then
+                sed -i "s|^$key=.*|$pair|" .env
+              else
+                printf '%s\n' "$pair" >> .env
+              fi
+            done
+
             docker compose up --build -d
+            docker compose ps
         env:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ENCRYPTION_MASTER_KEY: ${{ secrets.ENCRYPTION_MASTER_KEY }}
