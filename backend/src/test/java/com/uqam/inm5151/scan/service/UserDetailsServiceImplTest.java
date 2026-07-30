@@ -43,9 +43,7 @@ class UserDetailsServiceImplTest {
 
     assertThat(userDetails.getUsername()).isEqualTo(EMAIL);
     assertThat(userDetails.getPassword()).isEqualTo(PASSWORD_HASH);
-    assertThat(userDetails.getAuthorities())
-        .extracting("authority")
-        .containsExactly("ROLE_USER");
+    assertThat(userDetails.getAuthorities()).extracting("authority").containsExactly("ROLE_USER");
     verify(userRepository).findByEmail(EMAIL);
   }
 

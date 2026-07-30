@@ -2,6 +2,7 @@ package com.uqam.inm5151.scan.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.uqam.inm5151.scan.config.JwtProperties;
@@ -24,7 +25,7 @@ class JwtServiceTest {
   private JwtService service(long accessExpiration, long refreshExpiration) {
     when(jwtProperties.secret()).thenReturn(SECRET);
     when(jwtProperties.accessExpiration()).thenReturn(accessExpiration);
-    when(jwtProperties.refreshExpiration()).thenReturn(refreshExpiration);
+    lenient().when(jwtProperties.refreshExpiration()).thenReturn(refreshExpiration);
     return new JwtService(jwtProperties);
   }
 

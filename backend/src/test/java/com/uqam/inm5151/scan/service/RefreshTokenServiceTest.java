@@ -103,7 +103,10 @@ class RefreshTokenServiceTest {
   void verify_whenTokenExpired_throwsIllegalArgumentException() throws Exception {
     RefreshToken storedToken =
         new RefreshToken(
-            USER_ID, hash(RAW_TOKEN), Instant.now().minusSeconds(7200), Instant.now().minusSeconds(3600));
+            USER_ID,
+            hash(RAW_TOKEN),
+            Instant.now().minusSeconds(7200),
+            Instant.now().minusSeconds(3600));
     when(refreshTokenRepository.findByTokenHash(hash(RAW_TOKEN)))
         .thenReturn(Optional.of(storedToken));
 
@@ -116,8 +119,7 @@ class RefreshTokenServiceTest {
   void rotate_whenValidToken_revokesOldAndReturnsNewToken() throws Exception {
     RefreshToken oldToken =
         new RefreshToken(USER_ID, hash(RAW_TOKEN), Instant.now(), Instant.now().plusSeconds(3600));
-    when(refreshTokenRepository.findByTokenHash(hash(RAW_TOKEN)))
-        .thenReturn(Optional.of(oldToken));
+    when(refreshTokenRepository.findByTokenHash(hash(RAW_TOKEN))).thenReturn(Optional.of(oldToken));
     when(userRepository.existsById(USER_ID)).thenReturn(true);
     when(jwtProperties.refreshExpiration()).thenReturn(EXPIRE_MS);
     when(refreshTokenRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
