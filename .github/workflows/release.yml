@@ -299,29 +299,20 @@ jobs:
           host: ${{ secrets.SITE}}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          envs: DEPLOY_PATH,JWT_SECRET,ENCRYPTION_MASTER_KEY
+          envs: DEPLOY_PATH,ENVIRONMENT,DATABASE_URL,DATABASE_USER,DATABASE_PASSWORD,JWT_SECRET,ENCRYPTION_MASTER_KEY,GEMINI_API_KEY,GEMINI_MODEL,FDC_API_KEY,OFF_USER_AGENT
           script: |
-            set -euo pipefail
-            cd $DEPLOY_PATH
-            git pull origin main
-            cd backend
-
-            # Upsert managed secrets into .env without touching hand-set values
-            # (DATABASE_URL, OFF_USER_AGENT, GEMINI_*, FDC_API_KEY stay as-is).
-            touch .env
-            chmod 600 .env
-            for pair in "JWT_SECRET=$JWT_SECRET" "ENCRYPTION_MASTER_KEY=$ENCRYPTION_MASTER_KEY"; do
-              key=${pair%%=*}
-              if grep -qE "^$key=" .env; then
-                sed -i "s|^$key=.*|$pair|" .env
-              else
-                printf '%s\n' "$pair" >> .env
-              fi
-            done
-
-            docker compose up --build -d
-            docker compose ps
+            cd $DEPLOY_PATH && git pull origin main && bash scripts/deploy.sh
         env:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          # Secrets
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           ENCRYPTION_MASTER_KEY: ${{ secrets.ENCRYPTION_MASTER_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FDC_API_KEY: ${{ secrets.FDC_API_KEY || 'DEMO_KEY' }}
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD || 'scan' }}
+          # Non-secret config, overridable by repository variables
+          ENVIRONMENT: ${{ vars.ENVIRONMENT || 'production' }}
+          DATABASE_URL: ${{ vars.DATABASE_URL || 'jdbc:postgresql://db:5432/scan' }}
+          DATABASE_USER: ${{ vars.DATABASE_USER || 'scan' }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-3.5-flash' }}
+          OFF_USER_AGENT: "${{ vars.OFF_USER_AGENT || 'MyAm/3.0.0 (contact: equipe@courrier.uqam.ca)' }}"
