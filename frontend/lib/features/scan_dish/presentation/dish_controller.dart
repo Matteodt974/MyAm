@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../child_profiles/presentation/parent_scan_alert_controller.dart';
 import '../../history/data/scan_history_entry.dart';
 import '../../history/presentation/history_persistence.dart';
 import '../../profile_allergies/presentation/allergy_controller.dart';
@@ -24,7 +25,15 @@ class DishController extends Notifier<AsyncValue<DishResult?>> {
     });
 
     if (state.value != null) {
-      ref.persistScanToHistory(() => _buildHistoryEntry(state.value!, image));
+      final result = state.value!;
+      await ref.read(parentScanAlertControllerProvider.notifier).recordIfNeeded(
+        incompatible: result.dietStatus == 'incompatible' ||
+            flaggedDishIngredients(result.ingredients, await ref.read(allergyControllerProvider.future)).isNotEmpty,
+        childDisplayName: 'Profil enfant',
+        message:
+            'Le plat analysé contient un allergène ou un régime incompatible pour le profil enfant actif.',
+      );
+      ref.persistScanToHistory(() => _buildHistoryEntry(result, image));
     }
   }
 

@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/languages.dart';
 import '../../../core/providers/auth_state_provider.dart';
+import '../../child_profiles/data/parent_scan_alert_store.dart';
 import '../../child_profiles/presentation/child_profile_controller.dart';
 import '../../child_profiles/presentation/child_profile_management_section.dart';
+import '../../child_profiles/presentation/parent_scan_alert_controller.dart';
 import 'allergy_controller.dart';
 import 'allergy_severity_chip.dart';
 import 'allergy_severity_controller.dart';
@@ -22,6 +24,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _controller = TextEditingController();
+  final Set<String> _shownAlertIds = <String>{};
 
   static const _dietOptions = [
     (value: 'VEGAN', label: 'Vegan'),
@@ -34,9 +37,77 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    ref.listen<AsyncValue<List<ParentScanAlert>>>(
+      parentScanAlertControllerProvider,
+      _handleAlertState,
+    );
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _handleAlertState(
+    AsyncValue<List<ParentScanAlert>>? previous,
+    AsyncValue<List<ParentScanAlert>> next,
+  ) {
+    next.whenData((alerts) {
+      final newAlerts = alerts
+          .where((alert) => !_shownAlertIds.contains(alert.id))
+          .toList();
+      if (newAlerts.isEmpty) return;
+
+      _shownAlertIds.addAll(newAlerts.map((alert) => alert.id));
+
+      for (final alert in newAlerts) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          await showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              titlePadding: const EdgeInsets.fromLTRB(20, 20, 12, 0),
+              contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              title: Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('Scan incompatible')),
+                  IconButton(
+                    tooltip: 'Fermer',
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(dialogContext),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${alert.childDisplayName} a scanné un produit incompatible avec ses allergies ou ses régimes.',
+                  ),
+                  const SizedBox(height: 8),
+                  Text(alert.message),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Fermer'),
+                ),
+              ],
+            ),
+          );
+          if (!mounted) return;
+          await ref.read(parentScanAlertControllerProvider.notifier).dismiss(alert.id);
+        });
+      }
+    });
   }
 
   Future<void> _add() async {

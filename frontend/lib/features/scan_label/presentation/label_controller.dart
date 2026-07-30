@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../child_profiles/presentation/parent_scan_alert_controller.dart';
 import '../../history/data/scan_history_entry.dart';
 import '../../history/presentation/history_persistence.dart';
 import '../../profile_allergies/presentation/allergy_controller.dart';
@@ -26,9 +27,15 @@ class LabelController extends Notifier<AsyncValue<LabelResult?>> {
     });
 
     if (state.value != null) {
-      ref.persistScanToHistory(
-        () => ScanHistoryEntry.fromLabelResult(state.value!),
+      final result = state.value!;
+      await ref.read(parentScanAlertControllerProvider.notifier).recordIfNeeded(
+        incompatible: result.matchedAllergens.isNotEmpty ||
+            result.dietStatus == 'incompatible',
+        childDisplayName: 'Profil enfant',
+        message:
+            'L’étiquette analysée contient un allergène ou un régime incompatible pour le profil enfant actif.',
       );
+      ref.persistScanToHistory(() => ScanHistoryEntry.fromLabelResult(result));
     }
   }
 

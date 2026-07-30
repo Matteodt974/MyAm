@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../child_profiles/presentation/parent_scan_alert_controller.dart';
 import '../../history/data/scan_history_entry.dart';
 import '../../history/presentation/history_persistence.dart';
 import '../../profile_allergies/presentation/language_controller.dart';
@@ -27,9 +28,16 @@ class ScanController extends Notifier<AsyncValue<ProductResult?>> {
     });
 
     if (state.value != null) {
-      ref.persistScanToHistory(
-        () => ScanHistoryEntry.fromProductResult(state.value!),
+      final product = state.value!;
+      await ref.read(parentScanAlertControllerProvider.notifier).recordIfNeeded(
+        incompatible: product.riskLevel == 'DANGER' ||
+            product.riskLevel == 'WARNING' ||
+            !product.dietCompatible,
+        childDisplayName: 'Profil enfant',
+        message:
+            'Le produit scanné présente un risque ou une incompatibilité pour le profil enfant actif.',
       );
+      ref.persistScanToHistory(() => ScanHistoryEntry.fromProductResult(product));
     }
   }
 
