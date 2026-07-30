@@ -37,15 +37,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    ref.listen<AsyncValue<List<ParentScanAlert>>>(
-      parentScanAlertControllerProvider,
-      _handleAlertState,
-    );
-  }
-
-  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -211,6 +202,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<List<ParentScanAlert>>>(
+      parentScanAlertControllerProvider,
+      _handleAlertState,
+    );
+
     final allergiesAsync = ref.watch(allergyControllerProvider);
     final dietsAsync = ref.watch(dietControllerProvider);
     final languageAsync = ref.watch(languageControllerProvider);

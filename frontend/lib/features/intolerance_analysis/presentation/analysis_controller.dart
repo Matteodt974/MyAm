@@ -15,7 +15,7 @@ const Duration foodJournalWindow = Duration(hours: 72);
 class AnalysisController extends AsyncNotifier<IntoleranceReport?> {
   @override
   Future<IntoleranceReport?> build() async {
-    ref.watch(activeProfileIdProvider);
+    ref.watch(guardianIdProvider);
     return null;
   }
 
@@ -26,7 +26,7 @@ class AnalysisController extends AsyncNotifier<IntoleranceReport?> {
 
     state = await AsyncValue.guard<IntoleranceReport?>(() async {
       final foodItems = await _recentFoodItems();
-      final profileId = ref.read(activeProfileIdProvider);
+      final profileId = ref.read(guardianIdProvider);
       if (profileId == null) return null;
       return ref
           .read(intoleranceAnalysisRepositoryProvider)
@@ -35,7 +35,7 @@ class AnalysisController extends AsyncNotifier<IntoleranceReport?> {
   }
 
   Future<List<FoodItemPayload>> _recentFoodItems() async {
-    final profileId = ref.read(activeProfileIdProvider);
+    final profileId = ref.read(guardianIdProvider);
     if (profileId == null) return const <FoodItemPayload>[];
 
     final since = DateTime.now().subtract(foodJournalWindow);

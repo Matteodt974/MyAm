@@ -4,19 +4,22 @@ import '../data/child_profile.dart';
 import '../data/parent_scan_alert_store.dart';
 import 'child_profile_controller.dart';
 
-class ParentScanAlertController extends AutoDisposeNotifier<List<ParentScanAlert>> {
+class ParentScanAlertController extends AsyncNotifier<List<ParentScanAlert>> {
   @override
-  List<ParentScanAlert> build() {
-    Future<void>.microtask(() => load());
-    return const <ParentScanAlert>[];
+  Future<List<ParentScanAlert>> build() async {
+    return _loadAlerts();
   }
 
   Future<void> load() async {
-    final guardianId = ref.read(guardianIdProvider);
-    if (guardianId == null) return;
+    state = const AsyncLoading();
+    state = AsyncData(await _loadAlerts());
+  }
 
-    final alerts = await ref.read(parentScanAlertStoreProvider).load(guardianId);
-    state = alerts;
+  Future<List<ParentScanAlert>> _loadAlerts() async {
+    final guardianId = ref.read(guardianIdProvider);
+    if (guardianId == null) return const <ParentScanAlert>[];
+
+    return ref.read(parentScanAlertStoreProvider).load(guardianId);
   }
 
   Future<void> recordIfNeeded({
@@ -57,6 +60,6 @@ class ParentScanAlertController extends AutoDisposeNotifier<List<ParentScanAlert
 }
 
 final parentScanAlertControllerProvider =
-    NotifierProvider.autoDispose<ParentScanAlertController, List<ParentScanAlert>>(
+    AsyncNotifierProvider.autoDispose<ParentScanAlertController, List<ParentScanAlert>>(
       ParentScanAlertController.new,
     );

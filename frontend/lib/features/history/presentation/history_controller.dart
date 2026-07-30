@@ -26,10 +26,8 @@ class HistoryController extends AsyncNotifier<List<ScanHistoryEntry>> {
   }
 
   int? _activeProfileId() {
-    final profileState = ref.read(childProfileControllerProvider).value;
     final parentId = ref.read(guardianIdProvider);
-    if (parentId == null) return null;
-    return profileState?.activeProfileId ?? parentId;
+    return parentId;
   }
 
   /// Reloads the history while preserving the current filter.

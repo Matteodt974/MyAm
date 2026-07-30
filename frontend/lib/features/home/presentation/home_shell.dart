@@ -20,8 +20,6 @@ import '../../scan_barcode/presentation/scan_controller.dart';
 import '../../scan_dish/presentation/picture_tab.dart';
 import '../../scan_label/presentation/label_tab.dart';
 import '../../history/presentation/history_screen.dart';
-import '../../profile_allergies/presentation/allergy_controller.dart';
-import '../../profile_allergies/presentation/diet_controller.dart';
 
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
@@ -128,17 +126,13 @@ class _HomeShellState extends ConsumerState<HomeShell> {
 
     try {
       if (_productFormats.contains(detected.format)) {
-        final allergies = ref.read(allergyControllerProvider).value ?? [];
-        final diets = ref.read(dietControllerProvider).value ?? [];
         //if (allergies.isEmpty) {
         //_showSnack(
         //  'Aucune allergie enregistrée. Allez dans votre profil pour en ajouter.',
         //);
         //return;
         //}
-        await ref
-            .read(scanControllerProvider.notifier)
-            .scan(value, allergies, diets);
+        await ref.read(scanControllerProvider.notifier).scan(value);
 
         if (!mounted) return;
 

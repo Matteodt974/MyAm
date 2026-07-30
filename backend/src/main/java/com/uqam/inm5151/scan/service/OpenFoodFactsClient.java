@@ -20,18 +20,23 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Client Open Food Facts. Portage fidele de la logique de backend/app/api/routes_scan.py.
+ * Client Open Food Facts. Portage fidele de la logique de
+ * backend/app/api/routes_scan.py.
  *
- * <p>Comportement (identique a FastAPI) :
+ * <p>
+ * Comportement (identique a FastAPI) :
  *
  * <ul>
- *   <li>erreur reseau / timeout -> 502 "Open Food Facts injoignable"
- *   <li>reponse HTTP != 200 -> 502 "Reponse OFF invalide"
- *   <li>corps avec status != 1 -> 404 "Produit introuvable"
+ * <li>erreur reseau / timeout -> 502 "Open Food Facts injoignable"
+ * <li>reponse HTTP != 200 -> 502 "Reponse OFF invalide"
+ * <li>corps avec status != 1 -> 404 "Produit introuvable"
  * </ul>
  *
- * <p>Les erreurs transitoires (timeout reseau, 429, 502, 503, 504) sont reessayees jusqu'a {@link
- * #MAX_ATTEMPTS} fois avec un backoff exponentiel avant de remonter le 502. Les autres reponses
+ * <p>
+ * Les erreurs transitoires (timeout reseau, 429, 502, 503, 504) sont reessayees
+ * jusqu'a {@link
+ * #MAX_ATTEMPTS} fois avec un backoff exponentiel avant de remonter le 502. Les
+ * autres reponses
  * d'erreur (400, 404, ...) sont definitives et remontent immediatement.
  */
 @Service
@@ -39,8 +44,7 @@ public class OpenFoodFactsClient {
 
   private static final Logger log = LoggerFactory.getLogger(OpenFoodFactsClient.class);
 
-  private static final String FIELDS =
-      "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags,ingredients_analysis_tags,label_tags,nutriments";
+  private static final String FIELDS = "product_name,brands,nutriscore_grade,nova_group,additives_tags,allergens_tags,traces_tags,ingredients_analysis_tags,ingredients_text,label_tags,nutriments";
 
   /** Tentative initiale + 2 reessais. */
   private static final int MAX_ATTEMPTS = 3;
@@ -66,7 +70,7 @@ public class OpenFoodFactsClient {
     this.dietMatch = dietMatch;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public BarcodeResponse fetchBarcode(
       String ean, List<String> userAllergies, String language, List<Diet> userDiets) {
     String lc = language == null || language.isBlank() ? "en" : language;
@@ -85,6 +89,7 @@ public class OpenFoodFactsClient {
     List<String> allergensTags = toStringList(p.get("allergens_tags"));
     List<String> tracesTags = toStringList(p.get("traces_tags"));
     List<String> ingredientsAnalysisTags = toStringList(p.get("ingredients_analysis_tags"));
+    List<String> ingredientNames = toIngredientNames(p.get("ingredients_text"));
     List<String> labelTags = toStringList(p.get("label_tags"));
 
     List<String> productTags = new ArrayList<>();
@@ -92,9 +97,10 @@ public class OpenFoodFactsClient {
     productTags.addAll(ingredientsAnalysisTags);
     productTags.addAll(allergensTags);
 
-    boolean dietCompatible = dietMatch.isUserDietsCompatible(userDiets, productTags, List.of());
+    boolean dietCompatible = dietMatch.isUserDietsCompatible(userDiets, productTags, ingredientNames);
 
     List<String> matched = crossMatch.findMatches(allergensTags, userAllergies);
+    matched = mergeUnique(matched, crossMatch.findMatchesInIngredients(ingredientNames, userAllergies));
     List<String> traces = crossMatch.findTraces(tracesTags, userAllergies);
     List<String> undetermined = crossMatch.findUndetermined(allergensTags, userAllergies);
     String risk = crossMatch.riskLevel(matched, traces, undetermined);
@@ -119,23 +125,23 @@ public class OpenFoodFactsClient {
   }
 
   /**
-   * Appelle OFF en reessayant les erreurs transitoires. Le dernier echec est traduit en 502 avec le
+   * Appelle OFF en reessayant les erreurs transitoires. Le dernier echec est
+   * traduit en 502 avec le
    * meme message que lorsqu'aucun reessai n'etait fait.
    */
   @SuppressWarnings("rawtypes")
   private ResponseEntity<Map> getProduct(String ean, String lc) {
     Duration backoff = INITIAL_BACKOFF;
 
-    for (int attempt = 1; ; attempt++) {
+    for (int attempt = 1;; attempt++) {
       try {
         return client
             .get()
             .uri(
-                uri ->
-                    uri.path("/api/v2/product/{ean}.json")
-                        .queryParam("fields", FIELDS)
-                        .queryParam("lc", lc)
-                        .build(ean))
+                uri -> uri.path("/api/v2/product/{ean}.json")
+                    .queryParam("fields", FIELDS)
+                    .queryParam("lc", lc)
+                    .build(ean))
             .header("User-Agent", userAgent)
             .retrieve()
             .toEntity(Map.class);
@@ -164,10 +170,9 @@ public class OpenFoodFactsClient {
   }
 
   private static ResponseStatusException asBadGateway(RuntimeException e) {
-    String reason =
-        e instanceof RestClientResponseException
-            ? "Réponse OFF invalide"
-            : "Open Food Facts injoignable";
+    String reason = e instanceof RestClientResponseException
+        ? "Réponse OFF invalide"
+        : "Open Food Facts injoignable";
     return new ResponseStatusException(HttpStatus.BAD_GATEWAY, reason);
   }
 
@@ -181,8 +186,10 @@ public class OpenFoodFactsClient {
   }
 
   /**
-   * Extrait les valeurs pour 100 g de l'objet {@code nutriments} d'Open Food Facts. Les cles {@code
-   * *_100g} sont celles normalisees par OFF, toutes les fiches ne les renseignent pas.
+   * Extrait les valeurs pour 100 g de l'objet {@code nutriments} d'Open Food
+   * Facts. Les cles {@code
+   * *_100g} sont celles normalisees par OFF, toutes les fiches ne les renseignent
+   * pas.
    */
   private static Nutriments toNutriments(Object raw) {
     if (!(raw instanceof Map<?, ?> map)) {
@@ -230,5 +237,25 @@ public class OpenFoodFactsClient {
       return list.stream().map(String::valueOf).toList();
     }
     return List.of();
+  }
+
+  private static List<String> toIngredientNames(Object o) {
+    if (o instanceof String s && !s.isBlank()) {
+      return List.of(s);
+    }
+    if (o instanceof List<?> list) {
+      return list.stream().map(String::valueOf).toList();
+    }
+    return List.of();
+  }
+
+  private static List<String> mergeUnique(List<String> first, List<String> second) {
+    List<String> merged = new ArrayList<>(first);
+    for (String value : second) {
+      if (!merged.contains(value)) {
+        merged.add(value);
+      }
+    }
+    return merged;
   }
 }

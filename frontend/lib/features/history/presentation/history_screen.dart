@@ -89,16 +89,14 @@ class HistoryScreen extends ConsumerWidget {
   }
 
   Future<void> _openFilterSheet(BuildContext context, WidgetRef ref) async {
-    final profileState = ref.read(childProfileControllerProvider).value;
     final parentId = ref.read(guardianIdProvider);
-    final profileId = profileState?.activeProfileId ?? parentId;
-    if (profileId == null) return;
+    if (parentId == null) return;
 
     // Always drawn from the full history, not the currently filtered view,
     // so applying a filter doesn't shrink the options available afterward.
     final allEntries = await ref
         .read(scanHistoryRepositoryProvider)
-        .load(profileId);
+      .load(parentId);
     final availableAllergens =
         allEntries.expand((e) => e.matchedAllergens).toSet().toList()..sort();
 

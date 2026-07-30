@@ -21,13 +21,11 @@ extension ScanHistoryPersistence on Ref {
   Future<void> _persistScanToHistory(
     FutureOr<ScanHistoryEntry> Function() buildEntry,
   ) async {
-    final profileState = read(childProfileControllerProvider).value;
     final parentId = read(guardianIdProvider);
     if (parentId == null) return;
-    final profileId = profileState?.activeProfileId ?? parentId;
 
     final entry = await buildEntry();
-    await read(scanHistoryRepositoryProvider).save(entry, profileId);
+    await read(scanHistoryRepositoryProvider).save(entry, parentId);
     if (mounted) invalidate(historyControllerProvider);
   }
 }
